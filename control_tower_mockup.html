@@ -1,0 +1,553 @@
+<title>Visibility Control Tower</title>
+<style>
+  :root {
+    --bg: #eef2f1; --surface: #ffffff; --surface-2: #f7f9f8;
+    --ink: #172230; --ink-soft: #57646f;
+    --line: #dbe3e1; --line-strong: #c3ccca;
+    --accent: #0c6c8c; --accent-ink: #ffffff; --accent-soft: #e0eff3;
+    --good: #1f7a52; --good-soft: #e2f3ea;
+    --warn: #a8701a; --warn-soft: #faf0dd;
+    --crit: #b23a3a; --crit-soft: #fbe9e8;
+    --shadow: 0 1px 2px rgba(23,34,48,.06), 0 6px 20px -8px rgba(23,34,48,.16);
+    --radius: 10px;
+    --font-ui: -apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo","Pretendard",sans-serif;
+    --font-data: "SF Mono","Cascadia Mono",Consolas,"Noto Sans Mono",monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#101820; --surface:#161f29; --surface-2:#1c2732; --ink:#e8edf0; --ink-soft:#93a1ab;
+      --line:#29343e; --line-strong:#37424c; --accent:#56b9d6; --accent-ink:#08222b; --accent-soft:#17323c;
+      --good:#4cbf8b; --good-soft:#17332a; --warn:#dba649; --warn-soft:#362a15; --crit:#e2726c; --crit-soft:#3a1e1d;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#101820; --surface:#161f29; --surface-2:#1c2732; --ink:#e8edf0; --ink-soft:#93a1ab;
+    --line:#29343e; --line-strong:#37424c; --accent:#56b9d6; --accent-ink:#08222b; --accent-soft:#17323c;
+    --good:#4cbf8b; --good-soft:#17332a; --warn:#dba649; --warn-soft:#362a15; --crit:#e2726c; --crit-soft:#3a1e1d;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -8px rgba(0,0,0,.5);
+  }
+  :root[data-theme="light"] {
+    --bg:#eef2f1; --surface:#ffffff; --surface-2:#f7f9f8; --ink:#172230; --ink-soft:#57646f;
+    --line:#dbe3e1; --line-strong:#c3ccca; --accent:#0c6c8c; --accent-ink:#ffffff; --accent-soft:#e0eff3;
+    --good:#1f7a52; --good-soft:#e2f3ea; --warn:#a8701a; --warn-soft:#faf0dd; --crit:#b23a3a; --crit-soft:#fbe9e8;
+    --shadow:0 1px 2px rgba(23,34,48,.06),0 6px 20px -8px rgba(23,34,48,.16);
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-ui); font-size:14px; line-height:1.5; }
+  a { color:inherit; }
+
+  .app { max-width:1080px; margin:0 auto; padding:20px 24px 60px; display:flex; flex-direction:column; gap:16px; }
+
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .brand-mark {
+    width:36px; height:36px; border-radius:9px;
+    background: conic-gradient(from 220deg, var(--accent), #123a48 60%, var(--accent));
+    display:grid; place-items:center; color:#fff; font-weight:800; font-size:11px; letter-spacing:.02em;
+  }
+  .brand-text .name { font-weight:800; font-size:16px; letter-spacing:-.01em; }
+  .brand-text .sub { font-size:11.5px; color:var(--ink-soft); letter-spacing:.03em; text-transform:uppercase; }
+  .updated { font-family:var(--font-data); font-size:12px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+
+  /* Tabs */
+  .tabbar { display:flex; gap:4px; border-bottom:1px solid var(--line); }
+  .tab-btn {
+    appearance:none; border:none; background:transparent; cursor:pointer;
+    padding:10px 16px; font-size:13.5px; font-weight:700; color:var(--ink-soft);
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+    font-family:var(--font-ui);
+  }
+  .tab-btn[aria-selected="true"] { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .tab-panel { display:none; }
+  .tab-panel[data-active="true"] { display:flex; flex-direction:column; gap:16px; }
+
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .panel-head { display:flex; align-items:baseline; justify-content:space-between; padding:14px 18px 10px; gap:10px; flex-wrap:wrap; }
+  .panel-head h2 { margin:0; font-size:14.5px; font-weight:700; letter-spacing:-.01em; }
+  .panel-head .hint { font-size:12px; color:var(--ink-soft); }
+  .panel-body { padding:4px 18px 18px; }
+  .assumption { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--warn); background:var(--warn-soft); border:1px dashed color-mix(in srgb, var(--warn) 55%, transparent); border-radius:6px; padding:2px 8px; }
+  .unit { font-size:11px; font-weight:600; color:var(--ink-soft); margin-left:2px; }
+
+  /* Overview lens cards */
+  .lens-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  @media (max-width:800px) { .lens-grid { grid-template-columns:1fr; } }
+  .lens-card {
+    text-align:left; cursor:pointer; border:1px solid var(--line); background:var(--surface-2);
+    border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:8px;
+    font-family:var(--font-ui); transition:border-color .12s ease;
+  }
+  .lens-card:hover { border-color:var(--accent); }
+  .lens-card:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .lens-card .lens-tag { font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); }
+  .lens-card .lens-title { font-size:15px; font-weight:800; }
+  .lens-card .lens-total { font-size:11.5px; color:var(--ink-soft); font-family:var(--font-data); }
+  .lens-metrics { display:flex; gap:14px; margin-top:2px; }
+  .lens-metrics .m { display:flex; flex-direction:column; }
+  .lens-metrics .m .num-row { display:flex; align-items:baseline; }
+  .lens-metrics .m .num { font-family:var(--font-data); font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .lens-metrics .m.crit .num { color:var(--crit); }
+  .lens-metrics .m.warn .num { color:var(--warn); }
+  .lens-metrics .m .lbl { font-size:11.5px; color:var(--ink-soft); }
+  .lens-cta { font-size:12px; color:var(--accent); font-weight:700; margin-top:auto; }
+
+  .priority-list { display:flex; flex-direction:column; gap:8px; }
+  .priority-row { display:grid; grid-template-columns:74px 1fr auto; gap:12px; align-items:center; padding:9px 12px; border:1px solid var(--line); border-radius:8px; background:var(--surface-2); }
+  .priority-row .lens-chip { font-size:10.5px; font-weight:700; text-align:center; padding:3px 0; border-radius:5px; }
+  .lens-chip.cargo { background:var(--accent-soft); color:var(--accent); }
+  .lens-chip.ops { background:var(--warn-soft); color:var(--warn); }
+  .lens-chip.cost { background:var(--crit-soft); color:var(--crit); }
+  .priority-main .t { font-weight:600; font-size:13px; }
+  .priority-main .m { font-size:12px; color:var(--ink-soft); font-family:var(--font-data); }
+  .priority-when { font-size:11.5px; color:var(--ink-soft); font-family:var(--font-data); white-space:nowrap; }
+
+  /* Delay lineage */
+  .lineage { display:flex; flex-direction:column; gap:0; }
+  .lineage-node { display:flex; gap:12px; padding:10px 0; position:relative; }
+  .lineage-node:not(:last-child)::after {
+    content:""; position:absolute; left:15px; top:38px; bottom:-4px; width:2px; background:var(--line-strong);
+  }
+  .lineage-dot { flex:none; width:32px; height:32px; border-radius:50%; display:grid; place-items:center; font-size:14px; background:var(--surface-2); border:1px solid var(--line-strong); z-index:1; }
+  .lineage-dot.crit { background:var(--crit-soft); border-color:var(--crit); }
+  .lineage-dot.warn { background:var(--warn-soft); border-color:var(--warn); }
+  .lineage-body .t { font-weight:700; font-size:13px; }
+  .lineage-body .d { font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .lineage-body .d b { color:var(--ink); font-family:var(--font-data); }
+
+  /* ETA probability */
+  .eta-block { display:flex; flex-direction:column; gap:8px; }
+  .eta-range-bar { position:relative; height:34px; border-radius:8px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden; }
+  .eta-range-fill { position:absolute; top:0; bottom:0; background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 15%, transparent), color-mix(in srgb, var(--accent) 55%, transparent), color-mix(in srgb, var(--accent) 15%, transparent)); }
+  .eta-marker { position:absolute; top:0; bottom:0; width:2px; background:var(--accent); }
+  .eta-labels { display:flex; justify-content:space-between; font-family:var(--font-data); font-size:11.5px; color:var(--ink-soft); }
+  .eta-cause { font-size:12px; color:var(--ink-soft); }
+
+  /* Inventory projection */
+  .inv-chart-wrap { overflow-x:auto; }
+  .inv-legend { display:flex; gap:14px; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px; flex-wrap:wrap; }
+  .inv-legend span { display:inline-flex; align-items:center; gap:5px; }
+  .inv-legend i { width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .inv-unit-note { font-size:11px; color:var(--ink-soft); margin-top:4px; }
+
+  /* Cutoff timeline */
+  .cutoff-track { display:flex; gap:0; overflow-x:auto; padding:6px 0 2px; }
+  .cutoff-item { flex:none; width:150px; padding:10px 12px; border-right:1px dashed var(--line); position:relative; }
+  .cutoff-item:last-child { border-right:none; }
+  .cutoff-item .k { font-size:11px; font-weight:700; letter-spacing:.02em; color:var(--ink-soft); text-transform:uppercase; }
+  .cutoff-item .v { font-family:var(--font-data); font-weight:700; font-size:14px; margin-top:4px; }
+  .cutoff-item .cd { font-size:11.5px; margin-top:4px; font-weight:700; }
+  .cutoff-item.crit .cd { color:var(--crit); }
+  .cutoff-item.warn .cd { color:var(--warn); }
+  .cutoff-item.good .cd { color:var(--good); }
+
+  /* Space tightness */
+  .lane-list { display:flex; flex-direction:column; gap:8px; }
+  .lane-row { display:grid; grid-template-columns:1fr 140px; gap:12px; align-items:center; }
+  .lane-name { font-size:13px; font-weight:600; }
+  .lane-meta { font-size:11.5px; color:var(--ink-soft); font-family:var(--font-data); }
+  .tightness-bar { height:8px; border-radius:999px; background:var(--surface-2); overflow:hidden; }
+  .tightness-bar span { display:block; height:100%; }
+  .tightness-label { font-size:11px; font-weight:700; text-align:right; margin-top:3px; }
+
+  /* Inland routing */
+  table.routing { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.routing th { text-align:left; font-size:11px; color:var(--ink-soft); font-weight:600; padding:0 10px 6px; border-bottom:1px solid var(--line); }
+  table.routing td { padding:10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  table.routing tr:last-child td { border-bottom:none; }
+  .num-cell { font-family:var(--font-data); font-variant-numeric:tabular-nums; text-align:right; }
+  .route-pick { border:none; background:var(--accent); color:var(--accent-ink); border-radius:7px; padding:6px 12px; font-weight:700; font-size:12px; cursor:pointer; }
+  .route-pick.outline { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+  .recommend-tag { font-size:10px; font-weight:700; color:var(--good); background:var(--good-soft); border-radius:5px; padding:2px 6px; margin-left:6px; }
+
+  /* D&D + PCS */
+  table.demurrage { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.demurrage th { text-align:left; font-size:11px; color:var(--ink-soft); font-weight:600; padding:0 10px 6px; border-bottom:1px solid var(--line); }
+  table.demurrage td { padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  table.demurrage tr:last-child td { border-bottom:none; }
+  .status-pill { font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .status-pill.soon { background:var(--warn-soft); color:var(--warn); }
+  .status-pill.now { background:var(--crit-soft); color:var(--crit); }
+
+  .pcs-list { display:flex; flex-direction:column; gap:8px; }
+  .pcs-row { display:flex; gap:12px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--surface-2); }
+  .pcs-amt { font-family:var(--font-data); font-weight:800; font-size:15px; flex:none; width:84px; }
+  .pcs-amt .u { font-size:10px; font-weight:600; color:var(--ink-soft); }
+  .pcs-main .t { font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; }
+  .pcs-main .d { font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .src-tag { font-size:10.5px; font-weight:700; color:var(--ink-soft); border:1px solid var(--line-strong); border-radius:5px; padding:1px 6px; }
+
+  footer.note { font-size:11.5px; color:var(--ink-soft); text-align:center; padding-top:6px; }
+
+  /* ---------- Floating AI Q&A ---------- */
+  .qa-fab {
+    position:fixed; right:22px; bottom:22px; width:52px; height:52px; border-radius:50%;
+    background:var(--accent); color:var(--accent-ink); border:none; cursor:pointer;
+    display:grid; place-items:center; box-shadow:var(--shadow); z-index:40;
+    font-size:22px;
+  }
+  .qa-fab:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+  .qa-fab .qa-fab-badge {
+    position:absolute; top:-2px; right:-2px; width:14px; height:14px; border-radius:50%;
+    background:var(--crit); border:2px solid var(--bg);
+  }
+
+  .qa-overlay {
+    position:fixed; right:22px; bottom:86px; width:360px; max-width:calc(100vw - 44px);
+    height:520px; max-height:calc(100vh - 130px);
+    background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
+    display:none; flex-direction:column; z-index:41; overflow:hidden;
+  }
+  .qa-overlay.open { display:flex; }
+  .qa-head { padding:12px 14px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+  .qa-dot { width:8px; height:8px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-soft); }
+  .qa-head h2 { margin:0; font-size:13.5px; font-weight:700; }
+  .qa-scope { font-size:11px; color:var(--ink-soft); margin-left:auto; }
+  .qa-close { border:none; background:transparent; color:var(--ink-soft); font-size:16px; cursor:pointer; padding:2px 4px; }
+  .qa-thread { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .qa-msg { max-width:92%; font-size:13px; line-height:1.5; padding:9px 12px; border-radius:10px; }
+  .qa-msg.user { align-self:flex-end; background:var(--accent); color:var(--accent-ink); border-bottom-right-radius:3px; }
+  .qa-msg.bot { align-self:flex-start; background:var(--surface-2); border:1px solid var(--line); border-bottom-left-radius:3px; }
+  .qa-msg.bot .src { display:block; margin-top:8px; font-size:11px; color:var(--ink-soft); font-family:var(--font-data); }
+  .qa-input-row { padding:10px 12px; border-top:1px solid var(--line); display:flex; gap:8px; }
+  .qa-input { flex:1; border:1px solid var(--line-strong); border-radius:8px; padding:9px 12px; font-size:13px; background:var(--surface-2); color:var(--ink); font-family:var(--font-ui); }
+  .qa-input:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .qa-send { border:none; background:var(--accent); color:var(--accent-ink); border-radius:8px; padding:0 16px; font-weight:700; font-size:13px; cursor:pointer; }
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">VCT</div>
+      <div class="brand-text">
+        <div class="name">대한물산</div>
+        <div class="sub">Visibility Control Tower</div>
+      </div>
+    </div>
+    <span class="updated">갱신 2026-08-01 09:12</span>
+  </div>
+
+  <div class="tabbar" role="tablist">
+    <button class="tab-btn" role="tab" aria-selected="true" data-tab="overview">Overview</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="cargo">화물</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="ops">업무</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="cost">비용</button>
+  </div>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <div class="tab-panel" data-tab="overview" data-active="true">
+    <section class="panel">
+      <div class="panel-head"><h2>관점별 요약</h2><span class="hint">클릭하면 해당 탭으로 이동</span></div>
+      <div class="panel-body lens-grid">
+        <button class="lens-card" data-goto="cargo">
+          <span class="lens-tag">화물 관점</span>
+          <span class="lens-title">위치 · 원인 · ETA</span>
+          <span class="lens-total">총 128건 진행 중</span>
+          <div class="lens-metrics">
+            <div class="m crit"><div class="num-row"><span class="num">9</span><span class="unit">건</span></div><span class="lbl">지연</span></div>
+            <div class="m warn"><div class="num-row"><span class="num">6</span><span class="unit">건</span></div><span class="lbl">Exception</span></div>
+          </div>
+          <span class="lens-cta">지연 계보 확인 →</span>
+        </button>
+        <button class="lens-card" data-goto="ops">
+          <span class="lens-tag">업무 관점</span>
+          <span class="lens-title">부킹 · Cut-off · 내륙운송</span>
+          <span class="lens-total">총 67건 서류/부킹 대상</span>
+          <div class="lens-metrics">
+            <div class="m warn"><div class="num-row"><span class="num">4</span><span class="unit">건</span></div><span class="lbl">Cut-off 임박</span></div>
+            <div class="m"><div class="num-row"><span class="num">2</span><span class="unit">건</span></div><span class="lbl">Inland 선택 대기</span></div>
+          </div>
+          <span class="lens-cta">타임라인 확인 →</span>
+        </button>
+        <button class="lens-card" data-goto="cost">
+          <span class="lens-tag">비용 관점</span>
+          <span class="lens-title">체화료 · 할증료</span>
+          <span class="lens-total">총 41건 비용 대상</span>
+          <div class="lens-metrics">
+            <div class="m crit"><div class="num-row"><span class="num">3</span><span class="unit">건</span></div><span class="lbl">D&amp;D 임박</span></div>
+            <div class="m warn"><div class="num-row"><span class="num">2</span><span class="unit">건</span></div><span class="lbl">PCS 알림</span></div>
+          </div>
+          <span class="lens-cta">비용 리스크 확인 →</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>지금 확인이 필요한 상위 항목</h2><span class="hint">3개 관점 통합, 긴급도 순</span></div>
+      <div class="panel-body priority-list">
+        <div class="priority-row">
+          <span class="lens-chip cost">비용</span>
+          <div class="priority-main"><div class="t">BKDU7741205 — Free Time D-1, 체화료 발생 임박</div><div class="m">롱비치 · MSC ARIES 지연 영향</div></div>
+          <span class="priority-when">오늘</span>
+        </div>
+        <div class="priority-row">
+          <span class="lens-chip ops">업무</span>
+          <div class="priority-main"><div class="t">TCLU9903341 — VGM cut-off D-1</div><div class="m">함부르크행 · 미제출</div></div>
+          <span class="priority-when">내일 18:00</span>
+        </div>
+        <div class="priority-row">
+          <span class="lens-chip cargo">화물</span>
+          <div class="priority-main"><div class="t">HJCU2210087 — 검역 보류로 지연 리스크</div><div class="m">인천공항 · 표본 검사 중</div></div>
+          <span class="priority-when">발생 07-27</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== 화물 ===================== -->
+  <div class="tab-panel" data-tab="cargo">
+    <section class="panel">
+      <div class="panel-head"><h2>지연 계보 — 왜 지연됐는가</h2><span class="assumption">그래프DB 연결 가정</span></div>
+      <div class="panel-body">
+        <div class="lineage">
+          <div class="lineage-node">
+            <div class="lineage-dot crit">📦</div>
+            <div class="lineage-body"><div class="t">BKDU7741205 지연 중</div><div class="d">MSC ARIES V.114E 소속 컨테이너</div></div>
+          </div>
+          <div class="lineage-node">
+            <div class="lineage-dot crit">🚢</div>
+            <div class="lineage-body"><div class="t">선박 3일 지연</div><div class="d">MSC ARIES, 부산 → 롱비치</div></div>
+          </div>
+          <div class="lineage-node">
+            <div class="lineage-dot warn">⚓</div>
+            <div class="lineage-body"><div class="t">부산항 접안 대기</div><div class="d">현재 항만 혼잡도 <b>높음</b></div></div>
+          </div>
+        </div>
+        <div class="lineage" style="margin-top:6px;">
+          <div class="lineage-node">
+            <div class="lineage-dot warn">🔀</div>
+            <div class="lineage-body"><div class="t">TCLU9903341 — 환적 리스크</div><div class="d">상하이 환적 예정, 환적선(ONE HARMONY) 콜링 스케줄 미확정 — 아직 지연 아님, 리스크로만 표시</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>ETA 예측</h2><span class="hint">단일 날짜 대신 확률 구간</span></div>
+      <div class="panel-body eta-block">
+        <div class="eta-labels"><span>7/28</span><span>7/30</span><span>8/1</span><span>8/3</span><span>8/5</span></div>
+        <div class="eta-range-bar">
+          <div class="eta-range-fill" style="left:28%; width:44%;"></div>
+          <div class="eta-marker" style="left:50%;"></div>
+        </div>
+        <div class="eta-cause">가장 가능성 높은 도착: <b style="font-family:var(--font-data)">8/1</b> · 범위 7/30~8/3(±일) · 사유: 부산 환적 대기가 변수</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Exception · 부적합(Irre)</h2><span class="hint">총 128건 중 6건 · 경과시간 미표시</span></div>
+      <div class="panel-body priority-list">
+        <div class="priority-row"><span class="lens-chip cargo">서류</span><div class="priority-main"><div class="t">B/L 상 품명과 인보이스 품명 불일치</div><div class="m">BKDU7741205</div></div><span class="priority-when">07-26</span></div>
+        <div class="priority-row"><span class="lens-chip cargo">통관</span><div class="priority-main"><div class="t">수입신고 서류 보완 요청</div><div class="m">TCLU9903341 · 부산세관</div></div><span class="priority-when">07-27</span></div>
+        <div class="priority-row"><span class="lens-chip cargo">검역</span><div class="priority-main"><div class="t">동식물 검역 대상 표본 검사 중</div><div class="m">HJCU2210087 · 인천공항</div></div><span class="priority-when">07-27</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>재고 투영</h2><span class="hint">On-hand + 입고예정(확률 반영) · 단위: TEU</span></div>
+      <div class="panel-body">
+        <div class="inv-legend">
+          <span><i style="background:var(--ink-soft)"></i>On-hand(TEU)</span>
+          <span><i style="background:var(--accent)"></i>입고 확정(TEU)</span>
+          <span><i style="background:color-mix(in srgb, var(--accent) 35%, transparent)"></i>입고 예측(TEU, 확률)</span>
+        </div>
+        <div class="inv-chart-wrap">
+          <svg width="640" height="140" viewBox="0 0 640 140">
+            <line x1="0" y1="110" x2="640" y2="110" stroke="var(--line)" stroke-width="1"/>
+            <polyline points="0,90 80,90 80,70 200,70 200,50 340,50" fill="none" stroke="var(--ink-soft)" stroke-width="2.5"/>
+            <polyline points="340,50 460,30" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+            <polygon points="460,30 460,15 560,5 560,45" fill="var(--accent)" opacity="0.18"/>
+            <polyline points="460,30 560,20" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="5 4"/>
+            <text x="0" y="128" font-size="10.5" fill="var(--ink-soft)" font-family="var(--font-data)">7/28</text>
+            <text x="300" y="128" font-size="10.5" fill="var(--ink-soft)" font-family="var(--font-data)">8/1</text>
+            <text x="590" y="128" font-size="10.5" fill="var(--ink-soft)" font-family="var(--font-data)">8/8</text>
+          </svg>
+        </div>
+        <div class="inv-unit-note">Y축: 재고 수량(TEU) · 우측 점선 구간은 ETA 확률 구간에 연동</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== 업무 ===================== -->
+  <div class="tab-panel" data-tab="ops">
+    <section class="panel">
+      <div class="panel-head"><h2>Cut-off 통합 타임라인</h2><span class="hint">SI · VGM · 게이트인 한 줄로</span></div>
+      <div class="panel-body">
+        <div class="cutoff-track">
+          <div class="cutoff-item crit"><div class="k">SI Cut-off</div><div class="v">07-29 12:00</div><div class="cd">D-1</div></div>
+          <div class="cutoff-item warn"><div class="k">VGM Cut-off</div><div class="v">07-30 18:00</div><div class="cd">D-2</div></div>
+          <div class="cutoff-item good"><div class="k">CY(게이트인)</div><div class="v">07-31 17:00</div><div class="cd">D-3</div></div>
+          <div class="cutoff-item"><div class="k">On-board</div><div class="v">08-02</div><div class="cd">예정</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>부킹 진행 스테이지</h2><span class="hint">총 67건 중</span></div>
+      <div class="panel-body priority-list">
+        <div class="priority-row"><span class="lens-chip ops">부킹</span><div class="priority-main"><div class="t">Booking #A7712 — 선사 사정으로 선복 재배정</div><div class="m">ONE HARMONY</div></div><span class="priority-when">07-25</span></div>
+        <div class="priority-row"><span class="lens-chip ops">통관</span><div class="priority-main"><div class="t">수입신고 서류 보완 요청</div><div class="m">TCLU9903341</div></div><span class="priority-when">07-27</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>항로별 스페이스 상황</h2><span class="hint">Pantos 부킹 성공률 기반 신호</span></div>
+      <div class="panel-body lane-list">
+        <div class="lane-row">
+          <div><div class="lane-name">부산 → 롱비치</div><div class="lane-meta">MSC · 주 2회</div></div>
+          <div><div class="tightness-bar"><span style="width:82%; background:var(--crit)"></span></div><div class="tightness-label" style="color:var(--crit)">타이트 (성공률 18%)</div></div>
+        </div>
+        <div class="lane-row">
+          <div><div class="lane-name">상하이 → 함부르크</div><div class="lane-meta">ONE · 주 3회</div></div>
+          <div><div class="tightness-bar"><span style="width:38%; background:var(--good)"></span></div><div class="tightness-label" style="color:var(--good)">여유 (성공률 82%)</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Inland Routing</h2><span class="hint">롱비치 하역 후 최종목적지까지</span></div>
+      <div class="panel-body">
+        <table class="routing">
+          <thead><tr><th>모드</th><th style="text-align:right">리드타임(일)</th><th style="text-align:right">비용(USD)</th><th style="text-align:right">Free Time(일)</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td>트럭 (직송) <span class="recommend-tag">추천</span></td>
+              <td class="num-cell">1</td><td class="num-cell">1,850</td><td class="num-cell">3</td>
+              <td><button class="route-pick">선택</button></td>
+            </tr>
+            <tr>
+              <td>철도(IPI) + 단거리 트럭</td>
+              <td class="num-cell">4</td><td class="num-cell">1,120</td><td class="num-cell">5</td>
+              <td><button class="route-pick outline">선택</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== 비용 ===================== -->
+  <div class="tab-panel" data-tab="cost">
+    <section class="panel">
+      <div class="panel-head"><h2>체화료 · 반납지체 현황</h2><span class="hint">총 41건 대상 중</span></div>
+      <div class="panel-body">
+        <table class="demurrage">
+          <thead><tr><th>컨테이너</th><th>도착지</th><th style="text-align:right">Free Time(일)</th><th></th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--font-data)">BKDU7741205</td><td>롱비치</td><td class="num-cell">D-1</td><td><span class="status-pill now">발생 임박</span></td></tr>
+            <tr><td style="font-family:var(--font-data)">HJCU2210087</td><td>인천</td><td class="num-cell">D-2</td><td><span class="status-pill soon">확인 필요</span></td></tr>
+            <tr><td style="font-family:var(--font-data)">TCLU9903341</td><td>함부르크</td><td class="num-cell">D-4</td><td><span class="status-pill soon">확인 필요</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>PCS(항만혼잡할증) 알림</h2><span class="hint">선사 공지 크롤링</span></div>
+      <div class="panel-body pcs-list">
+        <div class="pcs-row">
+          <div class="pcs-amt">$450<span class="u">/TEU</span></div>
+          <div class="pcs-main"><div class="t">롱비치항 <span class="src-tag">선사 공지</span></div><div class="d">효력일 8/3부터, 터미널 적체로 혼잡할증 부과 예정 — 부산→롱비치 항로 영향</div></div>
+        </div>
+        <div class="pcs-row">
+          <div class="pcs-amt">$300<span class="u">/TEU</span></div>
+          <div class="pcs-main"><div class="t">Jebel Ali <span class="src-tag">K+N</span></div><div class="d">홍해 우회 물량 증가로 긴급 할증 부과 — 해당 항로 화물 없음, 참고용</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="note">목업 · 콘텐츠는 PantosView_VisibilityControlTower_기획.md 기준 · 실제 데이터 연동 전 초안 · 수치는 예시</footer>
+</div>
+
+<!-- Floating AI Q&A -->
+<button class="qa-fab" id="qaFab" aria-label="가시성 Q&A 열기" aria-expanded="false">
+  💬<span class="qa-fab-badge"></span>
+</button>
+<div class="qa-overlay" id="qaOverlay">
+  <div class="qa-head">
+    <span class="qa-dot"></span>
+    <h2>가시성 Q&amp;A</h2>
+    <span class="qa-scope" id="qaScope">전체 데이터 범위</span>
+    <button class="qa-close" id="qaClose" aria-label="닫기">✕</button>
+  </div>
+  <div class="qa-thread" id="qaThread"></div>
+  <div class="qa-input-row">
+    <input class="qa-input" type="text" placeholder="현황에 대해 물어보세요" />
+    <button class="qa-send">전송</button>
+  </div>
+</div>
+
+<script>
+  const qaContent = {
+    overview: { scope: "전체 데이터 범위", msgs: [
+      ["user", "오늘 가장 급한 거 뭐야?"],
+      ["bot", "체화료가 가장 임박했습니다. BKDU7741205가 오늘 Free Time이 끝나요. 같은 선박(MSC ARIES) 지연의 영향을 받고 있습니다.", "출처: 비용 탭 D&D, 화물 탭 지연 계보"]
+    ]},
+    cargo: { scope: "화물 탭 범위", msgs: [
+      ["user", "MSC ARIES 왜 늦어진거야"],
+      ["bot", "부산항 접안 대기 때문입니다. 현재 항만 혼잡도가 \\"높음\\"으로 분류되어 있고, 이 지연이 실려있는 컨테이너 3건에 그대로 반영되고 있습니다.", "출처: 지연 계보, 항만 혼잡도"]
+    ]},
+    ops: { scope: "업무 탭 범위", msgs: [
+      ["user", "이번주 cut-off 놓칠 위험 있는거 있어?"],
+      ["bot", "TCLU9903341의 VGM cut-off가 내일 18시입니다. 아직 미제출 상태로 확인됩니다.", "출처: Cut-off 통합 타임라인"]
+    ]},
+    cost: { scope: "비용 탭 범위", msgs: [
+      ["user", "이번 달 예상치 못한 비용 있어?"],
+      ["bot", "롱비치항 PCS $450/TEU가 8/3부터 적용될 예정이고, BKDU7741205가 이 항로에 걸려있어 영향을 받습니다.", "출처: PCS 알림, 체화료 현황"]
+    ]}
+  };
+
+  let currentTab = 'overview';
+
+  function activateTab(name) {
+    currentTab = name;
+    document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      if (p.dataset.tab === name) p.setAttribute('data-active', 'true');
+      else p.removeAttribute('data-active');
+    });
+    renderQaThread(name);
+  }
+
+  function renderQaThread(tab) {
+    const data = qaContent[tab] || qaContent.overview;
+    document.getElementById('qaScope').textContent = data.scope;
+    const thread = document.getElementById('qaThread');
+    thread.innerHTML = '';
+    data.msgs.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'qa-msg ' + m[0];
+      div.textContent = m[1];
+      if (m[2]) {
+        const src = document.createElement('span');
+        src.className = 'src';
+        src.textContent = m[2];
+        div.appendChild(src);
+      }
+      thread.appendChild(div);
+    });
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  });
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    el.addEventListener('click', () => activateTab(el.dataset.goto));
+  });
+
+  const fab = document.getElementById('qaFab');
+  const overlay = document.getElementById('qaOverlay');
+  fab.addEventListener('click', () => {
+    const open = overlay.classList.toggle('open');
+    fab.setAttribute('aria-expanded', open);
+    if (open) renderQaThread(currentTab);
+  });
+  document.getElementById('qaClose').addEventListener('click', () => {
+    overlay.classList.remove('open');
+    fab.setAttribute('aria-expanded', 'false');
+  });
+
+  renderQaThread('overview');
+</script>
