@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Vessel Live Position — prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --ink: #10181c; --ink-muted: #566067; --border: #dbe1df; --surface: #ffffff;
+    --bg: #f4f6f4; --accent: #0b6e5c; --accent-soft: #e0efe9; --warn: #b9821d; --crit: #b23b30;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; background: var(--bg); color: var(--ink); }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .bar h1 { font-size: 14px; margin: 0 12px 0 0; font-weight: 700; }
+  .bar input { padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; width: 160px; }
+  .bar button { padding: 7px 14px; border: none; border-radius: 7px; background: var(--accent); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .bar button.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
+  .hint { font-size: 11.5px; color: var(--ink-muted); }
+  .named-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; }
+  .named-badge b { font-size: 14px; }
+  .bar button.link-btn { background: none; border: none; color: var(--accent); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; }
+  #map { height: calc(100vh - 128px); width: 100%; }
+  .status { padding: 8px 16px; font-size: 12.5px; color: var(--ink-muted); background: var(--surface); border-bottom: 1px solid var(--border); }
+  .status.error { color: var(--crit); }
+  .status.ok { color: var(--accent); }
+  .note { padding: 7px 16px; font-size: 11.5px; color: var(--ink-muted); background: var(--accent-soft); border-bottom: 1px solid var(--border); }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <h1>Vessel Live Position (prototype)</h1>
+
+    <div id="named-controls" class="named-badge" style="display:none">
+      <span>실시간 연결 데모 — 클릭한 선박: <b id="named-vessel">—</b></span>
+      <button id="stop-named" class="secondary">Stop</button>
+      <button id="show-manual" class="link-btn">MMSI로 직접 조회</button>
+    </div>
+
+    <div id="manual-controls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <input id="mmsi" type="text" placeholder="MMSI (e.g. 368207620)" value="368207620" />
+      <button id="track">Track (단일 선박)</button>
+      <button id="track-live" class="secondary">실시간 트래픽 보기 (지역 기준)</button>
+      <button id="stop" class="secondary">Stop</button>
+      <span class="hint">Docs sample MMSIs: 368207620 · 367719770 · 211476060 — 실제 신호라 시간이 걸릴 수 있음</span>
+    </div>
+  </div>
+  <div class="note" id="note" style="display:none"></div>
+  <div class="status" id="status">Idle.</div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map("map").setView([20, 0], 2);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 18,
+    }).addTo(map);
+
+    let marker = null;       // single-vessel mode
+    const liveMarkers = new Map(); // mmsi -> L.marker, for live-region mode
+    let ws = null;
+    let mode = null; // 'single' | 'live'
+    let liveSeenCount = 0;
+
+    const statusEl = document.getElementById("status");
+    const noteEl = document.getElementById("note");
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg;
+      statusEl.className = "status" + (kind ? " " + kind : "");
+    }
+    function setNote(msg) {
+      noteEl.textContent = msg;
+      noteEl.style.display = msg ? "" : "none";
+    }
+
+    function clearMarkers() {
+      if (marker) { marker.remove(); marker = null; }
+      liveMarkers.forEach(m => m.remove());
+      liveMarkers.clear();
+      liveSeenCount = 0;
+    }
+
+    function connect(onOpenSend) {
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      ws = new WebSocket(proto + "//" + location.host + "/ws");
+
+      ws.addEventListener("open", () => onOpenSend());
+
+      ws.addEventListener("message", (evt) => {
+        const data = JSON.parse(evt.data);
+        if (data.type === "status") setStatus(data.message, "ok");
+        if (data.type === "error") setStatus(data.message, "error");
+        if (data.type === "position") {
+          if (mode === "single") {
+            setStatus(
+              `${data.shipName || "MMSI " + data.mmsi} · ${data.lat.toFixed(4)}, ${data.lon.toFixed(4)} · SOG ${data.sog ?? "—"} kn · ${data.timeUtc}`,
+              "ok"
+            );
+            const latlng = [data.lat, data.lon];
+            if (!marker) {
+              marker = L.marker(latlng).addTo(map);
+              map.setView(latlng, 8);
+            } else {
+              marker.setLatLng(latlng);
+            }
+            marker.bindPopup(`<b>${data.shipName || "Unknown"}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`);
+          } else if (mode === "live") {
+            const latlng = [data.lat, data.lon];
+            const label = data.shipName || ("MMSI " + data.mmsi);
+            if (!liveMarkers.has(data.mmsi)) {
+              liveSeenCount++;
+              const m = L.marker(latlng).addTo(map);
+              liveMarkers.set(data.mmsi, m);
+              if (liveMarkers.size === 1) map.setView(latlng, 7);
+            }
+            const m = liveMarkers.get(data.mmsi);
+            m.setLatLng(latlng);
+            m.bindPopup(`<b>${label}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`);
+            setStatus(`실시간 연결 확인됨 — 지금까지 ${liveSeenCount}척 수신 · 최근: ${label} (${data.lat.toFixed(3)}, ${data.lon.toFixed(3)})`, "ok");
+          }
+        }
+      });
+
+      ws.addEventListener("close", () => setStatus("Disconnected.", ""));
+      ws.addEventListener("error", () => setStatus("WebSocket error.", "error"));
+    }
+
+    function trackSingle() {
+      if (ws) ws.close();
+      clearMarkers();
+      mode = "single";
+      setNote("");
+      setStatus("Connecting...", "");
+      connect(() => {
+        const mmsi = document.getElementById("mmsi").value.trim();
+        if (!mmsi) { setStatus("Enter an MMSI first.", "error"); return; }
+        ws.send(JSON.stringify({ type: "track", mmsi }));
+      });
+    }
+
+    function trackLive(clickedName) {
+      if (ws) ws.close();
+      clearMarkers();
+      mode = "live";
+      setNote(
+        (clickedName ? clickedName + "의 실제 실시간 위치는 이 지역(한국 해역)에 AIS 수신 커버리지가 없어 확인할 수 없습니다. " : "") +
+        "대신 실제로 신호가 잡히는 도버 해협·싱가포르 해협 실시간 트래픽을 보여줘서 aisstream.io 연결 자체가 살아있는지 확인합니다."
+      );
+      setStatus("Connecting...", "");
+      connect(() => {
+        ws.send(JSON.stringify({ type: "track-live" }));
+      });
+    }
+
+    function stopTracking() {
+      if (ws) {
+        ws.send(JSON.stringify({ type: "stop" }));
+        ws.close();
+      }
+      setStatus("Stopped.", "");
+    }
+
+    document.getElementById("track").addEventListener("click", trackSingle);
+    document.getElementById("track-live").addEventListener("click", () => trackLive(null));
+    document.getElementById("stop").addEventListener("click", stopTracking);
+    document.getElementById("stop-named").addEventListener("click", stopTracking);
+    document.getElementById("show-manual").addEventListener("click", () => {
+      document.getElementById("named-controls").style.display = "none";
+      document.getElementById("manual-controls").style.display = "flex";
+      setNote("");
+    });
+
+    // Arrived from the cargo screen with a vessel name — show the live-region
+    // feed rather than chasing one MMSI that may never report from Korean waters.
+    const params = new URLSearchParams(location.search);
+    const qName = params.get("name");
+    const qMmsi = params.get("mmsi");
+    if (qMmsi || qName) {
+      document.getElementById("mmsi").value = qMmsi || "";
+      document.getElementById("named-vessel").textContent = qName || ("MMSI " + qMmsi);
+      document.getElementById("manual-controls").style.display = "none";
+      document.getElementById("named-controls").style.display = "flex";
+      trackLive(qName || ("MMSI " + qMmsi));
+    }
+  </script>
+</body>
+</html>
