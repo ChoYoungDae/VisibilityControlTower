@@ -92,6 +92,16 @@
   .timeline-row.head { background:var(--surface-2); font-size:10.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
   .timeline-row .cum { font-weight:700; color:var(--accent); }
   .timeline-pending { margin-top:10px; font-size:12px; color:var(--ink-faint); padding:0 4px; }
+  .sim-row { display:grid; grid-template-columns: 1fr 1fr 1fr 1.2fr 1.6fr; gap:10px; align-items:center; padding:11px 16px; border-bottom:1px solid var(--border); font-size:12.5px; }
+  .sim-row:last-child { border-bottom:none; }
+  .sim-row.head { background:var(--surface-2); font-size:10.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+  .sim-row .in-v { color:var(--ok); font-weight:700; }
+  .sim-row .out-v { color:var(--crit); font-weight:700; }
+  .sim-row .bal-v { font-weight:700; }
+  .sim-row.danger { background:var(--crit-soft); }
+  .sim-row.danger .bal-v { color:var(--crit); }
+  .sim-banner { display:none; align-items:center; gap:8px; background:var(--crit-soft); color:var(--crit); border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:700; margin-bottom:10px; }
+  .sim-banner.show { display:flex; }
   .jump-btn:hover { border-color:var(--border-strong); }
   .jump-btn .mi { width:8px; height:8px; border-radius:2px; }
   .jump-btn .cnt { color:var(--ink-faint); font-weight:500; }
@@ -460,6 +470,10 @@
             <div class="idesc" id="item-desc"></div>
           </div>
           <div class="itotal">
+            <div class="v num" id="item-onhand-qty"></div>
+            <div class="l">현재 Onhand</div>
+          </div>
+          <div class="itotal">
             <div class="v num" id="item-total-qty"></div>
             <div class="l">총 발주 수량</div>
           </div>
@@ -488,6 +502,21 @@
             <div id="item-timeline-rows"></div>
           </div>
           <div class="timeline-pending" id="item-timeline-pending"></div>
+        </div>
+
+        <div class="timeline-block">
+          <div class="block-head" style="margin-bottom:10px;">
+            <div>
+              <div class="block-title" style="font-size:13.5px;">재고 부족 시뮬레이션</div>
+              <div class="block-sub">Onhand + 입고(In, P95 기준) − 예상출고(Out, 수요예측 연동 가정) 누적</div>
+            </div>
+          </div>
+          <div class="sim-banner" id="sim-banner"></div>
+          <div class="timeline-table">
+            <div class="sim-row head"><div>날짜</div><div>In</div><div>Out</div><div>투영재고</div><div></div></div>
+            <div id="sim-rows"></div>
+          </div>
+          <div class="timeline-pending" id="sim-footnote">Out은 고객 수요예측(Demand Forecast) 시스템 연동을 전제로 한 가정치 — 아직 실제 연동 안 됨. In은 P95(보수적) 기준이라 Out과 비관성 방향이 안 맞을 수 있음(미해결, 기획서 §6.1 참고).</div>
         </div>
       </div>
     </section>
@@ -739,6 +768,15 @@
   const itemCatalog = {
     "SKU-8841-BLK": {
       desc: "알루미늄 브래킷 세트",
+      onhand: 250,
+      // 수요예측(Demand Forecast) 시스템 연동 가정 — 일자별 예상 출고량
+      demandOut: [
+        { date:"7/28", qty:200 },
+        { date:"8/01", qty:400 },
+        { date:"8/04", qty:300 },
+        { date:"8/08", qty:280 },
+        { date:"8/11", qty:220 },
+      ],
       shipments: [
         { id:"TEMU9012334", po:"PO-25050", mode:"sea", stage:"loading", stageLabel:"Pre-carriage", qty:600, fdestP50:null, fdestP95:null },
         { id:"HLXU3308719", po:"PO-24650", mode:"sea", stage:"arrived", stageLabel:"On-carriage", qty:500, fdestP50:"7/30", fdestP95:"7/31" },
@@ -749,12 +787,22 @@
     },
     "SKU-8842-BLK": {
       desc: "알루미늄 브래킷 세트 (소형)",
+      onhand: 1800,
+      demandOut: [
+        { date:"7/29", qty:300 },
+        { date:"8/06", qty:350 },
+      ],
       shipments: [
         { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:3000, fdestP50:"8/03", fdestP95:"8/05" },
       ],
     },
     "SKU-9010-GRY": {
       desc: "체결 부속 키트",
+      onhand: 900,
+      demandOut: [
+        { date:"7/29", qty:150 },
+        { date:"8/06", qty:180 },
+      ],
       shipments: [
         { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:640, fdestP50:"8/03", fdestP95:"8/05" },
       ],
@@ -784,6 +832,7 @@
     document.getElementById("item-desc").textContent = item.desc;
     const totalQty = item.shipments.reduce((s, x) => s + x.qty, 0);
     document.getElementById("item-total-qty").textContent = totalQty.toLocaleString() + " EA";
+    document.getElementById("item-onhand-qty").textContent = (item.onhand || 0).toLocaleString() + " EA";
 
     const rowsEl = document.getElementById("item-shipment-rows");
     rowsEl.innerHTML = item.shipments.map(s => {
@@ -821,6 +870,44 @@
     document.getElementById("item-timeline-pending").textContent = pending.length
       ? "일정 미정 " + pendingQty.toLocaleString() + " EA (Pre-carriage " + pending.length + "건) — 위 누적에는 포함되지 않음. 확정분 " + cum.toLocaleString() + " EA + 미정 " + pendingQty.toLocaleString() + " EA = 총 발주 " + totalQty.toLocaleString() + " EA"
       : "";
+
+    renderStockoutSim(item, determined);
+  }
+
+  // ---- 재고 부족 시뮬레이션: Onhand + 누적 In(P95) - 누적 Out(수요예측 가정) ----
+  function renderStockoutSim(item, determinedShipments) {
+    const events = [];
+    determinedShipments.forEach(s => events.push({ date: s.fdestP95, type: "in", qty: s.qty, ref: s.id }));
+    (item.demandOut || []).forEach(o => events.push({ date: o.date, type: "out", qty: o.qty, ref: null }));
+    events.sort((a, b) => parseMD(a.date) - parseMD(b.date));
+
+    let balance = item.onhand || 0;
+    let stockoutDate = null;
+    const simEl = document.getElementById("sim-rows");
+    simEl.innerHTML = events.map(e => {
+      const inV = e.type === "in" ? "+" + e.qty.toLocaleString() : "—";
+      const outV = e.type === "out" ? "−" + e.qty.toLocaleString() : "—";
+      balance += e.type === "in" ? e.qty : -e.qty;
+      const danger = balance < 0;
+      if (danger && !stockoutDate) stockoutDate = e.date;
+      const refText = e.type === "in" ? ("입고 · " + e.ref) : "예상출고 (수요예측)";
+      return '<div class="sim-row' + (danger ? " danger" : "") + '">' +
+        '<div class="num">' + e.date + '</div>' +
+        '<div class="num in-v">' + inV + '</div>' +
+        '<div class="num out-v">' + outV + '</div>' +
+        '<div class="num bal-v">' + balance.toLocaleString() + ' EA</div>' +
+        '<div class="cell-sub">' + refText + '</div>' +
+        '</div>';
+    }).join("");
+
+    const bannerEl = document.getElementById("sim-banner");
+    if (stockoutDate) {
+      bannerEl.classList.add("show");
+      bannerEl.innerHTML = '⚠ 예상 재고 소진일: <span class="num">' + stockoutDate + '</span> — 이 날짜부터 투영재고가 0 밑으로 내려갈 것으로 예상됩니다.';
+    } else {
+      bannerEl.classList.remove("show");
+      bannerEl.innerHTML = "";
+    }
   }
 
   itemSelect.addEventListener("change", () => renderItemView(itemSelect.value));

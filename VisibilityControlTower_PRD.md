@@ -2,7 +2,7 @@
 
 - 작성일: 2026-08-03
 - 버전: v1.0 (기획 확정본 + 화물/업무 탭 세부 설계 반영)
-- 근거 문서: [`PantosView_VisibilityControlTower_기획.md`](PantosView_VisibilityControlTower_기획.md), [`PROGRESS.md`](PROGRESS.md)
+- 근거 문서: [`VisibilityControlTower_기획.md`](VisibilityControlTower_기획.md), [`PROGRESS.md`](PROGRESS.md)
 - 상태: 화물 탭 목업 진행 중(`cargo_tab_mockup.html`), 업무 탭 목업 리뷰 중(`operation_tab_mockup.html`), 비용 탭·Overview는 설계 미착수
 
 ---

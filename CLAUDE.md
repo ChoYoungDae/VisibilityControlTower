@@ -1,7 +1,7 @@
-# Pantos View — Visibility Control Tower
+# Visibility Control Tower
 
 세션 시작 시 항상 [`PROGRESS.md`](PROGRESS.md)를 먼저 읽고, 거기 적힌 "다음 단계"부터 이어간다.
-콘텐츠의 상세 근거가 필요하면 [`PantosView_VisibilityControlTower_기획.md`](PantosView_VisibilityControlTower_기획.md)를 참고한다.
+콘텐츠의 상세 근거가 필요하면 [`VisibilityControlTower_기획.md`](VisibilityControlTower_기획.md)를 참고한다.
 
 작업을 진행하다 방향이나 다음 할 일이 바뀌면, Claude가 세션을 끝내기 전에
 PROGRESS.md의 "다음 단계" 섹션을 그 시점 기준으로 직접 갱신한다 (사용자가 수동으로
