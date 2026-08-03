@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <title>Vessel Live Position — prototype</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" />
 <style>
   :root {
     --ink: #10181c; --ink-muted: #566067; --border: #dbe1df; --surface: #ffffff;
@@ -50,19 +50,19 @@
   <div class="status" id="status">Idle.</div>
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"></script>
   <script>
-    const map = L.map("map").setView([20, 0], 2);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-      maxZoom: 18,
-    }).addTo(map);
-
+    let map = null;
     let marker = null;       // single-vessel mode
-    const liveMarkers = new Map(); // mmsi -> L.marker, for live-region mode
+    const liveMarkers = new Map(); // mmsi -> mapboxgl.Marker, for live-region mode
     let ws = null;
     let mode = null; // 'single' | 'live'
     let liveSeenCount = 0;
+    let fallbackTimer = null; // pending "no live signal, fall back to region demo" timeout
+
+    function clearFallbackTimer() {
+      if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+    }
 
     const statusEl = document.getElementById("status");
     const noteEl = document.getElementById("note");
@@ -82,6 +82,37 @@
       liveSeenCount = 0;
     }
 
+    // Custom hull-shaped icon (bow pointing "up" = 0° COG) so mapboxgl.Marker's
+    // built-in setRotation() can turn it to match each vessel's heading —
+    // Mapbox's own Maki sprite only has a generic non-directional "ferry" icon.
+    function createVesselEl(color) {
+      const el = document.createElement("div");
+      el.innerHTML = `
+        <svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1 L18.5 19 L12 15.5 L5.5 19 Z" fill="${color}" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>`;
+      el.style.cursor = "pointer";
+      return el;
+    }
+
+    async function initMap() {
+      const res = await fetch("/config");
+      const config = await res.json();
+      if (!config.mapboxToken) {
+        setStatus("Server has no MAPBOX_TOKEN configured (.env) — map cannot load.", "error");
+        return;
+      }
+      mapboxgl.accessToken = config.mapboxToken;
+      map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/standard",
+        center: [0, 20],
+        zoom: 1.5,
+      });
+      map.addControl(new mapboxgl.NavigationControl(), "top-right");
+      startFromQuery();
+    }
+
     function connect(onOpenSend) {
       const proto = location.protocol === "https:" ? "wss:" : "ws:";
       ws = new WebSocket(proto + "//" + location.host + "/ws");
@@ -93,31 +124,45 @@
         if (data.type === "status") setStatus(data.message, "ok");
         if (data.type === "error") setStatus(data.message, "error");
         if (data.type === "position") {
+          clearFallbackTimer();
           if (mode === "single") {
             setStatus(
               `${data.shipName || "MMSI " + data.mmsi} · ${data.lat.toFixed(4)}, ${data.lon.toFixed(4)} · SOG ${data.sog ?? "—"} kn · ${data.timeUtc}`,
               "ok"
             );
-            const latlng = [data.lat, data.lon];
+            const lngLat = [data.lon, data.lat];
+            const popupHtml = `<b>${data.shipName || "Unknown"}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`;
             if (!marker) {
-              marker = L.marker(latlng).addTo(map);
-              map.setView(latlng, 8);
+              marker = new mapboxgl.Marker({ element: createVesselEl("#0b6e5c"), rotationAlignment: "map" })
+                .setLngLat(lngLat)
+                .setRotation(data.cog ?? 0)
+                .setPopup(new mapboxgl.Popup({ offset: 16 }).setHTML(popupHtml))
+                .addTo(map);
+              map.flyTo({ center: lngLat, zoom: 8 });
             } else {
-              marker.setLatLng(latlng);
+              marker.setLngLat(lngLat);
+              marker.setRotation(data.cog ?? 0);
+              marker.getPopup().setHTML(popupHtml);
             }
-            marker.bindPopup(`<b>${data.shipName || "Unknown"}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`);
           } else if (mode === "live") {
-            const latlng = [data.lat, data.lon];
+            const lngLat = [data.lon, data.lat];
             const label = data.shipName || ("MMSI " + data.mmsi);
+            const popupHtml = `<b>${label}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`;
             if (!liveMarkers.has(data.mmsi)) {
               liveSeenCount++;
-              const m = L.marker(latlng).addTo(map);
+              const m = new mapboxgl.Marker({ element: createVesselEl("#1976d2"), rotationAlignment: "map" })
+                .setLngLat(lngLat)
+                .setRotation(data.cog ?? 0)
+                .setPopup(new mapboxgl.Popup({ offset: 16 }).setHTML(popupHtml))
+                .addTo(map);
               liveMarkers.set(data.mmsi, m);
-              if (liveMarkers.size === 1) map.setView(latlng, 7);
+              if (liveMarkers.size === 1) map.flyTo({ center: lngLat, zoom: 7 });
+            } else {
+              const m = liveMarkers.get(data.mmsi);
+              m.setLngLat(lngLat);
+              m.setRotation(data.cog ?? 0);
+              m.getPopup().setHTML(popupHtml);
             }
-            const m = liveMarkers.get(data.mmsi);
-            m.setLatLng(latlng);
-            m.bindPopup(`<b>${label}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`);
             setStatus(`실시간 연결 확인됨 — 지금까지 ${liveSeenCount}척 수신 · 최근: ${label} (${data.lat.toFixed(3)}, ${data.lon.toFixed(3)})`, "ok");
           }
         }
@@ -128,6 +173,7 @@
     }
 
     function trackSingle() {
+      clearFallbackTimer();
       if (ws) ws.close();
       clearMarkers();
       mode = "single";
@@ -140,7 +186,28 @@
       });
     }
 
+    // Try tracking the actual MMSI first — if it hasn't reported within the
+    // window, most likely it's outside this data source's receiver coverage
+    // (e.g. Korean waters), so fall back to the region-traffic demo instead
+    // of leaving the user staring at an empty map forever.
+    function trackNamed(mmsi, name) {
+      clearFallbackTimer();
+      if (ws) ws.close();
+      clearMarkers();
+      mode = "single";
+      setNote("실시간 위치 확인 중... (신호가 없으면 15초 후 지역 트래픽 데모로 전환됩니다)");
+      setStatus("Connecting...", "");
+      connect(() => {
+        ws.send(JSON.stringify({ type: "track-in-region", mmsi }));
+      });
+      fallbackTimer = setTimeout(() => {
+        fallbackTimer = null;
+        trackLive(name);
+      }, 15000);
+    }
+
     function trackLive(clickedName) {
+      clearFallbackTimer();
       if (ws) ws.close();
       clearMarkers();
       mode = "live";
@@ -155,6 +222,7 @@
     }
 
     function stopTracking() {
+      clearFallbackTimer();
       if (ws) {
         ws.send(JSON.stringify({ type: "stop" }));
         ws.close();
@@ -172,18 +240,28 @@
       setNote("");
     });
 
-    // Arrived from the cargo screen with a vessel name — show the live-region
-    // feed rather than chasing one MMSI that may never report from Korean waters.
-    const params = new URLSearchParams(location.search);
-    const qName = params.get("name");
-    const qMmsi = params.get("mmsi");
-    if (qMmsi || qName) {
-      document.getElementById("mmsi").value = qMmsi || "";
-      document.getElementById("named-vessel").textContent = qName || ("MMSI " + qMmsi);
-      document.getElementById("manual-controls").style.display = "none";
-      document.getElementById("named-controls").style.display = "flex";
-      trackLive(qName || ("MMSI " + qMmsi));
+    // Arrived from the cargo screen with a vessel name. Try tracking the real
+    // MMSI first (works if this vessel happens to be in this data source's
+    // receiver coverage right now); trackNamed() auto-falls-back to the
+    // live-region demo if no report shows up in time.
+    function startFromQuery() {
+      const params = new URLSearchParams(location.search);
+      const qName = params.get("name");
+      const qMmsi = params.get("mmsi");
+      if (qMmsi || qName) {
+        document.getElementById("mmsi").value = qMmsi || "";
+        document.getElementById("named-vessel").textContent = qName || ("MMSI " + qMmsi);
+        document.getElementById("manual-controls").style.display = "none";
+        document.getElementById("named-controls").style.display = "flex";
+        if (qMmsi) {
+          trackNamed(qMmsi, qName || ("MMSI " + qMmsi));
+        } else {
+          trackLive(qName);
+        }
+      }
     }
+
+    initMap();
   </script>
 </body>
 </html>
