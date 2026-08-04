@@ -44,12 +44,13 @@
   .num { font-family: "SFMono-Regular","JetBrains Mono",ui-monospace,Consolas,monospace; font-variant-numeric: tabular-nums; }
 
   /* ===== shared: topnav / search ===== */
-  .topnav { display:flex; align-items:center; gap:24px; padding:14px 28px; border-bottom:1px solid var(--border); background:var(--surface); }
+  .topnav { display:flex; align-items:center; gap:24px; padding:14px 28px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:30; }
   .brand-mark { width:26px; height:26px; border-radius:7px; background:linear-gradient(155deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#123)); flex-shrink:0; }
   .brand-title { font-size:13.5px; font-weight:700; color:var(--ink); white-space:nowrap; }
   .tabs { display:flex; gap:4px; flex-shrink:0; }
   .tab { padding:7px 14px; border-radius:8px; color:var(--ink-muted); font-weight:600; font-size:13.5px; white-space:nowrap; cursor:pointer; }
   .tab.active { background:var(--accent-soft); color:var(--accent); }
+  .nav-divider { width:1px; align-self:stretch; background:var(--border); margin:2px 2px; }
   .topnav-spacer { flex:1; }
   .search { display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:8px 12px; width:320px; }
   .search input { border:none; background:transparent; outline:none; font-size:13px; color:var(--ink); width:100%; font-family:inherit; }
@@ -159,16 +160,7 @@
   .unit-btn.active { background:var(--surface); color:var(--ink); box-shadow:var(--shadow); }
   .unit-hint { font-size:11.5px; color:var(--ink-faint); margin-top:6px; max-width:540px; }
 
-  .item-select-row { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
-  .item-select-row label { font-size:12.5px; font-weight:600; color:var(--ink-muted); }
-  .item-select-row select { padding:9px 12px; border:1px solid var(--border); border-radius:9px; font-size:13px; background:var(--surface); color:var(--ink); font-family:inherit; min-width:300px; }
   .item-empty { padding:44px 20px; text-align:center; color:var(--ink-faint); font-size:13px; border:1px dashed var(--border-strong); border-radius:12px; }
-  .item-summary-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
-  .item-summary-card .isku { font-weight:700; font-size:15px; }
-  .item-summary-card .idesc { font-size:12.5px; color:var(--ink-muted); margin-top:2px; }
-  .item-summary-card .itotal { text-align:right; }
-  .item-summary-card .itotal .v { font-size:21px; font-weight:700; }
-  .item-summary-card .itotal .l { font-size:11px; color:var(--ink-faint); }
   .cols-item { grid-template-columns: .7fr 1.3fr .8fr .9fr 1fr 18px; }
   .stage-pill { display:inline-flex; align-items:center; padding:3px 9px; border-radius:100px; font-size:11px; font-weight:700; background:var(--surface-2); color:var(--ink-muted); }
   .fdest-cell .num { font-weight:700; }
@@ -210,7 +202,7 @@
 
   .list-table { display:none; }
   .list-table.active { display:block; }
-  .cols-loading { grid-template-columns: 1.5fr .9fr 1.2fr 1fr .6fr .9fr 18px; }
+  .cols-loading { grid-template-columns: 1.4fr .9fr 1.1fr .85fr .95fr .8fr 18px; }
   .cols-transit { grid-template-columns: 1.4fr .8fr 1.1fr 1.1fr .55fr 1.3fr .9fr 18px; }
   .cols-arrived { grid-template-columns: 1.5fr .9fr 1fr 1fr .6fr .9fr 18px; }
 
@@ -365,6 +357,62 @@
   .accrual-bar { height:10px; border-radius:6px; background:var(--surface-2); overflow:hidden; display:flex; }
   .accrual-seg { height:100%; }
   .accrual-legend { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-faint); margin-top:6px; }
+
+  /* ===== 재고 탭 전용 ===== */
+  .cols-proj { grid-template-columns: 1.6fr .8fr .8fr .9fr 1.1fr 18px; }
+  .cols-inbound { grid-template-columns: 1.6fr .8fr 1.2fr 1fr 18px; }
+  .cols-inv-item { grid-template-columns: 1.4fr .9fr 1.4fr .6fr 18px; }
+
+  .isku-cell .sku { font-weight:700; }
+  .isku-cell .idesc { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+
+  .inv-summary-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  .inv-summary-card .isku { font-weight:700; font-size:15px; }
+  .inv-summary-card .idesc { font-size:12.5px; color:var(--ink-muted); margin-top:2px; }
+  .inv-summary-card .ifigs { display:flex; gap:22px; flex-wrap:wrap; }
+  .inv-summary-card .ifig .v { font-size:19px; font-weight:700; }
+  .inv-summary-card .ifig .l { font-size:11px; color:var(--ink-faint); }
+  .inv-summary-card .ifig.ss .v { color:var(--warn); }
+
+  .ptimeline-table { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .ptimeline-row { display:grid; grid-template-columns: 1fr 1fr 1fr 1.3fr 1.4fr; gap:10px; align-items:center; padding:11px 16px; border-bottom:1px solid var(--border); font-size:12.5px; }
+  .ptimeline-row:last-child { border-bottom:none; }
+  .ptimeline-row.head { background:var(--surface-2); font-size:10.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+  .ptimeline-row .in-v { color:var(--ok); font-weight:700; }
+  .ptimeline-row .out-v { color:var(--crit); font-weight:700; }
+  .ptimeline-row .proj-v { font-weight:700; }
+  .ptimeline-row.warn { background:var(--warn-soft); }
+  .ptimeline-row.warn .proj-v { color:var(--warn); }
+  .ptimeline-row.crit { background:var(--crit-soft); }
+  .ptimeline-row.crit .proj-v { color:var(--crit); }
+  .ptimeline-pending { margin-top:10px; font-size:12px; color:var(--ink-faint); padding:0 4px; }
+
+  .shortage-banner { display:none; align-items:center; gap:8px; border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:700; margin-bottom:10px; }
+  .shortage-banner.warn-b { display:flex; background:var(--warn-soft); color:var(--warn); }
+  .shortage-banner.crit-b { display:flex; background:var(--crit-soft); color:var(--crit); }
+
+  .ss-legend { display:flex; gap:16px; font-size:11.5px; color:var(--ink-muted); margin:10px 0 16px; }
+  .ss-legend .ld { display:inline-flex; align-items:center; gap:6px; }
+  .ss-legend .sw { width:9px; height:9px; border-radius:2px; }
+
+  .pchart-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px 12px; margin-bottom:14px; }
+  .pchart-legend { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; font-size:11.5px; color:var(--ink-muted); }
+  .pchart-legend .ld { display:inline-flex; align-items:center; gap:6px; }
+  .pchart-legend .sw { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .pchart-legend .lw { width:14px; height:2px; border-radius:2px; flex-shrink:0; }
+  svg .pbar-in { fill:var(--ok); fill-opacity:.68; cursor:pointer; transition:fill-opacity .12s ease; }
+  svg .pbar-in:hover { fill-opacity:.95; }
+  svg .pbar-out { fill:var(--crit); fill-opacity:.68; cursor:pointer; transition:fill-opacity .12s ease; }
+  svg .pbar-out:hover { fill-opacity:.95; }
+  svg .pproj-line { stroke:var(--ink-muted); stroke-width:2; fill:none; }
+  svg .pproj-dot { fill:var(--ink-muted); stroke:var(--surface); stroke-width:1.5; cursor:pointer; transition:r .12s ease; }
+  svg .pproj-dot:hover { r:6; }
+  svg .pproj-dot.warn { fill:var(--warn); }
+  svg .pproj-dot.crit { fill:var(--crit); }
+  svg .pchart-zeroline { stroke:var(--border-strong); stroke-width:1; }
+  svg .pchart-refline-ss { stroke:var(--warn); stroke-width:1.25; stroke-dasharray:4 3; opacity:.7; }
+  svg .pchart-label { font-size:10.5px; fill:var(--ink-faint); font-family:"Pretendard",sans-serif; }
+  svg .pchart-date-label { font-size:10.5px; fill:var(--ink-muted); font-weight:600; font-family:"Pretendard",sans-serif; }
 </style>
 
 <div class="app">
@@ -373,9 +421,12 @@
     <div class="brand-title">Visibility Control Tower</div>
     <div class="tabs">
       <div class="tab" data-tab="overview">Overview</div>
+      <div class="nav-divider"></div>
       <div class="tab active" data-tab="cargo">화물</div>
       <div class="tab" data-tab="operation">업무</div>
       <div class="tab" data-tab="cost">비용</div>
+      <div class="nav-divider"></div>
+      <div class="tab" data-tab="inventory">재고</div>
     </div>
     <div class="topnav-spacer"></div>
     <div class="search">
@@ -411,13 +462,7 @@
       </div>
 
       <div class="controlbar">
-        <div>
-          <div class="unit-toggle">
-            <button class="unit-btn active" data-unit="unit">Container / HBL</button>
-            <button class="unit-btn" data-unit="item">Item</button>
-          </div>
-          <div class="unit-hint" id="unit-hint">기본값 — Container(해상) / HBL(항공) 단위로 리스트를 봅니다.</div>
-        </div>
+        <div class="unit-hint" style="margin-top:0;">Container(해상) / HBL(항공) 단위 리스트. Item 단위 재고 현황은 <b>재고</b> 탭에서 봅니다.</div>
         <div class="jumpbar">
           <button class="jump-btn" data-jump="sec-sea"><span class="mi" style="background:var(--accent2)"></span>해상으로 이동 <span class="cnt num">96</span></button>
           <button class="jump-btn" data-jump="sec-air"><span class="mi" style="background:var(--accent)"></span>항공으로 이동 <span class="cnt num">32</span></button>
@@ -468,13 +513,13 @@
         <div class="list">
           <!-- Pre-carriage -->
           <div class="list-table" data-scope="sea" data-status="loading">
-            <div class="list-row head cols-loading"><div>Container / HBL</div><div>POL → POD</div><div>선적예정 Vessel</div><div>POL ETD</div><div>TS</div><div>상태</div><div></div></div>
+            <div class="list-row head cols-loading"><div>Container / HBL</div><div>POL → POD</div><div>선적예정 Vessel</div><div>Initial POL ETD</div><div>POL ETD</div><div>상태</div><div></div></div>
             <div class="list-row cols-loading" data-row="s-l1">
               <div><div class="cell-id num">CMAU0488226</div><div class="cell-sub num">BL CMDU0488226A</div><div class="cell-sub num">PO-25011</div></div>
               <div class="num">Qingdao → Rotterdam</div>
               <div><span class="vessel-link">CMA CGM AQUILA</span></div>
-              <div class="num">9/02</div>
-              <div><span class="ts-chip">TS 0</span></div>
+              <div class="num" style="color:var(--ink-faint)">8/13</div>
+              <div class="num">8/13</div>
               <div><span class="pill neutral">Pre-carriage</span></div>
               <div class="chev">›</div>
             </div>
@@ -482,8 +527,8 @@
               <div><div class="cell-id num">TEMU9012334</div><div class="cell-sub num">BL MEDUN9012334</div><div class="cell-sub num">PO-25050</div></div>
               <div class="num">Ningbo → Antwerp</div>
               <div><span class="vessel-link">MSC ISABELLA</span></div>
-              <div class="num">9/05</div>
-              <div><span class="ts-chip has-ts">TS 1</span></div>
+              <div class="num" style="color:var(--ink-faint)">8/13</div>
+              <div class="eta-cell"><span class="num">8/16</span><div class="p95-inline" style="color:var(--crit); font-weight:700;">+3일 지연</div></div>
               <div><span class="pill crit"><span class="dot" style="background:var(--crit)"></span>지연</span></div>
               <div class="chev">›</div>
             </div>
@@ -563,13 +608,13 @@
 
         <div class="list">
           <div class="list-table" data-scope="air" data-status="loading">
-            <div class="list-row head cols-loading"><div>HBL</div><div>POL → POD</div><div>선적예정 편명</div><div>POL ETD</div><div>TS</div><div>상태</div><div></div></div>
+            <div class="list-row head cols-loading"><div>HBL</div><div>POL → POD</div><div>선적예정 편명</div><div>Initial POL ETD</div><div>POL ETD</div><div>상태</div><div></div></div>
             <div class="list-row cols-loading" data-row="a-l1">
               <div><div class="cell-id num">SEL-AIR-88301</div><div class="cell-sub num">PO-25102</div></div>
               <div class="num">Incheon → Chicago</div>
               <div><span class="vessel-link">KE 037</span></div>
+              <div class="num" style="color:var(--ink-faint)">8/03, 14:20</div>
               <div class="num">8/03, 14:20</div>
-              <div><span class="ts-chip">TS 0</span></div>
               <div><span class="pill neutral">Pre-carriage</span></div>
               <div class="chev">›</div>
             </div>
@@ -610,75 +655,6 @@
               <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>정상</span></div>
               <div class="chev">›</div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== ITEM VIEW ===== -->
-      <section id="item-view" style="display:none;">
-        <div class="item-select-row">
-          <label for="item-select">Item</label>
-          <select id="item-select">
-            <option value="">Item을 선택하세요</option>
-          </select>
-        </div>
-
-        <div class="item-empty" id="item-empty">Item을 선택하면 그 Item이 포함된 모든 화물과 일자별 입고 현황을 보여줍니다.</div>
-
-        <div id="item-result" style="display:none;">
-          <div class="item-summary-card">
-            <div>
-              <div class="isku num" id="item-sku"></div>
-              <div class="idesc" id="item-desc"></div>
-            </div>
-            <div class="itotal">
-              <div class="v num" id="item-onhand-qty"></div>
-              <div class="l">현재 Onhand</div>
-            </div>
-            <div class="itotal">
-              <div class="v num" id="item-total-qty"></div>
-              <div class="l">총 발주 수량</div>
-            </div>
-          </div>
-
-          <div class="block-head" style="margin-bottom:10px;">
-            <div>
-              <div class="block-title" style="font-size:13.5px;">이 Item이 포함된 화물</div>
-              <div class="block-sub">Pre-carriage 포함 전 단계 · 해상/항공 통합</div>
-            </div>
-          </div>
-          <div class="list">
-            <div class="list-row head cols-item"><div>화물</div><div>Container / HBL · PO</div><div>단계</div><div>수량</div><div>FDEST ETA (P95)</div><div></div></div>
-            <div id="item-shipment-rows"></div>
-          </div>
-
-          <div class="timeline-block">
-            <div class="block-head" style="margin-bottom:10px;">
-              <div>
-                <div class="block-title" style="font-size:13.5px;">일자별 재고 도착 현황</div>
-                <div class="block-sub">FDEST ETA의 P95 기준(보수적 추정)으로 날짜별 입고량 누적</div>
-              </div>
-            </div>
-            <div class="timeline-table">
-              <div class="timeline-row head"><div>날짜 (P95)</div><div>입고 수량</div><div>누적 수량</div><div>화물</div></div>
-              <div id="item-timeline-rows"></div>
-            </div>
-            <div class="timeline-pending" id="item-timeline-pending"></div>
-          </div>
-
-          <div class="timeline-block">
-            <div class="block-head" style="margin-bottom:10px;">
-              <div>
-                <div class="block-title" style="font-size:13.5px;">재고 부족 시뮬레이션</div>
-                <div class="block-sub">Onhand + 입고(In, P95 기준) − 예상출고(Out, 수요예측 연동 가정) 누적</div>
-              </div>
-            </div>
-            <div class="sim-banner" id="sim-banner"></div>
-            <div class="timeline-table">
-              <div class="sim-row head"><div>날짜</div><div>In</div><div>Out</div><div>투영재고</div><div></div></div>
-              <div id="sim-rows"></div>
-            </div>
-            <div class="timeline-pending" id="sim-footnote">Out은 고객 수요예측(Demand Forecast) 시스템 연동을 전제로 한 가정치 — 아직 실제 연동 안 됨. In은 P95(보수적) 기준이라 Out과 비관성 방향이 안 맞을 수 있음(미해결, 기획서 §6.1 참고).</div>
           </div>
         </div>
       </section>
@@ -761,7 +737,7 @@
           <div class="block-head" style="margin-bottom:10px;">
             <div>
               <div class="block-title" style="font-size:13.5px;">Item / SKU (이 컨테이너에 실린 3종)</div>
-              <div class="block-sub">이 컨테이너만의 재고 계산은 의미가 적어 — Item을 클릭하면 그 Item이 실린 모든 화물을 합산한 통합 재고현황으로 이동합니다</div>
+              <div class="block-sub">이 컨테이너만의 재고 계산은 의미가 적어 — Item을 클릭하면 <b>재고</b> 탭의 Item 단위 통합 재고 투영으로 이동합니다</div>
             </div>
           </div>
 
@@ -769,19 +745,19 @@
             <div><div class="item-sku num">SKU-8841-BLK</div><div class="item-desc">알루미늄 브래킷 세트</div></div>
             <div><span class="num">1,200 EA</span> (이 컨테이너분)</div>
             <div class="cell-sub">최종목적지: Long Beach DC</div>
-            <div class="item-link">통합 재고현황 보기 ›</div>
+            <div class="item-link">재고 투영에서 보기 ›</div>
           </div>
           <div class="item-row" data-item="SKU-8842-BLK">
             <div><div class="item-sku num">SKU-8842-BLK</div><div class="item-desc">알루미늄 브래킷 세트 (소형)</div></div>
             <div><span class="num">3,000 EA</span> (이 컨테이너분)</div>
             <div class="cell-sub">최종목적지: Long Beach DC</div>
-            <div class="item-link">통합 재고현황 보기 ›</div>
+            <div class="item-link">재고 투영에서 보기 ›</div>
           </div>
           <div class="item-row" data-item="SKU-9010-GRY">
             <div><div class="item-sku num">SKU-9010-GRY</div><div class="item-desc">체결 부속 키트</div></div>
             <div><span class="num">640 EA</span> (이 컨테이너분)</div>
             <div class="cell-sub">최종목적지: Phoenix DC</div>
-            <div class="item-link">통합 재고현황 보기 ›</div>
+            <div class="item-link">재고 투영에서 보기 ›</div>
           </div>
         </div>
       </div>
@@ -1443,6 +1419,108 @@
     </div>
   </div>
 
+  <!-- ============================================================ -->
+  <!-- 재고 탭 (Inventory)                                            -->
+  <!-- ============================================================ -->
+  <div class="tab-panel" id="tab-inventory">
+    <div class="main">
+      <div class="note">
+        <b>검토 포인트</b> — 화물/업무/비용이 컨테이너·B/L 단위인 것과 달리, 이 탭은 <b>Item(SKU) 단위</b>로 같은 운송
+        이벤트를 재구성한 화면입니다(별도 데이터 아님). Inbound 인식 시점은 화물 탭의 <b>FDEST ETA(P95, 내륙운송 포함
+        최종 목적지 도착 기준)</b>를 그대로 재사용합니다. Outbound(예상 출고)는 수요예측이든 확정 출고계획이든 소스를
+        특정하지 않고 "고객 시스템에서 주어지는 값"으로 가정했습니다 — 이 값의 정확도에 재고 투영 정확도가 달려있습니다.
+      </div>
+
+      <div class="controlbar">
+        <div class="unit-toggle">
+          <button class="unit-btn active" data-invtab="projection">재고 투영</button>
+          <button class="unit-btn" data-invtab="inbound">입고 예정</button>
+        </div>
+        <div class="unit-hint" id="inv-hint" style="margin-top:0; max-width:460px;">Item별 일자별 재고 추이 — Safety Stock 이하(주의)와 음수 재고(Shortage)를 색으로 구분해 강조합니다.</div>
+      </div>
+
+      <div class="summary" id="inv-summary"></div>
+
+      <!-- ===== PROJECTION ===== -->
+      <section id="inv-projection">
+        <div class="ss-legend">
+          <span class="ld"><span class="sw" style="background:var(--warn)"></span>Safety Stock 이하 (주의)</span>
+          <span class="ld"><span class="sw" style="background:var(--crit)"></span>0 미만 (Shortage)</span>
+        </div>
+
+        <div class="list" id="inv-item-list">
+          <div class="list-row head cols-inv-item"><div>Item</div><div>On-hand</div><div>Inbound 합계 / Safety Stock</div><div>상태</div><div></div></div>
+          <div id="inv-item-rows"></div>
+        </div>
+
+        <!-- ===== ITEM DETAIL ===== -->
+        <div class="detail" id="inv-item-detail">
+          <div class="detail-head">
+            <div>
+              <h3 id="inv-d-sku">—</h3>
+              <div class="route" id="inv-d-desc">—</div>
+            </div>
+            <span class="pill ok" id="inv-d-badge"><span class="dot" style="background:var(--ok)"></span>정상</span>
+          </div>
+
+          <div class="inv-summary-card">
+            <div class="ifigs">
+              <div class="ifig"><div class="v num" id="inv-d-onhand"></div><div class="l">On-hand</div></div>
+              <div class="ifig"><div class="v num" id="inv-d-inbound"></div><div class="l">Inbound 합계</div></div>
+              <div class="ifig ss"><div class="v num" id="inv-d-ss"></div><div class="l">Safety Stock</div></div>
+            </div>
+          </div>
+
+          <div class="block-head" style="margin-bottom:10px;">
+            <div>
+              <div class="block-title" style="font-size:13.5px;">Projected Inventory Timeline</div>
+              <div class="block-sub">Projected(t) = On-hand + Σ Inbound(≤t, FDEST ETA P95) − Σ Outbound(≤t)</div>
+            </div>
+          </div>
+          <div class="shortage-banner" id="inv-d-banner"></div>
+
+          <div class="pchart-wrap">
+            <div class="pchart-legend">
+              <span class="ld"><span class="sw" style="background:var(--ok)"></span>Inbound</span>
+              <span class="ld"><span class="sw" style="background:var(--crit)"></span>Outbound</span>
+              <span class="ld"><span class="lw" style="background:var(--ink-muted)"></span>Projected (추세)</span>
+              <span class="ld"><span class="lw" style="background:none; height:0; border-bottom:2px dashed var(--warn);"></span>Safety Stock</span>
+            </div>
+            <div id="inv-d-chart"></div>
+          </div>
+
+          <div class="block-title" style="font-size:12.5px; color:var(--ink-muted); margin-bottom:10px;">일자별 상세 수치</div>
+          <div class="ptimeline-table">
+            <div class="ptimeline-row head"><div>Date</div><div>Inbound</div><div>Outbound</div><div>Projected</div><div>참고</div></div>
+            <div id="inv-d-timeline-rows"></div>
+          </div>
+          <div class="ptimeline-pending" id="inv-d-pending"></div>
+
+          <div class="block-head" style="margin-bottom:10px; margin-top:22px;">
+            <div>
+              <div class="block-title" style="font-size:13.5px;">Inbound Schedule</div>
+              <div class="block-sub">Item → Inbound → B/L → Container → Transportation Tracking (클릭 시 화물 탭으로 이동)</div>
+            </div>
+          </div>
+          <div class="list">
+            <div class="list-row head cols-item"><div>화물</div><div>Container / HBL · PO</div><div>단계</div><div>수량</div><div>FDEST ETA (P95)</div><div></div></div>
+            <div id="inv-d-shipment-rows"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== INBOUND ===== -->
+      <section id="inv-inbound" style="display:none;">
+        <div class="section-sub" style="margin-bottom:14px;">FDEST ETA(P95) 기준 정렬 — Container-Item Mapping이 없는 건은 동일 B/L 내 가장 늦은 ETA로 보수적으로 계산됩니다.</div>
+        <div class="list">
+          <div class="list-row head cols-inbound"><div>Item</div><div>Qty</div><div>FDEST ETA (P95 / P50)</div><div>Delay Status</div><div></div></div>
+          <div id="inv-inbound-rows"></div>
+        </div>
+        <div class="ptimeline-pending" id="inv-inbound-pending"></div>
+      </section>
+    </div>
+  </div>
+
   <div class="fab">✦</div>
   <div class="toast" id="toast"></div>
 </div>
@@ -1465,12 +1543,14 @@
       cargo: document.getElementById("tab-cargo"),
       operation: document.getElementById("tab-operation"),
       cost: document.getElementById("tab-cost"),
+      inventory: document.getElementById("tab-inventory"),
     };
     const placeholders = {
       overview: "검색",
       cargo: "B/L · Container · Item · PO No 검색",
       operation: "PO · 부킹 · Container · HBL 검색",
       cost: "PO · Container · HBL 검색",
+      inventory: "Item · SKU 검색",
     };
     const searchInput = document.getElementById("global-search");
 
@@ -1583,191 +1663,13 @@
       });
     });
 
-    // ---- unit toggle: Container/HBL view <-> Item view ----
-    const secSea = document.getElementById("sec-sea");
-    const secAir = document.getElementById("sec-air");
-    const itemView = document.getElementById("item-view");
-    const jumpbarEl = root.querySelector(".jumpbar");
-
-    root.querySelectorAll(".unit-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        root.querySelectorAll(".unit-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const unit = btn.getAttribute("data-unit");
-        const isItem = unit === "item";
-
-        secSea.style.display = isItem ? "none" : "";
-        secAir.style.display = isItem ? "none" : "";
-        jumpbarEl.style.display = isItem ? "none" : "";
-        itemView.style.display = isItem ? "" : "none";
-
-        document.getElementById("unit-hint").textContent = isItem
-          ? "Item 단위 — 하나의 Item을 선택하면 그 Item이 포함된 모든 화물(해상+항공, Pre-carriage 포함)과 일자별 입고 현황을 봅니다. 서로 다른 Item끼리는 합산하지 않습니다."
-          : "기본값 — Container(해상) / HBL(항공) 단위로 리스트를 봅니다.";
-
-        detail.classList.remove("open");
-        if (selectedRow) { selectedRow.classList.remove("selected"); selectedRow = null; }
-      });
-    });
-
-    // ---- item catalog (mock data: which shipments carry which SKU) ----
-    // FDEST ETA here = internally-held value (POD PTA + inland-leg estimate), continuously
-    // calculated from Main-carriage onward. Pre-carriage shipments have no FDEST yet — too
-    // much of the journey (loading, main-carriage, inland) is still unresolved to give one.
-    const itemCatalog = {
-      "SKU-8841-BLK": {
-        desc: "알루미늄 브래킷 세트",
-        onhand: 250,
-        demandOut: [
-          { date:"7/28", qty:200 },
-          { date:"8/01", qty:400 },
-          { date:"8/04", qty:300 },
-          { date:"8/08", qty:280 },
-          { date:"8/11", qty:220 },
-        ],
-        shipments: [
-          { id:"TEMU9012334", po:"PO-25050", mode:"sea", stage:"loading", stageLabel:"Pre-carriage", qty:600, fdestP50:null, fdestP95:null },
-          { id:"HLXU3308719", po:"PO-24650", mode:"sea", stage:"arrived", stageLabel:"On-carriage", qty:500, fdestP50:"7/30", fdestP95:"7/31" },
-          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:1200, fdestP50:"8/03", fdestP95:"8/05" },
-          { id:"SEL-AIR-88231", po:"PO-24960", mode:"air", stage:"transit", stageLabel:"Main-carriage", qty:300, fdestP50:"8/07", fdestP95:"8/09" },
-          { id:"TCKU9944110", po:"PO-25090", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:800, fdestP50:"8/10", fdestP95:"8/12" },
-        ],
-      },
-      "SKU-8842-BLK": {
-        desc: "알루미늄 브래킷 세트 (소형)",
-        onhand: 1800,
-        demandOut: [
-          { date:"7/29", qty:300 },
-          { date:"8/06", qty:350 },
-        ],
-        shipments: [
-          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:3000, fdestP50:"8/03", fdestP95:"8/05" },
-        ],
-      },
-      "SKU-9010-GRY": {
-        desc: "체결 부속 키트",
-        onhand: 900,
-        demandOut: [
-          { date:"7/29", qty:150 },
-          { date:"8/06", qty:180 },
-        ],
-        shipments: [
-          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:640, fdestP50:"8/03", fdestP95:"8/05" },
-        ],
-      },
-    };
-
-    const itemSelect = document.getElementById("item-select");
-    Object.keys(itemCatalog).forEach(sku => {
-      const opt = document.createElement("option");
-      opt.value = sku;
-      opt.textContent = sku + " · " + itemCatalog[sku].desc;
-      itemSelect.appendChild(opt);
-    });
-
-    function parseMD(md) {
-      const [m, d] = md.split("/").map(Number);
-      return m * 100 + d;
-    }
-
-    function renderItemView(sku) {
-      const item = itemCatalog[sku];
-      document.getElementById("item-empty").style.display = item ? "none" : "";
-      document.getElementById("item-result").style.display = item ? "" : "none";
-      if (!item) return;
-
-      document.getElementById("item-sku").textContent = sku;
-      document.getElementById("item-desc").textContent = item.desc;
-      const totalQty = item.shipments.reduce((s, x) => s + x.qty, 0);
-      document.getElementById("item-total-qty").textContent = totalQty.toLocaleString() + " EA";
-      document.getElementById("item-onhand-qty").textContent = (item.onhand || 0).toLocaleString() + " EA";
-
-      const rowsEl = document.getElementById("item-shipment-rows");
-      rowsEl.innerHTML = item.shipments.map(s => {
-        const modeChip = '<span class="mode-chip ' + s.mode + '">' + (s.mode === "sea" ? "Sea" : "Air") + '</span>';
-        const fdest = s.fdestP95
-          ? '<div class="fdest-cell"><span class="num">' + s.fdestP95 + '</span><div class="p50-inline">P50 ' + s.fdestP50 + '</div></div>'
-          : '<div class="fdest-cell pending">미정</div>';
-        return '<div class="list-row cols-item">' +
-          '<div>' + modeChip + '</div>' +
-          '<div><div class="cell-id num">' + s.id + '</div><div class="cell-sub num">' + s.po + '</div></div>' +
-          '<div><span class="stage-pill">' + s.stageLabel + '</span></div>' +
-          '<div class="num">' + s.qty.toLocaleString() + ' EA</div>' +
-          fdest +
-          '<div></div>' +
-          '</div>';
-      }).join("");
-
-      const determined = item.shipments.filter(s => s.fdestP95).sort((a, b) => parseMD(a.fdestP95) - parseMD(b.fdestP95));
-      const pending = item.shipments.filter(s => !s.fdestP95);
-
-      let cum = 0;
-      const timelineEl = document.getElementById("item-timeline-rows");
-      timelineEl.innerHTML = determined.map(s => {
-        cum += s.qty;
-        const modeChip = '<span class="mode-chip ' + s.mode + '">' + (s.mode === "sea" ? "Sea" : "Air") + '</span>';
-        return '<div class="timeline-row">' +
-          '<div class="num">' + s.fdestP95 + '</div>' +
-          '<div class="num">+' + s.qty.toLocaleString() + ' EA</div>' +
-          '<div class="num cum">' + cum.toLocaleString() + ' EA</div>' +
-          '<div>' + modeChip + ' <span class="cell-sub num" style="margin-left:6px;">' + s.id + '</span></div>' +
-          '</div>';
-      }).join("");
-
-      const pendingQty = pending.reduce((s, x) => s + x.qty, 0);
-      document.getElementById("item-timeline-pending").textContent = pending.length
-        ? "일정 미정 " + pendingQty.toLocaleString() + " EA (Pre-carriage " + pending.length + "건) — 위 누적에는 포함되지 않음. 확정분 " + cum.toLocaleString() + " EA + 미정 " + pendingQty.toLocaleString() + " EA = 총 발주 " + totalQty.toLocaleString() + " EA"
-        : "";
-
-      renderStockoutSim(item, determined);
-    }
-
-    // ---- 재고 부족 시뮬레이션: Onhand + 누적 In(P95) - 누적 Out(수요예측 가정) ----
-    function renderStockoutSim(item, determinedShipments) {
-      const events = [];
-      determinedShipments.forEach(s => events.push({ date: s.fdestP95, type: "in", qty: s.qty, ref: s.id }));
-      (item.demandOut || []).forEach(o => events.push({ date: o.date, type: "out", qty: o.qty, ref: null }));
-      events.sort((a, b) => parseMD(a.date) - parseMD(b.date));
-
-      let balance = item.onhand || 0;
-      let stockoutDate = null;
-      const simEl = document.getElementById("sim-rows");
-      simEl.innerHTML = events.map(e => {
-        const inV = e.type === "in" ? "+" + e.qty.toLocaleString() : "—";
-        const outV = e.type === "out" ? "−" + e.qty.toLocaleString() : "—";
-        balance += e.type === "in" ? e.qty : -e.qty;
-        const danger = balance < 0;
-        if (danger && !stockoutDate) stockoutDate = e.date;
-        const refText = e.type === "in" ? ("입고 · " + e.ref) : "예상출고 (수요예측)";
-        return '<div class="sim-row' + (danger ? " danger" : "") + '">' +
-          '<div class="num">' + e.date + '</div>' +
-          '<div class="num in-v">' + inV + '</div>' +
-          '<div class="num out-v">' + outV + '</div>' +
-          '<div class="num bal-v">' + balance.toLocaleString() + ' EA</div>' +
-          '<div class="cell-sub">' + refText + '</div>' +
-          '</div>';
-      }).join("");
-
-      const bannerEl = document.getElementById("sim-banner");
-      if (stockoutDate) {
-        bannerEl.classList.add("show");
-        bannerEl.innerHTML = '⚠ 예상 재고 소진일: <span class="num">' + stockoutDate + '</span> — 이 날짜부터 투영재고가 0 밑으로 내려갈 것으로 예상됩니다.';
-      } else {
-        bannerEl.classList.remove("show");
-        bannerEl.innerHTML = "";
-      }
-    }
-
-    itemSelect.addEventListener("change", () => renderItemView(itemSelect.value));
-
-    // Item rows inside a container's detail panel jump into the Item-level unified view.
+    // Item rows inside a container's detail panel jump to the 재고 탭's Item-level Projection view.
+    // window.openInventoryItem is defined in the 재고 탭 script below.
     root.querySelectorAll(".item-row[data-item]").forEach(row => {
       row.addEventListener("click", () => {
         const sku = row.getAttribute("data-item");
-        root.querySelector('.unit-btn[data-unit="item"]').click();
-        itemSelect.value = sku;
-        renderItemView(sku);
-        itemView.scrollIntoView({ behavior:"smooth", block:"start" });
+        document.querySelector('.tab[data-tab="inventory"]').click();
+        if (window.openInventoryItem) window.openInventoryItem(sku);
       });
     });
   })();
@@ -2164,5 +2066,381 @@
         detailDnd.scrollIntoView({ behavior:"smooth", block:"nearest" });
       });
     });
+  })();
+
+  // ============================================================
+  // 재고 탭 스크립트 (Inventory)
+  // ============================================================
+  (function () {
+    const root = document.getElementById("tab-inventory");
+
+    // ---- item catalog (mock data) ----
+    // FDEST ETA = 화물 탭과 동일 값(내륙운송 포함 최종 목적지 도착, P95). Pre-carriage 화물은 미정.
+    // Outbound 값은 소스를 특정하지 않은 가정치(수요예측/확정 출고계획 등 — PRD §8.4 참고).
+    const itemCatalog = {
+      "SKU-8841-BLK": {
+        desc: "알루미늄 브래킷 세트",
+        onhand: 250,
+        safetyStock: 500,
+        outbound: [
+          { date:"7/28", qty:200 },
+          { date:"8/01", qty:400 },
+          { date:"8/04", qty:300 },
+          { date:"8/05", qty:150 },
+          { date:"8/08", qty:280 },
+          { date:"8/11", qty:220 },
+        ],
+        shipments: [
+          { id:"TEMU9012334", po:"PO-25050", mode:"sea", stage:"loading", stageLabel:"Pre-carriage", qty:600, fdestP50:null, fdestP95:null, delayed:false },
+          { id:"HLXU3308719", po:"PO-24650", mode:"sea", stage:"arrived", stageLabel:"On-carriage", qty:500, fdestP50:"7/30", fdestP95:"7/31", delayed:false },
+          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:1200, fdestP50:"8/03", fdestP95:"8/05", delayed:true },
+          { id:"SEL-AIR-88231", po:"PO-24960", mode:"air", stage:"transit", stageLabel:"Main-carriage", qty:300, fdestP50:"8/07", fdestP95:"8/09", delayed:true },
+          { id:"TCKU9944110", po:"PO-25090", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:800, fdestP50:"8/10", fdestP95:"8/12", delayed:false },
+        ],
+      },
+      "SKU-8842-BLK": {
+        desc: "알루미늄 브래킷 세트 (소형)",
+        onhand: 1800,
+        safetyStock: 1000,
+        outbound: [
+          { date:"7/29", qty:300 },
+          { date:"8/06", qty:350 },
+        ],
+        shipments: [
+          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:3000, fdestP50:"8/03", fdestP95:"8/05", delayed:true },
+        ],
+      },
+      "SKU-9010-GRY": {
+        desc: "체결 부속 키트",
+        onhand: 900,
+        safetyStock: 800,
+        outbound: [
+          { date:"7/29", qty:150 },
+          { date:"8/06", qty:180 },
+        ],
+        shipments: [
+          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:640, fdestP50:"8/03", fdestP95:"8/05", delayed:true },
+        ],
+      },
+    };
+
+    function parseMD(md) {
+      const [m, d] = md.split("/").map(Number);
+      return m * 100 + d;
+    }
+
+    // ---- shared calc: combined In/Out events sorted by date, with Projected balance ----
+    function buildTimeline(item) {
+      const determined = item.shipments.filter(s => s.fdestP95).sort((a, b) => parseMD(a.fdestP95) - parseMD(b.fdestP95));
+      const pending = item.shipments.filter(s => !s.fdestP95);
+
+      const events = [];
+      determined.forEach(s => events.push({ date: s.fdestP95, type: "in", qty: s.qty, ref: "입고 · " + s.id }));
+      (item.outbound || []).forEach(o => events.push({ date: o.date, type: "out", qty: o.qty, ref: "예상 출고" }));
+      events.sort((a, b) => parseMD(a.date) - parseMD(b.date));
+
+      let balance = item.onhand || 0;
+      let warnDate = null, shortageDate = null;
+      const rows = events.map(e => {
+        balance += e.type === "in" ? e.qty : -e.qty;
+        const tier = balance < 0 ? "crit" : (balance < (item.safetyStock || 0) ? "warn" : "");
+        if (tier === "warn" && !warnDate) warnDate = e.date;
+        if (tier === "crit" && !shortageDate) shortageDate = e.date;
+        return { date: e.date, type: e.type, qty: e.qty, ref: e.ref, balance, tier };
+      });
+
+      const inboundTotal = determined.reduce((s, x) => s + x.qty, 0);
+      const pendingTotal = pending.reduce((s, x) => s + x.qty, 0);
+      return { determined, pending, rows, inboundTotal, pendingTotal, warnDate, shortageDate };
+    }
+
+    function statusOf(tl) {
+      if (tl.shortageDate) return { tier:"crit", label:"Shortage 예상 " + tl.shortageDate };
+      if (tl.warnDate) return { tier:"warn", label:"Safety Stock 이하 " + tl.warnDate };
+      return { tier:"ok", label:"정상" };
+    }
+
+    // ---- chart: date on x-axis, Inbound/Outbound as diverging bars, Projected as a trend line ----
+    function bucketByDate(rows) {
+      const map = new Map();
+      const buckets = [];
+      rows.forEach(r => {
+        let b = map.get(r.date);
+        if (!b) { b = { date:r.date, in:0, out:0, balance:r.balance, tier:r.tier }; map.set(r.date, b); buckets.push(b); }
+        if (r.type === "in") b.in += r.qty; else b.out += r.qty;
+        b.balance = r.balance;
+        b.tier = r.tier;
+      });
+      return buckets;
+    }
+
+    function renderProjectionChart(item, tl) {
+      const container = document.getElementById("inv-d-chart");
+      const buckets = bucketByDate(tl.rows);
+      if (!buckets.length) {
+        container.innerHTML = '<div class="item-empty" style="padding:24px;">표시할 입고/출고 일정이 없습니다.</div>';
+        return;
+      }
+
+      const W = 760, H = 300;
+      const padL = 46, padR = 16, padT = 16, padB = 34;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // Single shared scale for bars AND the Projected line — Inbound is a positive
+      // deviation from 0, Outbound a negative one, so both sit naturally against the
+      // same zero baseline the Projected balance is measured on.
+      const domainVals = [0, item.onhand, item.safetyStock];
+      buckets.forEach(b => domainVals.push(b.balance, b.in, -b.out));
+      let vMax = Math.max(...domainVals);
+      let vMin = Math.min(...domainVals);
+      const pad = (vMax - vMin) * 0.12 || 1;
+      vMax += pad; vMin -= pad;
+      const y = (v) => padT + (vMax - v) / (vMax - vMin) * plotH;
+
+      const n = buckets.length;
+      const xStep = plotW / n;
+      const xAt = (i) => padL + xStep * (i + 0.5);
+      const barW = Math.min(27, xStep * 0.336);
+      const zeroY = y(0);
+
+      let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:100%; display:block;">';
+
+      svg += '<line class="pchart-zeroline" x1="' + padL + '" y1="' + zeroY + '" x2="' + (W - padR) + '" y2="' + zeroY + '"></line>';
+      svg += '<text class="pchart-label" x="' + (padL - 6) + '" y="' + (zeroY + 3) + '" text-anchor="end">0</text>';
+
+      const ssY = y(item.safetyStock);
+      svg += '<line class="pchart-refline-ss" x1="' + padL + '" y1="' + ssY + '" x2="' + (W - padR) + '" y2="' + ssY + '"></line>';
+      svg += '<text class="pchart-label" x="' + (W - padR) + '" y="' + (ssY - 4) + '" text-anchor="end">Safety Stock ' + item.safetyStock.toLocaleString() + '</text>';
+
+      // Same date's Inbound/Outbound bars share one x (stacked above/below the zero line,
+      // not offset left-right), so the Projected dot for that date sits centered on top of them.
+      buckets.forEach((b, i) => {
+        const cx = xAt(i);
+        if (b.in > 0) {
+          const yTop = y(b.in);
+          svg += '<rect class="pbar-in" x="' + (cx - barW / 2) + '" y="' + yTop + '" width="' + barW + '" height="' + (zeroY - yTop) + '">' +
+            '<title>Inbound ' + b.date + ': +' + b.in.toLocaleString() + ' EA</title></rect>';
+        }
+        if (b.out > 0) {
+          const yBottom = y(-b.out);
+          svg += '<rect class="pbar-out" x="' + (cx - barW / 2) + '" y="' + zeroY + '" width="' + barW + '" height="' + (yBottom - zeroY) + '">' +
+            '<title>Outbound ' + b.date + ': −' + b.out.toLocaleString() + ' EA</title></rect>';
+        }
+        svg += '<text class="pchart-date-label" x="' + cx + '" y="' + (H - 10) + '" text-anchor="middle">' + b.date + '</text>';
+      });
+
+      const pts = buckets.map((b, i) => xAt(i) + ',' + y(b.balance)).join(" ");
+      svg += '<polyline class="pproj-line" points="' + pts + '"></polyline>';
+      buckets.forEach((b, i) => {
+        const dotClass = b.tier ? " " + b.tier : "";
+        const tierNote = b.tier === "crit" ? " (Shortage)" : b.tier === "warn" ? " (Safety Stock 이하)" : "";
+        svg += '<circle class="pproj-dot' + dotClass + '" cx="' + xAt(i) + '" cy="' + y(b.balance) + '" r="4">' +
+          '<title>Projected ' + b.date + ': ' + b.balance.toLocaleString() + ' EA' + tierNote + '</title></circle>';
+      });
+
+      svg += '</svg>';
+      container.innerHTML = svg;
+    }
+
+    // ---- summary stats ----
+    function renderSummary() {
+      const skus = Object.keys(itemCatalog);
+      let critCount = 0, warnCount = 0, inboundCount = 0;
+      skus.forEach(sku => {
+        const tl = buildTimeline(itemCatalog[sku]);
+        const s = statusOf(tl);
+        if (s.tier === "crit") critCount++;
+        else if (s.tier === "warn") warnCount++;
+        inboundCount += tl.determined.length;
+      });
+      document.getElementById("inv-summary").innerHTML =
+        '<div class="stat stat-hero"><div class="stat-label">전체 Item</div><div class="stat-figures"><span class="total-v num">' + skus.length + '</span><span class="total-l">종</span></div></div>' +
+        '<div class="stat"><div class="stat-label">Shortage 예상</div><div class="stat-figures"><span class="delayed-v num" style="color:var(--crit)">' + critCount + '</span><span class="delayed-l" style="color:var(--crit)">종</span></div></div>' +
+        '<div class="stat"><div class="stat-label">Safety Stock 이하</div><div class="stat-figures"><span class="delayed-v num" style="color:var(--warn)">' + warnCount + '</span><span class="delayed-l" style="color:var(--warn)">종</span></div></div>' +
+        '<div class="stat"><div class="stat-label">입고 예정 (Inbound)</div><div class="stat-figures"><span class="total-v num">' + inboundCount + '</span><span class="total-l">건</span></div></div>';
+    }
+
+    // ---- Projection: item list ----
+    function renderItemList() {
+      const rowsEl = document.getElementById("inv-item-rows");
+      rowsEl.innerHTML = Object.keys(itemCatalog).map(sku => {
+        const item = itemCatalog[sku];
+        const tl = buildTimeline(item);
+        const s = statusOf(tl);
+        const pillClass = s.tier === "ok" ? "ok" : s.tier;
+        return '<div class="list-row cols-inv-item" data-sku="' + sku + '">' +
+          '<div class="isku-cell"><div class="sku num">' + sku + '</div><div class="idesc">' + item.desc + '</div></div>' +
+          '<div class="num">' + item.onhand.toLocaleString() + ' EA</div>' +
+          '<div class="num">Inbound ' + tl.inboundTotal.toLocaleString() + ' EA / SS ' + item.safetyStock.toLocaleString() + ' EA</div>' +
+          '<div><span class="pill ' + pillClass + '"><span class="dot" style="background:var(--' + pillClass + ')"></span>' + s.label + '</span></div>' +
+          '<div class="chev">›</div>' +
+          '</div>';
+      }).join("");
+
+      rowsEl.querySelectorAll(".list-row[data-sku]").forEach(row => {
+        row.addEventListener("click", () => openItemDetail(row.getAttribute("data-sku")));
+      });
+    }
+
+    // ---- Projection: item detail (Projected Timeline) ----
+    const itemDetail = document.getElementById("inv-item-detail");
+    let selectedItemRow = null;
+
+    function openItemDetail(sku) {
+      const item = itemCatalog[sku];
+      if (!item) return;
+      const tl = buildTimeline(item);
+      const s = statusOf(tl);
+
+      document.getElementById("inv-d-sku").textContent = sku;
+      document.getElementById("inv-d-desc").textContent = item.desc;
+      const badgeEl = document.getElementById("inv-d-badge");
+      const pillClass = s.tier === "ok" ? "ok" : s.tier;
+      badgeEl.className = "pill " + pillClass;
+      badgeEl.innerHTML = '<span class="dot" style="background:var(--' + pillClass + ')"></span>' + s.label;
+
+      document.getElementById("inv-d-onhand").textContent = item.onhand.toLocaleString() + " EA";
+      document.getElementById("inv-d-inbound").textContent = tl.inboundTotal.toLocaleString() + " EA";
+      document.getElementById("inv-d-ss").textContent = item.safetyStock.toLocaleString() + " EA";
+
+      renderProjectionChart(item, tl);
+
+      const timelineEl = document.getElementById("inv-d-timeline-rows");
+      timelineEl.innerHTML = tl.rows.map(r => {
+        const inV = r.type === "in" ? "+" + r.qty.toLocaleString() : "—";
+        const outV = r.type === "out" ? "−" + r.qty.toLocaleString() : "—";
+        return '<div class="ptimeline-row' + (r.tier ? " " + r.tier : "") + '">' +
+          '<div class="num">' + r.date + '</div>' +
+          '<div class="num in-v">' + inV + '</div>' +
+          '<div class="num out-v">' + outV + '</div>' +
+          '<div class="num proj-v">' + r.balance.toLocaleString() + ' EA</div>' +
+          '<div class="cell-sub">' + r.ref + '</div>' +
+          '</div>';
+      }).join("");
+
+      document.getElementById("inv-d-pending").textContent = tl.pending.length
+        ? "일정 미정(Pre-carriage) " + tl.pendingTotal.toLocaleString() + " EA (" + tl.pending.length + "건) — 위 Projected 계산에는 포함되지 않음"
+        : "";
+
+      const bannerEl = document.getElementById("inv-d-banner");
+      bannerEl.className = "shortage-banner";
+      if (tl.shortageDate) {
+        bannerEl.classList.add("crit-b");
+        bannerEl.innerHTML = '⚠ 예상 재고 소진일(Shortage): <span class="num">' + tl.shortageDate + '</span> — 이 날짜부터 Projected가 0 밑으로 내려갈 것으로 예상됩니다.';
+      } else if (tl.warnDate) {
+        bannerEl.classList.add("warn-b");
+        bannerEl.innerHTML = '△ Safety Stock 이하 진입: <span class="num">' + tl.warnDate + '</span> — 재고는 있으나 안전재고 밑으로 내려갑니다.';
+      } else {
+        bannerEl.innerHTML = "";
+      }
+
+      const shipEl = document.getElementById("inv-d-shipment-rows");
+      shipEl.innerHTML = item.shipments.map(sp => {
+        const modeChip = '<span class="mode-chip ' + sp.mode + '">' + (sp.mode === "sea" ? "Sea" : "Air") + '</span>';
+        const fdest = sp.fdestP95
+          ? '<div class="fdest-cell"><span class="num">' + sp.fdestP95 + '</span><div class="p50-inline">P50 ' + sp.fdestP50 + '</div></div>'
+          : '<div class="fdest-cell pending">미정</div>';
+        return '<div class="list-row cols-item" data-container="' + sp.id + '">' +
+          '<div>' + modeChip + '</div>' +
+          '<div><div class="cell-id num">' + sp.id + '</div><div class="cell-sub num">' + sp.po + '</div></div>' +
+          '<div><span class="stage-pill">' + sp.stageLabel + '</span></div>' +
+          '<div class="num">' + sp.qty.toLocaleString() + ' EA</div>' +
+          fdest +
+          '<div class="chev">›</div>' +
+          '</div>';
+      }).join("");
+      shipEl.querySelectorAll(".list-row[data-container]").forEach(row => {
+        row.addEventListener("click", () => jumpToCargoContainer(row.getAttribute("data-container")));
+      });
+
+      document.querySelectorAll("#inv-item-rows .list-row[data-sku]").forEach(r => r.classList.remove("selected"));
+      const target = root.querySelector('#inv-item-rows .list-row[data-sku="' + sku + '"]');
+      if (target) target.classList.add("selected");
+      selectedItemRow = target;
+
+      itemDetail.classList.add("open");
+      itemDetail.scrollIntoView({ behavior:"smooth", block:"nearest" });
+    }
+
+    // ---- Inbound: shipment list across all items ----
+    function renderInboundList() {
+      const rows = [];
+      Object.keys(itemCatalog).forEach(sku => {
+        const item = itemCatalog[sku];
+        item.shipments.filter(s => s.fdestP95).forEach(s => rows.push({ sku, desc:item.desc, ...s }));
+      });
+      rows.sort((a, b) => parseMD(a.fdestP95) - parseMD(b.fdestP95));
+
+      const pendingCount = Object.keys(itemCatalog).reduce((n, sku) =>
+        n + itemCatalog[sku].shipments.filter(s => !s.fdestP95).length, 0);
+
+      const rowsEl = document.getElementById("inv-inbound-rows");
+      rowsEl.innerHTML = rows.map(r => {
+        const delayPill = r.delayed
+          ? '<span class="pill crit"><span class="dot" style="background:var(--crit)"></span>지연</span>'
+          : '<span class="pill ok"><span class="dot" style="background:var(--ok)"></span>정상</span>';
+        return '<div class="list-row cols-inbound" data-container="' + r.id + '">' +
+          '<div class="isku-cell"><div class="sku num">' + r.sku + '</div><div class="idesc">' + r.desc + '</div></div>' +
+          '<div class="num">' + r.qty.toLocaleString() + ' EA</div>' +
+          '<div class="eta-cell"><span class="num">' + r.fdestP95 + '</span><div class="p50-inline" style="margin-top:2px;">P50 <span class="num">' + r.fdestP50 + '</span></div></div>' +
+          '<div>' + delayPill + '</div>' +
+          '<div class="chev">›</div>' +
+          '</div>';
+      }).join("");
+      rowsEl.querySelectorAll(".list-row[data-container]").forEach(row => {
+        row.addEventListener("click", () => jumpToCargoContainer(row.getAttribute("data-container")));
+      });
+
+      document.getElementById("inv-inbound-pending").textContent = pendingCount
+        ? "이 외에 Pre-carriage 단계라 FDEST ETA 미정인 입고 " + pendingCount + "건은 목록에서 제외됨(계산 근거 약함)"
+        : "";
+    }
+
+    // ---- drill-down: Item → Inbound → B/L → Container → Transportation Tracking ----
+    function jumpToCargoContainer(containerId) {
+      document.querySelector('.tab[data-tab="cargo"]').click();
+      const row = Array.from(document.querySelectorAll('#tab-cargo .list-row[data-row]')).find(r => {
+        const idEl = r.querySelector('.cell-id');
+        return idEl && idEl.textContent.trim() === containerId;
+      });
+      if (!row) {
+        showToast("Transportation Tracking: " + containerId + " — 이 목업 데이터엔 상세가 없습니다 (mock)");
+        return;
+      }
+      const table = row.closest(".list-table");
+      const scope = table.getAttribute("data-scope");
+      const status = table.getAttribute("data-status");
+      const btn = document.querySelector('#tab-cargo .status-tabs[data-scope="' + scope + '"] .status-btn[data-status="' + status + '"]');
+      if (btn) btn.click();
+      row.click();
+      setTimeout(() => row.scrollIntoView({ behavior:"smooth", block:"center" }), 60);
+    }
+
+    // ---- subtab: 재고 투영 <-> 입고 예정 ----
+    const secProjection = document.getElementById("inv-projection");
+    const secInbound = document.getElementById("inv-inbound");
+    root.querySelectorAll('.unit-btn[data-invtab]').forEach(btn => {
+      btn.addEventListener("click", () => {
+        root.querySelectorAll('.unit-btn[data-invtab]').forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const key = btn.getAttribute("data-invtab");
+        secProjection.style.display = key === "projection" ? "" : "none";
+        secInbound.style.display = key === "inbound" ? "" : "none";
+        document.getElementById("inv-hint").textContent = key === "projection"
+          ? "Item별 일자별 재고 추이 — Safety Stock 이하(주의)와 음수 재고(Shortage)를 색으로 구분해 강조합니다."
+          : "Item별 입고 예정 리스트 — FDEST ETA(P95) 기준. 클릭하면 해당 화물의 Transportation Tracking으로 이동합니다.";
+      });
+    });
+
+    // Entry point from 화물 탭's container detail "재고 투영에서 보기" links.
+    window.openInventoryItem = function (sku) {
+      root.querySelector('.unit-btn[data-invtab="projection"]').click();
+      openItemDetail(sku);
+    };
+
+    renderSummary();
+    renderItemList();
+    renderInboundList();
   })();
 </script>

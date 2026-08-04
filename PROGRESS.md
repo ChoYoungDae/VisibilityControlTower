@@ -1,6 +1,6 @@
 # Visibility Control Tower · 진행 상황
 
-마지막 갱신: 2026-08-03 (화물+업무+비용 통합 목업 `visibility_control_tower_mockup.html` 작성 완료)
+마지막 갱신: 2026-08-04 (재고 탭 목업 리뷰 1차 반영 — Projected Inventory Timeline 차트화 등)
 
 새 대화 세션에서 이어갈 때는 이 파일을 먼저 읽으면 됩니다. 콘텐츠의 상세 근거는
 [`VisibilityControlTower_기획.md`](VisibilityControlTower_기획.md)에 있습니다.
@@ -149,20 +149,62 @@
 - 최초 커밋(`94bb9a5`): 기획 문서 + 초기 목업
 - `visibility_control_tower_mockup.html`, `vessel-tracker/`는 아직 커밋 안 됨 (사용자가 명시적으로 요청할 때 커밋)
 
+## Inventory 도메인 신설 (2026-08-04 세션, 신규 확정)
+
+기존에는 재고 투영이 **화물 탭 안의 Item 통합 뷰** 기능이었으나, 이번 세션에서
+**Transportation과 나란한 별도 최상위 도메인 Inventory**로 분리하기로 확정.
+`VisibilityControlTower_PRD.md` §6/§8에 전체 반영 완료 — 상세 근거는 그 문서 참고.
+
+- **도메인 분리 원칙**: Transportation = 컨테이너/B/L 단위(운송 운영), Inventory = Item 단위(재고 계획). 같은 이벤트를 다른 집계 단위로 재사용, 데이터 파이프라인은 안 바뀜.
+- **IA 2단 구조**: Overview(Transportation+Inventory 통합, 도메인별 개별 Overview는 없음) → Transportation(화물/업무/비용) / Inventory(Projection/Inbound + Item 드릴다운). Shortage는 별도 탭이 아니라 Projection의 필터 뷰로 흡수.
+- **Inbound 인식 시점**: POD Container ETA가 아니라 **FDEST ETA(P95, 내륙운송 포함 최종 목적지 도착 기준)** — 화물 탭에서 이미 확정한 PTA/FDEST ETA 개념을 그대로 재사용.
+- **Outbound 데이터**: 특정 시스템(수요예측/ERP Outbound Plan 등)에 고정하지 않고 "고객 시스템에서 주어지는 입력값"으로 일반화.
+- 화물 탭의 기존 "재고 투영(Item 단위)" 서브섹션(위 "화물 탭 — 확정된 콘텐츠 모델" 문단들)은 **Inventory 도메인으로 이관됨** — 화물 탭에는 더 이상 Item 토글/재고 부족 시뮬레이션을 두지 않음.
+- **하위 탭 한글 명칭 확정**: `Projection`/`Inbound`는 업계 관용 영어가 아니라고 판단해 **"재고 투영" / "입고 예정"**으로 확정(화면 텍스트 언어 규칙 적용). 최상위 탭명은 "Inventory"가 아니라 기존 화물/업무/비용과 톤을 맞춰 **"재고"**로 확정.
+
+## `visibility_control_tower_mockup.html` — 재고 탭 반영 완료 (2026-08-04)
+
+Inventory 도메인을 실제 목업에 반영함. 상단 탭바에 `Overview | 화물 | 업무 | 비용 | (구분선) | 재고` 구조 추가(플랫 탭바 유지, "재고"만 시각적 구분선으로 살짝 분리 — Transportation 산하 3탭과 Inventory를 완전히 별도 2단 내비게이션으로 만들지는 않음, 목업 단순화).
+
+- **화물 탭**: Item 토글/Item 통합 뷰(재고 부족 시뮬레이션 포함) 완전 제거. 컨트롤바는 Container/HBL 리스트 안내 문구만 남기고, 컨테이너 상세의 "Item / SKU" 블록은 "재고 투영에서 보기 ›" 링크로 재고 탭에 연결.
+- **재고 탭 — 재고 투영**: Item 리스트(On-hand / Inbound 합계·Safety Stock / 상태뱃지, Shortage 임박 순 아님 — 현재는 데이터 순, 정렬 로직은 추후 다듬을 것) → 클릭 시 Item 상세로 이동. Item 상세는 `Projected(t) = On-hand + Σ Inbound(≤t, FDEST ETA P95) − Σ Outbound(≤t)` 공식 그대로 계산한 Projected Inventory Timeline을 표로 보여주고, **Safety Stock 이하(주의, 노랑)와 0 미만(Shortage, 빨강) 2단계로 색 구분**(사용자 확정 사항 반영). Inbound Schedule 서브리스트에서 화물 클릭 시 화물 탭의 해당 컨테이너로 드릴다운(Item → Inbound → B/L → Container → Transportation Tracking).
+- **재고 탭 — 입고 예정**: Item×입고건 단위 리스트(Item, Qty, FDEST ETA P95/P50, Delay Status), FDEST ETA 기준 정렬. 클릭 시 화물 탭 드릴다운은 재고 투영과 동일 로직 재사용.
+- **드릴다운 왕복 확인 완료**: 화물 탭 컨테이너 상세 → 재고 투영 Item 상세, 재고 투영/입고예정 → 화물 탭 컨테이너 상세, 양방향 모두 브라우저로 테스트 완료(콘솔 에러 없음). 상태 탭(Pre/Main/On-carriage) 자동 전환까지 확인.
+- **Mock 데이터**: 기존 화물 탭에 있던 itemCatalog 3종(SKU-8841-BLK/8842-BLK/9010-GRY)을 재고 탭으로 옮기고 `safetyStock`, `delayed` 필드 추가. 손으로 계산한 결과와 화면 렌더링 결과 일치 확인(SKU-8841=Shortage 8/04, SKU-8842=정상, SKU-9010=Safety Stock 이하 7/29) — 세 가지 상태(정상/주의/Shortage)를 모두 보여주도록 의도적으로 구성한 예시 데이터.
+- **아직 안 한 것**: Overview 재구성(재고 탭 KPI를 Overview에 반영하는 작업), 재고 투영 Item 리스트의 정렬 로직(현재는 데이터 순서 그대로 — Shortage 임박 순 정렬이 아님).
+
+## `visibility_control_tower_mockup.html` — 1차 리뷰 피드백 반영 (2026-08-04, 같은 세션 이어서)
+
+재고 탭 1차 반영 직후, 사용자가 화면을 직접 보며 준 피드백을 그 자리에서 반영함.
+
+- **상단 topnav 틀고정(sticky)**: 스크롤해도 topnav(탭바+검색)가 상단에 고정되도록 `position:sticky; top:0` 적용.
+- **탭 그룹 구분선**: `Overview | (구분선) | 화물 업무 비용 | (구분선) | 재고` — Overview와 Transportation 3탭, 그리고 재고(Inventory)를 시각적으로 구분. (중간에 한 번 "구분선 없애 달라"로 오해해서 지웠다가, 사용자가 "Overview와 화물 사이에도 넣어달라는 거였다"고 정정 — 다시 추가함. 구분선 요청은 "없애기"가 아니라 "위치 추가"였다는 점 주의.)
+- **화물 탭 Pre-carriage 컬럼 변경**: TS 컬럼 제거, 그 자리에 **Initial POL ETD**를 POL ETD 앞에 추가해서 최초 예정 대비 지연 여부를 비교(지연 시 POL ETD 셀에 "+N일 지연" 빨간 텍스트로 표시). 해상·항공 Pre-carriage 섹션 둘 다 적용.
+- **날짜 현실화**: 위 Pre-carriage 예시 날짜가 9월로 되어 있던 것을 현재 시점(2026-08) 기준 8월로 수정(Initial POL ETD 8/13, POL ETD 8/13 정상 / 8/13→8/16 +3일 지연 예시).
+- **재고 탭 "Projected Inventory Timeline"을 표에서 차트로 전환**: 가로축=날짜, 세로축=Inbound(양수)/Outbound(음수)를 **하나의 공유 스케일**로 표현하는 다이버징 바 차트 + Projected 잔량 추세선(꺾은선) 오버레이. 상세 수치 표는 차트 아래에 보조 자료로 유지.
+  - Safety Stock 기준선(노란 점선), Projected가 0 밑으로 가면 Shortage로 자동 강조(빨간 점).
+  - 같은 날짜에 Inbound/Outbound가 동시에 있는 사례를 mock 데이터에 추가(SKU-8841-BLK, 8/05에 입고 1,200 + 출고 150 동시 발생) — 그 날짜의 두 막대와 Projected 점이 **같은 x축 위치(같은 열)에 정렬**되도록 좌우 오프셋을 없앰.
+  - 막대·점에 네이티브 `<title>` 툴팁 추가 + hover 시 막대 진하게/점 커지는 인터랙션 추가 — "이미지처럼 안 움직인다"는 피드백에 대응(차트 라이브러리 없이도 순수 SVG로 인터랙션 가능하다는 점 확인시켜줌).
+  - 색상은 처음엔 원색(진한 초록/빨강/파랑 3색 경쟁)이라 "안 깔끔하다"는 피드백 → 막대는 `fill-opacity` 낮춰 톤 다운, 추세선/기본 점은 회색조(`--ink-muted`)로 바꾸고 warn/crit 상태일 때만 색(노랑/빨강)이 튀도록 정리.
+  - 막대 두께 20% 축소, 모서리 각짐(rounded corner 제거, `rx` 속성 삭제)으로 마무리.
+
 ## 다음 단계 (여기서부터 이어가면 됨)
 
-**화물+업무+비용 통합 목업을 `visibility_control_tower_mockup.html` 하나로 확정 완료** — 위 "산출물 이력" 5번 참고. 개별 탭 파일 3개는 삭제했고, **앞으로 모든 리뷰·수정은 이 파일 하나 기준**으로 진행. 아직 화면/문구 자체에 대한 사용자 리뷰는 진행 전(구조 통합만 끝난 상태) — 다음 세션은 여기서부터 화면/문구/인터랙션 피드백 반영으로 이어가면 됨.
+**재고 탭 목업 + 1차 리뷰 피드백까지 반영 완료.** 다음 세션은 여기서부터 이어서 계속 화면/문구/인터랙션 피드백 받으면 됨 (재고 탭 차트 포함, 전체적으로 세부 다듬기 단계).
 
-**다음으로 할 것**:
-1. `visibility_control_tower_mockup.html` 리뷰 — 화면/문구/인터랙션 피드백 반영 (화물→업무→비용 순서로, 또는 사용자가 원하는 탭부터).
+**다음으로 할 것** (우선순위는 사용자와 상의):
+1. 재고 탭(재고 투영/입고 예정) 화면 리뷰 계속 — 남은 문구/인터랙션 피드백 반영.
+2. 재고 투영 Item 리스트 정렬 로직 정하기(Shortage 임박 순 등).
+3. 그 외 기존처럼 `visibility_control_tower_mockup.html` 화물/업무/비용 탭 리뷰 계속.
+4. 화물/업무/비용/재고 탭이 다 정리되면 → 마지막으로 통합 Overview 재구성.
 
 **화물 탭에서 나온 패턴 중 업무 탭에도 참고할 만한 것**: 언어 규칙(CLAUDE.md), Total/Delayed 같은 통계 표기, "정밀 수치 대신 등급/구간으로 표현"(PTA의 P50/P95 ↔ 업무 탭 스페이스 신호의 등급+추세).
 
 **화물 탭에 남아있는 미해결 항목** (나중에 돌아올 것):
 1. **"리스크" 상태 정의** — 환적 있음=리스크는 아님. 어떤 조건이면 리스크로 볼지 아직 미정.
 2. **PTA 방법론 문서화** — "과거 예측 정확도 이력 데이터 필요"라는 의존성을 기획서에도 반영할지 논의.
-3. **재고 부족 시뮬레이션 — Out의 비관성 방향** — In(P95)과 짝을 맞춰 Out도 수요예측 상단값(최악의 경우)을 쓸지, 평균/P50(현실적 기준)을 쓸지 미정. 수요예측 시스템이 그 정도 세분화된 값을 주는지에 달려있음.
-4. 화물/업무/비용 탭이 다 정리되면 → 마지막으로 **Overview 재구성** (기존 계획 유지).
+3. ~~재고 부족 시뮬레이션~~ — Inventory 도메인으로 이관됨(위 "Inventory 도메인 신설" 참고). Out의 낙관/비관 방향 미해결 이슈는 `VisibilityControlTower_PRD.md` §10로 옮겨서 계속 추적.
+4. 화물/업무/비용/Inventory 탭이 다 정리되면 → 마지막으로 **통합 Overview 재구성** (기존 계획 유지, 범위가 Transportation+Inventory로 확장됨).
 
 **업무 탭에 남아있는 미해결 의존성**:
 1. **Item 단위 연결 의존성** — PO Item 수량 → 부킹 → B/L → 컨테이너 매핑에 적입/장입 확정 데이터(Stuffing List) 필요. 대부분 Pantos 내부 시스템 연동 문제(예외: FCL 자가적입 시 고객 Packing List 필요). "데이터가 있다는 전제"로 설계 계속 진행 중. 화물 탭 Item 통합 뷰와 공유하는 의존성.
