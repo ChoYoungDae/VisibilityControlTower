@@ -1,6 +1,11 @@
 # Visibility Control Tower · 진행 상황
 
-마지막 갱신: 2026-08-04 (재고 탭 목업 리뷰 1차 반영 — Projected Inventory Timeline 차트화 등)
+마지막 갱신: 2026-08-07 (재고 탭을 실 raw data 기반으로 전면 교체 + Item별
+시나리오 아키타입 다양화 + `ItemLevel_InventoryManagement_PRD.md`를
+`VisibilityControlTower_PRD.md` §8로 재통합 — 이제 트랙이 하나로
+합쳐졌으므로 "어느 트랙을 이어갈지" 확인하는 절차는 더 이상 필요 없음.
+**다음 세션은 "재고관리 Agent" 설계부터 새로 시작** — 아래 "다음 단계"
+참고)
 
 새 대화 세션에서 이어갈 때는 이 파일을 먼저 읽으면 됩니다. 콘텐츠의 상세 근거는
 [`VisibilityControlTower_기획.md`](VisibilityControlTower_기획.md)에 있습니다.
@@ -55,21 +60,30 @@
 
 ## vessel-tracker (실제 AIS 연동 프로토타입)
 
-- 위치: [`vessel-tracker/`](vessel-tracker/) — Node/Express + WebSocket 프록시 + Leaflet 지도(OSM, 키 불필요)
-- 목적: aisstream.io API 키를 브라우저에 노출하지 않고, 서버가 중계해서 실시간 선박 위치를 지도에 표시
+- 위치: [`vessel-tracker/`](vessel-tracker/) — Node/Express + WebSocket 프록시 + Mapbox GL JS 지도
+- 목적: 실시간 선박 위치 API 인증정보를 브라우저에 노출하지 않고, 서버가 중계해서 지도에 표시
 - 실행: `cd vessel-tracker && npm start` (최초 1회만 `npm install`) → `http://localhost:8787`
   - **재부팅/터미널 종료 후에는 매번 다시 `npm start` 필요** — 상시 켜져 있는 서버가 아님
-  - `.env`에 실제 API 키 보관(gitignore 대상). `.env.example`은 빈 템플릿만 커밋
+  - `.env`에 실제 계정정보 보관(gitignore 대상). `.env.example`은 빈 템플릿만 커밋
 - `visibility_control_tower_mockup.html`의 선박명 6개(ONE INNOVATION, MSC BRUNELLA, ONE COMMITMENT, HYUNDAI FAITH, CMA CGM AQUILA, MSC ISABELLA)는 실제 선박이라 MMSI 확인 후 매핑 완료. 클릭하면 vessel-tracker가 새 탭으로 열림.
-- **버그 수정 이력**:
-  1. 좌표 필드 케이싱 — `server.js`가 `MetaData.Latitude/Longitude`(대문자)에서 읽고 있었는데, 실제 aisstream.io 응답은 `MetaData`에 소문자(`latitude`/`longitude`)로 옴 → `Message.PositionReport.Latitude/Longitude`(항상 대문자로 옴)를 우선 사용하도록 수정.
-  2. 프로세스 크래시 — 클라이언트가 track 요청을 연달아 보내면 이전 WebSocket의 `open` 콜백이 이미 null이 된 `upstream` 변수를 참조해 서버 전체가 죽는 race condition이 있었음 → 각 소켓 인스턴스를 로컬 `ws`로 클로저에 고정하고 `if (upstream !== ws) return;` 가드로 수정.
-- **알려진 한계 (중요) 및 최종 아키텍처 결정**:
-  1. `FiltersShipMMSI`(특정 선박 하나만 필터링)는 aisstream.io API 자체가 응답을 안 줌(바운딩박스를 좁혀도 동일) — API 이슈로 판단.
-  2. **한국 해역은 AIS 수신 커버리지가 없음** — 부산·한국 전역 바운딩박스로 65초 이상 테스트해도 리포트 0건(메시지 타입 필터 없이도 0건). 자원봉사자 지상 수신국 기반 서비스라 한국에 수신국이 없는 것으로 추정. 아시아 전체 문제는 아님(싱가포르 해협은 25초에 14건 정상 수신).
-  3. **최종 채택 방식 — "실시간 연결 데모" 모드**: 특정 MMSI를 기다리는 대신, 커버리지가 확인된 지역(도버 해협 + 싱가포르 해협)을 필터 없이 구독해서 **그 순간 실제로 신호를 보내는 아무 선박이나** 지도에 표시. 화물 목업에서 선박명을 클릭하면 "OO 선박의 실제 위치는 한국 해역이라 확인 불가 — 대신 실시간 연결 자체가 살아있음을 다른 실제 선박으로 보여줌"이라는 안내와 함께 이 모드가 뜸. 여러 척이 동시에 마커로 표시되고 "지금까지 N척 수신" 카운터로 살아있는 연결임을 확인시켜줌.
-  4. 기존 "MMSI로 직접 조회" 수동 단일-선박 모드도 별도 버튼으로 남겨둠 (교재에서 요구한 개별 MMSI 조회 실습용).
-  5. 이번 프로토타입은 **데모/검증 목적** — 실제 서비스에 넣으려면 한국 해역 커버리지가 있는 유료 AIS API(MarineTraffic, VesselFinder, Spire 등) 검토 필요.
+
+### 2026-08-06 세션 — API를 aisstream.io → SeaVantage(SVMP)로 교체
+
+- **교체 사유**: aisstream.io는 한국 해역 AIS 수신 커버리지가 없어(자원봉사자 지상 수신국 기반) 국내 물류 서비스에 부적합 — 아래 "폐기된 aisstream.io 관련 이력" 참고. SeaVantage는 유료 상용 AIS 데이터 제공사라 한국 커버리지를 기대할 수 있음.
+- **API 조사 경로 (다음 세션 참고용)**: 사용자가 준 Notion 링크 → `insight.seavantage.com/api` Swagger 문서 확인, 이 API의 `/ship/snapshot`은 파라미터가 아예 없이 전체 데이터를 반환해서 브라우저(Swagger UI)가 렌더링하다 멈출 정도로 응답이 컸음(사용자가 우려했고 실제로 확인됨) → 단일 선박 조회 전용 엔드포인트를 찾다가 **별도의, 더 잘 정리된 문서 사이트 `developer.seavantage.com`(Postman 기반, `svmp.seavantage.com/api/v1`)**을 발견 — 이쪽이 실제로 채택한 API. `insight.seavantage.com`과 `svmp.seavantage.com`은 서로 다른 SeaVantage API 두 벌이니 혼동 주의.
+- **채택한 엔드포인트** (`svmp.seavantage.com/api/v1`, Basic Auth):
+  1. `GET /ship/search?keyword=<MMSI/IMO/선명>` — 선박 메타정보 + `shipId`(UUID) 조회. 위치 정보는 없음.
+  2. `GET /ship/snapshot/:shipId?dateTime=<ISO>&range=<정수>` — **그 배 하나만**의 최신 위치, 지역 제한 없이 전세계 어디든 조회 가능. `server.js`가 MMSI→shipId를 캐싱해두고 이 엔드포인트를 주기적으로(기본 15초) 폴링.
+  - **미해결/미검증**: `/ship/snapshot/:shipId`의 `range` 파라미터 단위가 문서에 없음 — 분(minute)으로 가정하고 기본값 60 사용(`SEAVANTAGE_SNAPSHOT_RANGE` env로 조정 가능). 실제 계정으로 테스트해서 맞는지 확인 필요.
+  - REST 폴링 방식이라 aisstream.io의 WebSocket push와 달리 실시간성이 폴링 주기(기본 15초)에 묶임.
+  - `/ship/position/:fromDate/:toDate?lowerLeftLatitude=...`(기간+bounding box 내 선박들) 엔드포인트도 있지만, 단일 MMSI를 지역 제한 없이 바로 조회할 수 있어서 **채택 안 함** — 처음엔 이걸로 "한국 해역 실시간 트래픽 데모" 모드를 만들었다가, 지역 제한 자체가 aisstream.io 시절의 커버리지 문제를 우회하려던 것이었지 SeaVantage에는 필요 없다는 사용자 지적으로 코드에서 제거함.
+- **환경변수 변경**: `AISSTREAM_API_KEY` 제거 → `SEAVANTAGE_USERNAME`/`SEAVANTAGE_PASSWORD`(Basic Auth) + `SEAVANTAGE_BASE_URL`(기본 `https://svmp.seavantage.com/api/v1`) + `SEAVANTAGE_SNAPSHOT_RANGE` 추가. `.env`는 아직 사용자가 실제 계정정보로 안 채운 상태 — 채운 뒤 `npm start`로 직접 테스트 필요(브라우저 프리뷰만으로는 계정정보를 다룰 수 없어 확인 못 함).
+- **프런트엔드(`public/index.html`)도 단순화**: "실시간 트래픽 보기(지역 데모)" 버튼·fallback 15초 타이머·live 모드(복수 마커) 전부 제거하고, 항상 MMSI 하나를 직접 추적하는 단일 흐름으로 정리. `track`/`stop` 메시지 타입만 남음(`track-live`/`track-in-region` 삭제).
+
+#### 폐기된 aisstream.io 관련 이력 (참고용, 더 이상 유효하지 않음)
+
+- 좌표 필드 케이싱 버그, race condition 크래시 버그 등은 aisstream.io 전용 코드에 있던 것으로 이번 교체로 해당 코드 자체가 삭제됨.
+- "한국 해역 커버리지 없음 → 도버해협/싱가포르해협 실시간 데모로 대체" 방식이었으나, SeaVantage는 지역 제한 없이 MMSI 직접 조회가 되므로 이 우회 자체가 통째로 불필요해짐.
 
 ## 업무 탭 — 논의 중인 콘텐츠 모델 (아직 목업 없음, 구조 논의 단계)
 
@@ -188,26 +202,346 @@ Inventory 도메인을 실제 목업에 반영함. 상단 탭바에 `Overview | 
   - 색상은 처음엔 원색(진한 초록/빨강/파랑 3색 경쟁)이라 "안 깔끔하다"는 피드백 → 막대는 `fill-opacity` 낮춰 톤 다운, 추세선/기본 점은 회색조(`--ink-muted`)로 바꾸고 warn/crit 상태일 때만 색(노랑/빨강)이 튀도록 정리.
   - 막대 두께 20% 축소, 모서리 각짐(rounded corner 제거, `rx` 속성 삭제)으로 마무리.
 
+## 2026-08-05 세션 — PRD 재정의(개요~7.2) + 목업 반영
+
+`VisibilityControlTower_PRD.md`를 처음부터(§1) 사용자와 함께 문장 단위로 리뷰하며
+여러 구조적 결정을 새로 내림. 아래는 그 결과이자 최신 상태 — 이전 세션 기록(§8
+Inventory 도메인 신설 등)과 배치되는 부분은 이 섹션이 우선한다.
+
+- **§1 개요**: "재고 정보가 화물 정보로부터 파생된다"는 표현 정정 — 재고는
+  Transportation·W&D 등 **서로 다른 소스를 결합**한 것이지 화물 정보의 파생물이
+  아님(근거: §8.4 재고 계산식 `On-hand + Inbound − Outbound`, Inbound만
+  Transportation 유래).
+- **§2 문제 정의**: "화물이 어디 있는지는 안다"는 전제가 비현실적이라는 지적 반영
+  — 위치 파악 자체가 간접 추정(AIS 등)이라 불확실하고 항만 운영 역량·정보
+  비공개에 좌우된다는 점을 명시. 비용 예시는 "D&D, PCS" → "D&D 등"으로 단순화.
+- **§3 컨셉**: 화물 상태에 국한하지 않고 업무·비용까지 아우르며, 운송 단위
+  (컨테이너/B/L) 가시성을 고객이 실제 관심 있는 **Item/SKU 단위**로 변환해
+  Transportation·W&D를 잇는다는 방향으로 재작성.
+- **§4 대상 사용자**: 단일 유형 고객군·화면 미분기 원칙은 유지하되, "화물/업무/
+  비용은 물류·수출입 운영 담당자에게, 재고는 Demand Planner·자재·구매 계획
+  담당자에게 더 직접적으로 도움될 것"이라는 참고 설명(화면 분기 근거 아님) 추가.
+- **PO → CI/PL 전환 (핵심 결정)**: 포워더가 화주로부터 PO를 직접 받는 경우는
+  현실적으로 드묾(상업기밀·화주-공급업체 간 문서라 포워더가 당사자 아님).
+  Item/SKU 정보 소스를 **PO에서 CI/PL로 전환**. 트레이드오프: Item 단위
+  가시성 시작 시점이 "부킹 이전"에서 "부킹 이후·선적 준비(CI/PL 확보) 시점"으로
+  늦춰짐. §5 백본 다이어그램 시작점을 "부킹 → 선적 준비(CI/PL 확보) → ..."로
+  수정.
+- **§7.2 업무 탭 구조 변경**: 위 전환에 따라 "PO 리스트(최상위)+부킹 리스트"
+  2단 구조를 **부킹 리스트 단일 최상위**로 재구성. PO No는 CI/PL에 찍힌
+  참조번호로 부킹 행에 참고 표시만(별도 엔티티 추적 안 함). Item/수량은 부킹
+  시점엔 "미확정", 수출통관 준비(CI/PL 확보) 시 채워짐. Port-to-Port 스케줄
+  조회 진입점도 "PO 행 프리필" → "기존 부킹 재조회(롤오버 등)"로 변경.
+  **§8.1 Inventory 도메인 모델의 `PO→PO Line→Item` 트리는 아직 이 전환을
+  반영 안 함 — §8 리뷰 시 처리 필요.**
+- **지연 사유 분석 목적 재정의 (§7.1)**: "지연 원인을 서술하는 것"이 목표가
+  아니라, 화물 도착일(FDEST ETA)을 알려주는 **여러 소스가 상충할 때 이번 건은
+  어느 소스를 더 신뢰할지 판단하는 정황 증거 수집**이 실제 역할. 2단 구조 —
+  ① 소스별 과거 정확도 이력 기반 정적 신뢰도(통계, AI 불필요), ② 건별 상충
+  시 항만혼잡도·뉴스 등 독립 신호로 신뢰도 동적 보정(AI/LLM 추론이 필요한
+  유일한 지점). 원인 서술(그래프/체인형)은 핵심 산출물이 아니라 최종
+  신뢰도 판단의 근거·투명성 표시로 격하.
+- **AI Q&A 제외**: 내용이 전혀 정의 안 된 placeholder였음(질의 범위·응답
+  데이터·다른 AI 기능과의 관계 전부 미정) — §6 IA에서 빼고 §10 미해결
+  이슈로 이관.
+- **§7.1 화물 탭 세부 수정**: On-carriage 단계는 이미 환적이 끝난 시점이라
+  TS 컬럼 불필요 → 제거(TS 칩 표기는 Pre/Main-carriage로 범위 한정). ETA는
+  대부분 선사 공지값이지만 담당자 수기 업데이트 소스도 있다는 점 명시.
+- **§7 탭 서브헤딩 변경**: 화물 "어디에 있고, 왜 그런가"→"어디에 있고, 언제
+  도착할 것인가" / 업무 "앞으로 잘 진행될 것인가"→"현재 어느 단계에 있고,
+  업무 지연은 없는가" / 비용 "돈이 새고 있거나 샐 위험이 있는가"→"불필요한
+  비용이 발생하고 있지는 않는가".
+- **`visibility_control_tower_mockup.html` 반영 완료**: 위 결정 중 화면에
+  영향 있는 것 전부 적용 — 업무 탭 PO 리스트 subblock 삭제, 부킹 리스트에
+  "관련 PO No"·"Item/수량"(미확정/확정 두 상태) 컬럼 추가(`cols-booking`
+  grid-template 9열로 조정), 상단 요약의 "PO" stat → "Item 확정(CI/PL
+  확보)" stat로 교체, note box·section-sub 문구 갱신, Port-to-Port 진입점
+  1번을 "기존 부킹 재조회"로 변경. 화물 탭 On-carriage 테이블(해상·항공)
+  TS 컬럼 제거(`cols-arrived` 6열로 조정). AI Q&A FAB(`.fab`) 및 관련 CSS
+  삭제. 정적 서버(`.claude/launch.json`에 `mockup-static` 항목 추가, python
+  http.server 8123)로 브라우저 로드해 콘솔 에러 없음·부킹 리스트 4건 렌더링·
+  Item 셀 미확정/확정 값 정상 표시 확인 완료.
+- **아직 미반영**: §8.1 Inventory 도메인 모델 트리(PO 루트 → CI/PL 루트로
+  교체 필요), §8.2 데이터 소스 표의 PO 관련 서술, §10 관련 행 일부(§7.2 PO
+  Item 표기는 CI/PL로 이미 정정함). 화물 탭 PO No 서브라인 표기는 그대로
+  두되 "CI/PL 참조 라벨"이라는 성격 명시는 아직 안 함.
+
 ## 다음 단계 (여기서부터 이어가면 됨)
 
-**재고 탭 목업 + 1차 리뷰 피드백까지 반영 완료.** 다음 세션은 여기서부터 이어서 계속 화면/문구/인터랙션 피드백 받으면 됨 (재고 탭 차트 포함, 전체적으로 세부 다듬기 단계).
+**PRD를 §1부터 §7.2까지 문장 단위로 리뷰·재정의 완료, 그중 화면에 영향 있는
+부분은 목업에도 반영 완료.** 다음 세션은 **§7.3(비용 탭)부터 이어서** 같은
+방식(문장 단위 리뷰 → 필요 시 PRD·목업 동시 수정)으로 계속하면 됨.
 
 **다음으로 할 것** (우선순위는 사용자와 상의):
-1. 재고 탭(재고 투영/입고 예정) 화면 리뷰 계속 — 남은 문구/인터랙션 피드백 반영.
-2. 재고 투영 Item 리스트 정렬 로직 정하기(Shortage 임박 순 등).
-3. 그 외 기존처럼 `visibility_control_tower_mockup.html` 화물/업무/비용 탭 리뷰 계속.
-4. 화물/업무/비용/재고 탭이 다 정리되면 → 마지막으로 통합 Overview 재구성.
+1. §7.3 비용 탭부터 PRD 리뷰 이어가기(§7.4 대안 루트 추천 → §8 Inventory → §9 → §10 순).
+2. **§8.1 Inventory 도메인 모델 트리 수정** — 이번 세션에서 정한 PO→CI/PL
+   전환을 아직 반영 안 함. `PO → PO Line → Item` 루트를 CI/PL 기준으로
+   바꿔야 함(위 "2026-08-05 세션" 기록 참고). §8 리뷰 때 최우선으로 처리.
+3. 재고 탭(재고 투영/입고 예정) 화면 리뷰 계속 — 남은 문구/인터랙션 피드백 반영.
+4. 재고 투영 Item 리스트 정렬 로직 정하기(Shortage 임박 순 등).
+5. 화물/업무/비용/재고 탭이 다 정리되면 → 마지막으로 통합 Overview 재구성.
 
 **화물 탭에서 나온 패턴 중 업무 탭에도 참고할 만한 것**: 언어 규칙(CLAUDE.md), Total/Delayed 같은 통계 표기, "정밀 수치 대신 등급/구간으로 표현"(PTA의 P50/P95 ↔ 업무 탭 스페이스 신호의 등급+추세).
 
 **화물 탭에 남아있는 미해결 항목** (나중에 돌아올 것):
 1. **"리스크" 상태 정의** — 환적 있음=리스크는 아님. 어떤 조건이면 리스크로 볼지 아직 미정.
-2. **PTA 방법론 문서화** — "과거 예측 정확도 이력 데이터 필요"라는 의존성을 기획서에도 반영할지 논의.
+2. **PTA 방법론** — "과거 예측 정확도 이력 데이터 필요"라는 의존성은 이번
+   세션에서 지연 사유 분석의 "정적 신뢰도" 산출에 그대로 쓰인다고 명확해짐
+   (`VisibilityControlTower_PRD.md` §7.1, §10). 실 raw data(컨테이너
+   트래킹/선사 스케줄/항만 혼잡도) 확보되면 파일럿 착수 가능.
 3. ~~재고 부족 시뮬레이션~~ — Inventory 도메인으로 이관됨(위 "Inventory 도메인 신설" 참고). Out의 낙관/비관 방향 미해결 이슈는 `VisibilityControlTower_PRD.md` §10로 옮겨서 계속 추적.
 4. 화물/업무/비용/Inventory 탭이 다 정리되면 → 마지막으로 **통합 Overview 재구성** (기존 계획 유지, 범위가 Transportation+Inventory로 확장됨).
 
 **업무 탭에 남아있는 미해결 의존성**:
-1. **Item 단위 연결 의존성** — PO Item 수량 → 부킹 → B/L → 컨테이너 매핑에 적입/장입 확정 데이터(Stuffing List) 필요. 대부분 Pantos 내부 시스템 연동 문제(예외: FCL 자가적입 시 고객 Packing List 필요). "데이터가 있다는 전제"로 설계 계속 진행 중. 화물 탭 Item 통합 뷰와 공유하는 의존성.
+1. **Item 단위 연결 의존성** — CI/PL Item 수량 → 부킹 → B/L → 컨테이너 매핑에 적입/장입 확정 데이터(Stuffing List) 필요(2026-08-05: 소스를 PO에서 CI/PL로 전환). 대부분 Pantos 내부 시스템 연동 문제(예외: FCL 자가적입 시 고객 Packing List 필요). "데이터가 있다는 전제"로 설계 계속 진행 중. 화물 탭 Item 통합 뷰와 공유하는 의존성.
 2. **Inland 스케줄 마스터 의존성** — Inland Routing 트럭/철도 옵션 비교(리드타임/비용/프리타임)가 성립하려면 별도 스케줄 마스터 데이터 등록이 필요. "데이터가 있다는 전제"로 설계 계속 진행 중.
 
 새 세션에서는 이 파일을 먼저 읽고, "`visibility_control_tower_mockup.html` 리뷰부터 이어가자"고 이어가면 됩니다.
+
+---
+
+## Item 단위 통합재고관리 — 신규 별도 트랙 (2026-08-07 세션 시작, 같은 세션에 다시 통합됨)
+
+기존 Visibility Control Tower는 범위가 넓어서, 그중 재고관리 하나로
+압축한 **별도 PRD**를 새로 시작함. 산출물:
+`ItemLevel_InventoryManagement_PRD.md`(현재는 삭제됨 — 아래 "PRD 재통합"
+참고). **당시엔 위 Visibility Control Tower 트랙과 독립적으로 진행**하기로
+했었음.
+
+- **제목 확정**: "Item 단위 통합재고관리" — On-hand와 In-transit(운송중
+  재고)을 같은 관리 기준으로 통합한다는 의미로 여러 후보 중 선택.
+- **v0.1(이 세션에서 Claude가 작성)**: CI/PL 확보 → 부킹/PCP 관리 →
+  국제운송관리(CP/TS/POD ETA) → POD 양하·Route Planning → FDEST
+  도착·재고계산, 5블록 구조로 초안 작성.
+- **v0.2(사용자가 별도 작업물을 docx→md로 전달)**: raw data(Tracking.xlsx/
+  CP_Vessel_List/Port Congestion) 구조를 반영한 개발 기준본. Entity
+  Model, Inventory Engine 규칙(Grain=Item×Date, Normal/Risk/Shortage
+  3단계 판정), UI 요구사항(Screen A/B), Acceptance Criteria, 테스트
+  시나리오까지 포함된 상세 스펙 — v0.1보다 훨씬 구체적이라 이 버전을
+  기준으로 프로젝트 PRD를 재작성함.
+- **v0.2 리뷰에서 사용자가 내린 3가지 결정** — 전부
+  `ItemLevel_InventoryManagement_PRD.md`에 반영 완료:
+  1. POD 양하/Route Planning(Shortage 임박도 기반 하역 우선순위) → MVP
+     제외, Phase 2 이관.
+  2. POD ETA 자체 보정 로직(선사 ETA가 비합리적일 때 자체 수정) →
+     Phase 2에서 확정할 사항으로 명시.
+  3. 입고버퍼시간 → 되살림. raw data에 실제로 `W/H In Date`(실입고일)
+     컬럼이 존재하는 걸 발견해서, 이 필드를 1순위로 쓰는 우선순위
+     로직으로 §10.1 재정의(§10.1: W/H In Date → 없으면 ATA+버퍼 →
+     없으면 ETA+버퍼).
+- **raw data 실사 검증 완료** (`raw data/Tracking.xlsx`, 155건, 110컬럼):
+  - 전량 On-board 이후 상태(POL ATD 결측 0건) — Pre-carriage 케이스가
+    이 스냅샷엔 없음.
+  - 완료건(F.DEST ATA 존재)도 0건 — 입고버퍼 로직을 실측 검증할
+    데이터가 아직 없음.
+  - 완전 동일 키(Container+Item+Model+QTY+HouseBL+Invoice) 중복 행
+    0건 — §10.2에서 우려했던 중복 케이스가 이 데이터에서는 발생하지
+    않음, Open Issue 우선순위 하향.
+  - → 부족한 케이스는 합성 데이터로 보완하기로 사용자가 확정.
+- **`synthetic-data/` 폴더 신규 생성**: 실제 Tracking.xlsx의 Model(=Item)
+  6종과 실제 Inbound 수치는 그대로 쓰고, On-hand/Outbound/Safety
+  Stock만 합성해서 Normal/Risk/Shortage/Recovery 4개 상태가 모두
+  나오도록 구성(REFRIGERATOR=Shortage→Recovery, RO
+  COMPRESSOR=Risk only, MOTOR=전기간 Normal 등). 실제 엔진 계산식으로
+  결과를 검증 완료. 엔진 단위테스트용 예외 케이스(Pre-carriage 제외,
+  입고버퍼 우선순위, 완전동일 중복, QTY 결측) 5건도 별도 생성.
+  `generate_synthetic_data.py`로 재생성 가능, `README.md`에 시나리오
+  표 정리.
+- 사용자가 Claude Design(이 세션과 별개의 새 대화)에서 화면을
+  만들어보고 싶어함 — PRD와 함께 넘길 **압축 이벤트 테이블**(REFRIGERATOR
+  Shortage→Recovery, RO COMPRESSOR Risk only 두 시나리오)을 이 세션에서
+  만들어 전달함. 그 새 대화의 결과물은 이 세션 기록에는 없음 — 다음
+  세션에서 사용자가 결과를 가져오면 리뷰.
+
+### v0.2 → v0.2-lite로 축소 (같은 세션 이어서)
+
+사용자가 "v0.2에 너무 많은 내용이 포함된 것 같다"며 별도로 정리한
+**lite 버전**을 전달, 이걸로 `ItemLevel_InventoryManagement_PRD.md`를
+교체함. lite 버전은 Entity Model 상세, DB 스키마, API Contract, AC
+리스트, 테스트 시나리오, raw data 필드 매핑 테이블, Open Issues
+테이블 등 **구현 스펙 성격의 내용을 전부 제거**하고, "지금까지 논의에서
+명확히 합의한 내용만" 담은 개념/제품 수준 문서다(19개 섹션 — Product
+Vision, 핵심 가치, Forwarding/W&D 역할, Item 정의, Inventory 계산
+개념, 3단계 상태, 핵심 화면, Drill-down, ETA Confidence, AI 역할,
+발전 방향, 미확정 사항 등).
+
+- 위 3가지 결정(POD 양하/Route Planning 제외, ETA 자체보정 제외,
+  입고버퍼시간 반영)은 무거운 스펙 형태가 아니라 **한두 문장으로
+  가볍게** 문서에 남김 — §8(입고버퍼 개념), §14(ETA 자체보정 제외),
+  §17(Next 단계에 우선순위 배정 한 줄), §18(미확정 사항 리스트에 3개
+  추가).
+- **제거된 상세 내용(AC, DB 스키마, raw data 검증 수치 등)은 삭제된
+  게 아니라 이 PROGRESS.md와 `synthetic-data/README.md`에 이미 기록되어
+  있음** — 필요하면 거기서 다시 찾을 수 있음. `synthetic-data/` 폴더
+  자체(합성 데이터·재생성 스크립트)는 그대로 유지, 화면 데모용으로
+  계속 사용 가능.
+- v0.2(무거운 버전)는 더 이상 프로젝트 파일로 남아있지 않음(교체됨) —
+  필요하면 이 PROGRESS.md 위쪽 기록으로 세부 내용을 복원 가능.
+
+### Item 단위 통합재고관리 — 다음 단계 (2026-08-07 세션 후반에 아래 "PRD 재통합"으로 처리됨, 이 목록은 기록용)
+
+1. ~~Claude Design(별도 대화)에서 화면 결과가 나오면 가져와서 리뷰~~ —
+   대신 같은 세션에서 기존 `visibility_control_tower_mockup.html`의 재고
+   탭을 직접 수정하는 쪽으로 결정(아래 "재고 탭을 실제 raw data 기반으로
+   교체" 참고).
+2. 입고버퍼시간 구체적 일수, POD 양하 우선순위, ETA 자체보정 방법론 —
+   `VisibilityControlTower_PRD.md` §10(미해결 이슈 표)으로 이관됨.
+   개발 착수 시 순서대로 확정 필요.
+3. Inventory Engine 실제 구현 착수 시 `synthetic-data/`를 입력으로
+   단위테스트 작성(위 v0.2 상세 내용 — raw data 검증 결과, 엔진 규칙
+   등 — 참고).
+
+### 2026-08-07 세션 이어서 — 재고 탭을 실제 raw data 기반으로 교체
+
+Claude Design 등 별도 자리에 새로 만드는 대신, 기존
+`visibility_control_tower_mockup.html`의 재고 탭을 직접 수정하는 쪽으로
+결정(사용자 선택 — 이미 Item 리스트/Projected 차트/드릴다운 인프라가
+갖춰져 있어 처음부터 새로 만드는 것보다 빠름). Mock 3-SKU 데이터를
+`raw data/Tracking.xlsx` 실제 6개 Item(REFRIGERATOR 등)과
+`synthetic-data/`(On-hand/Outbound/Safety Stock)로 전면 교체.
+
+- **Inbound 데이터**: `Tracking.xlsx`에서 Container+P/O 단위로 QTY 합산,
+  Item당 6~33개 컨테이너(REFRIGERATOR 10 / RO COMPRESSOR 33 / MOTOR 28 /
+  PARTS FOR REFRIGERATOR 9 / REFRIGERATORS COMPRESSOR 6 / MICROWAVE OVEN
+  2). 전량 On-board 확인 상태라 그대로 Inbound 후보로 반영, MICROWAVE
+  OVEN에만 `pipeline_precarriage.csv`의 Pre-carriage 20,000 EA를 계산
+  제외 pending 항목으로 추가.
+- **P95/P50 표기 제거**: 실제 raw data엔 확률 개념이 없어(화물 탭 PTA와는
+  다른 개념) `ItemLevel_InventoryManagement_PRD.md` §7 정의대로 "현재
+  FDEST ETA" 단일값 + "Init. ETA"(최초 예상, 지연 비교용)로 단순화.
+  관련 텍스트(노트박스·컬럼헤더·서브텍스트) 전부 갱신.
+- **Outbound 합성 데이터를 자연스럽게 개선**: 기존엔 Item당 매일 동일
+  수량이라 Projected 추세선이 완전 직선으로 나와 사용자 피드백("어색함")을
+  받음 → 요일 가중치(주말 감소) + 시드 고정 의사난수 jitter로 매번
+  같은 결과가 나오되 지그재그 형태가 되도록 수정. 원래 검증된
+  Risk/Shortage/Recovery 날짜(README 표)와 거의 동일하게 재현됨(우연히
+  REFRIGERATOR 8/14 등 그대로 일치 확인).
+- **화물 탭과의 드릴다운 정합** (사용자 결정 — "컨테이너/BL번호만 정합,
+  화물 탭 3단계 시나리오는 그대로 유지"): 화물 탭에 이미 존재하는
+  Main-carriage 컨테이너 2건(TCLU5520134/PO-24815, MSKU7712901/PO-24902)을
+  REFRIGERATOR·RO COMPRESSOR의 대표 shipment 1건씩에 재사용해서 그
+  2건만 클릭 시 실제로 화물 탭 상세로 연결되도록 함. 나머지 실제
+  컨테이너(86건)는 원래 번호 그대로 두고, 클릭하면 기존에 있던 graceful
+  fallback(toast: "이 목업 데이터엔 상세가 없습니다")으로 처리 — 화물/업무/
+  비용 탭에 이미 깊게 얽혀있는 기존 컨테이너 ID(TCLU5520134 등)를 실제
+  raw data 번호로 통째로 rename하는 건 다른 탭(업무 탭 부킹, 비용 탭 D&D
+  리스트 등)까지 대규모로 건드리는 위험이 있어 하지 않음 — 대신 재고
+  탭 쪽에서 기존 ID를 "재사용"하는 방향으로 최소 침습적으로 처리함.
+- **버그 발견·수정 (이번 작업과 무관한 기존 이슈)**: 파일에
+  `<meta charset="UTF-8">`이 아예 없어서 로컬 정적 서버로 열면 한글이
+  깨지는 문제 발견(브라우저 검증 중 실제로 깨진 화면 확인) — `<title>`
+  앞에 charset 메타 태그 추가로 수정. 화물/업무/비용 탭도 이 수정으로
+  더 이상 안 깨짐(회귀 없음 확인).
+- **UI 보강**: 일자별 상세 수치 테이블(최대 55일치)과 Inbound Schedule
+  리스트(최대 33건)가 길어져서 `#inv-d-timeline-rows`/
+  `#inv-d-shipment-rows`에 `max-height:380px; overflow-y:auto` 추가.
+  차트 x축 라벨도 촘촘해지지 않도록 최대 12개만 샘플링해서 표시.
+- **브라우저 검증 완료**: 6개 Item 리스트, REFRIGERATOR 상세(차트+일자별
+  표+Shortage 배너 8/14), MICROWAVE OVEN pending 표시, Inbound 88건
+  리스트, 화물 탭 드릴다운 성공 케이스(TCLU5520134)와 실패 fallback
+  케이스(HAMU2277719) 모두 확인, 콘솔 에러 없음, 다른 탭 회귀 없음.
+- **아직 안 한 것**: 나머지 84건의 실제 컨테이너도 화물 탭에 완전히
+  연결하려면 화물 탭 쪽에 새 detail 데이터를 만들어야 함(이번엔 범위에서
+  제외). 아직 커밋 안 됨.
+
+### 같은 세션 이어서 — 합성 W&D 수치 재조정 (사용자 피드백 3건 반영)
+
+재고 탭을 실데이터 기반으로 바꾼 뒤 사용자가 화면을 보고 준 연속 피드백을
+반영해 On-hand/Safety Stock/Outbound 합성 수치를 다시 조정함.
+
+1. **"Outbound 물량이 너무 적어 보임"**: 기존 W&D 합성 수치(§v0.2, On-hand
+   2~6만/Safety Stock 1.5~3만)가 실제 raw data의 입고 Lot 크기(한 번에
+   3만~40만 EA)에 비해 지나치게 작아서, 입고 1건이 재고를 10배 이상
+   튀어오르게 만들고 그 뒤로는 계속 우하향만 하는 그림이 나왔음 —
+   Outbound가 상대적으로 무의미하게 작아 보이는 원인이었음.
+2. **"Inbound가 가끔씩 들어와서 회복하는 모습이어야 하는데 한 번 왕창
+   들어왔다가 계속 떨어지기만 함"**: `Tracking.xlsx`의 실제 FDEST ETA
+   분포를 확인해보니 REFRIGERATOR/PARTS FOR REFRIGERATOR는 입고가 사실상
+   1~2개 날짜에 몰려있고(대량 벌크 발주 패턴), RO COMPRESSOR/MOTOR는
+   3~5개 날짜에 분산되어 있어 — 이건 데이터 자체의 특성이라 없는 입고를
+   지어내지 않는 선에서, Outbound 스케일을 실제 총 입고량에 비례하게
+   재계산(요일 가중치+고정 시드 의사난수로 자연스러운 지그재그 추가)해서
+   해결.
+3. **"재고 과다도 문제 아니냐(창고보관료)"**: 위 대응 과정에서 On-hand를
+   과도하게 높여(Safety Stock의 2배 이상) 아예 안 떨어지게 만들었던 것을,
+   Safety Stock의 약 1.3배 수준으로 다시 낮춰서 큰 입고 이후에도 계속
+   여유재고로 남지 않고 자연스럽게 다시 내려오도록 조정.
+
+최종 결과(6개 Item 중): **Shortage(문제) 2개**(MOTOR, REFRIGERATORS
+COMPRESSOR), **Safety Stock 이하(잠깐 타이트했다가 회복)** 4개 — 전부
+문제처럼 보이지도, 전부 과잉재고로 보이지도 않는 균형점. REFRIGERATOR/
+RO COMPRESSOR처럼 입고 1건이 40만 EA대로 유독 큰 Item은 입고 직후 한동안
+여유재고 구간이 남는데, 이는 실제 대량 벌크 발주 패턴을 정직하게 반영한
+것이라 데이터를 더 조작하지 않고 그대로 둠(사용자에게 설명 완료).
+
+### 같은 세션 이어서 — `ItemLevel_InventoryManagement_PRD.md`를 `VisibilityControlTower_PRD.md`로 재통합
+
+사용자가 "재고 탭이 이미 같은 목업 파일에 구현돼 있는데 PRD만 계속
+별도로 유지할 이유가 있냐"고 문제 제기 → 동의하고 병합 진행.
+
+- `VisibilityControlTower_PRD.md` §8(Inventory 기능요구사항)을
+  `ItemLevel_InventoryManagement_PRD.md`(v0.2-lite, 19개 섹션) 최신
+  내용으로 전면 교체. §8.1(도메인 모델)은 CI/PL 루트를 유지하되 raw
+  data의 `Model`=Item 매핑 설명을 추가. §8.4(Inbound 인식 시점)에
+  On-board 확인 물량만 반영, 입고버퍼 우선순위(W/H In Date → ATA+버퍼 →
+  ETA+버퍼), Confirmed/Planning Projection 분리 개념을 새로 추가.
+  §8.6(ETA Confidence), §8.8(AI 역할), §8.9(MVP 검증 목적),
+  §8.10(raw data 검증 결과), §8.11(발전 방향)은 신규 섹션.
+- §10 미해결 이슈 표에 ItemLevel PRD §18의 미확정 사항(입고버퍼 일수,
+  POD 양하 우선순위, ETA 자체보정, News 연결 방식 등) 전부 이관.
+- §1 상태·버전(v1.3→v1.4), §13 진행 현황, §14 다음 단계도 갱신.
+- `ItemLevel_InventoryManagement_PRD.md` 파일은 삭제. 이제 프로젝트에
+  Visibility Control Tower 트랙 하나만 존재 — 새 세션 시작 시 더 이상
+  "어느 트랙을 이어갈지" 물어볼 필요 없음(이 문서 상단 안내 갱신 완료).
+- 아직 커밋 안 됨.
+
+### 같은 세션 이어서 — 재고 탭 6개 Item에 서로 다른 시나리오 아키타입 부여
+
+사용자 피드백: "지금은 6개 Item이 다 8/10 이후에 Safety Stock 이하나
+Shortage가 나오는 비슷한 모양이다 — 관리 잘되는 사례/왕창 입고 후 소진되는
+사례/입고만 있고 출고가 적어 계속 늘어나는 사례처럼 다양하게 만들어달라."
+→ 6개 Item을 2개씩 3가지 아키타입으로 재배정(각 Item의 실제 Inbound
+클러스터 개수·크기 패턴에 맞춰 배정 — 없는 입고를 지어내지 않는 원칙
+유지):
+
+| 아키타입 | Item | 근거 |
+|---|---|---|
+| **관리 잘됨** (주기적 입고+꾸준한 소진, Shortage 없이 SS 근처 유지) | RO COMPRESSOR(ROTARY COMPRESSOR), REFRIGERATORS COMPRESSOR | RO COMPRESSOR는 실제 입고가 8/17·19·24·26·31 총 5개 클러스터로 분산돼 있어 주기적 보충 그림이 자연스러움 |
+| **부족** (왕창 입고 후 소진 → Shortage, 이후 추가 입고 없어 재차 악화) | MOTOR, PARTS FOR REFRIGERATOR | 마지막 실제 입고(MOTOR 8/31, PARTS 8/26) 이후 9월엔 입고가 없어 그대로 두면 자연히 소진되는 real raw data 특성을 그대로 살림 |
+| **과잉** (입고는 크게 들어오는데 Outbound가 상대적으로 작아 계속 누적) | REFRIGERATOR, MICROWAVE OVEN | 실제 입고 1건이 압도적으로 큰(REFRIGERATOR 40만+ EA) Item — Outbound 배율을 의도적으로 낮게 잡아 "발주는 컸는데 소진이 느린" 과잉재고 신호를 보여줌 |
+
+각 아키타입은 On-hand/Safety Stock/일일 출고량(dailyOutbound)만 조정해서
+만들었고(Inbound 자체는 실데이터 그대로), "관리 잘됨" 2종은 절대 Shortage로
+안 내려가게(최소 잔량이 항상 양수) 파라미터를 확인 후 미세조정함. 최종
+상태: Shortage 2종(MOTOR·PARTS FOR REFRIGERATOR), 나머지 4종은 Safety
+Stock 이하 배지가 잠깐 뜨지만 그 뒤 궤적이 서로 다름(관리형은 SS 근처로
+안정, 과잉형은 SS 대비 5배 이상으로 계속 높게 유지) — 브라우저로 4개 Item
+차트 직접 확인해 의도한 모양대로 나오는 것 검증 완료.
+
+사용자가 "리스트 배지 자체는 왜 다 8/10 근처로 비슷해 보이냐"고 재차
+질문 → 배지는 "지금까지 한 번이라도 SS 밑으로 내려간 적 있는가"만
+판정하는 구조라 6개 다 기준일~첫 입고(대부분 8/17 이후) 사이 공백에서
+비슷하게 한 번씩 걸릴 수밖에 없고, 실제 차이는 그 이후 회복 모양(차트를
+열어야 보임)에 있다고 설명함. 리스트 단계에서부터 구분하려면 "과잉재고"를
+Normal/Risk/Shortage 3단계와 별도인 4번째 상태로 추가해야 하는데, 이번
+세션에서는 반영 안 하고 다음에 필요하면 결정하기로 함(`VisibilityControlTower_PRD.md`
+§8.5 상태 판정 로직 변경이 필요한 사항).
+
+### 같은 세션 이어서 — 재고관리 Agent 논의 시작 (설계 착수 전, 다음 세션으로 이관)
+
+"재고 상태 보고 발주/발주중단 판단하는 에이전트 만들면 어떨지" 질문에
+대한 논의. 결론(상세는 `VisibilityControlTower_PRD.md` §8.12 참고):
+단순 임계값 판단(재고<SS→발주, 과다재고→중단)은 룰 베이스로 충분하고
+에이전트가 필요 없다(§8.5 Normal/Risk/Shortage 판정이 이미 그 역할).
+에이전트가 값어치를 하는 지점은 Port Congestion·News·ETA Confidence·
+Supply Pipeline처럼 정형화 안 된 신호를 종합해 발주 의사결정을 권고하는
+한 단계 위 — 이는 §8.11 Advanced/Target Vision에 방향만 있고 설계 전인
+영역과 일치. **다음 세션에서 이 에이전트를 새로 설계하기로 함** — 이번
+세션에서는 방향성 합의만 하고 입력 신호·판단 로직·출력 형태 등 구체
+설계는 시작하지 않았음.
+
+### 커밋
+
+위 모든 변경사항(재고 탭 실데이터 반영, 아키타입 다양화, PRD 통합,
+`.md` 문서 갱신)을 하나의 커밋으로 정리함 — 커밋 메시지·해시는 `git log`
+참고.

@@ -1,3 +1,4 @@
+<meta charset="UTF-8" />
 <title>Visibility Control Tower — 통합 목업 v1</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <style>
@@ -43,19 +44,41 @@
   }
   .num { font-family: "SFMono-Regular","JetBrains Mono",ui-monospace,Consolas,monospace; font-variant-numeric: tabular-nums; }
 
-  /* ===== shared: topnav / search ===== */
-  .topnav { display:flex; align-items:center; gap:24px; padding:14px 28px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:30; }
-  .brand-mark { width:26px; height:26px; border-radius:7px; background:linear-gradient(155deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#123)); flex-shrink:0; }
-  .brand-title { font-size:13.5px; font-weight:700; color:var(--ink); white-space:nowrap; }
-  .tabs { display:flex; gap:4px; flex-shrink:0; }
-  .tab { padding:7px 14px; border-radius:8px; color:var(--ink-muted); font-weight:600; font-size:13.5px; white-space:nowrap; cursor:pointer; }
+  /* ===== icon system (lucide-style, mask-based so no HTML/JS strings need to change) ===== */
+  :root {
+    --ico-chevron-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E");
+    --ico-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+    --ico-sparkles: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z'/%3E%3C/svg%3E");
+    --ico-ship: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 10.189V14'/%3E%3Cpath d='M12 2v3'/%3E%3Cpath d='M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6'/%3E%3Cpath d='M19.38 20A11.6 11.6 0 0 0 21 14l-8.188-3.639a2 2 0 0 0-1.624 0L3 14a13.4 13.4 0 0 0 .245 2.187'/%3E%3Cpath d='M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1'/%3E%3C/svg%3E");
+    --ico-plane: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z'/%3E%3C/svg%3E");
+    --ico-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='7' height='7' x='3' y='3' rx='1'/%3E%3Crect width='7' height='7' x='14' y='3' rx='1'/%3E%3Crect width='7' height='7' x='14' y='14' rx='1'/%3E%3Crect width='7' height='7' x='3' y='14' rx='1'/%3E%3C/svg%3E");
+    --ico-truck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2'/%3E%3Cpath d='M15 18H9'/%3E%3Cpath d='M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14'/%3E%3Ccircle cx='17' cy='18' r='2'/%3E%3Ccircle cx='7' cy='18' r='2'/%3E%3C/svg%3E");
+    --ico-package: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73Z'/%3E%3Cpath d='M12 22V12'/%3E%3Cpath d='m3.3 7 8.7 5 8.7-5'/%3E%3C/svg%3E");
+    --ico-clipboard: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='8' height='4' x='8' y='2' rx='1'/%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Cpath d='M12 11h4'/%3E%3Cpath d='M12 16h4'/%3E%3Cpath d='M8 11h.01'/%3E%3Cpath d='M8 16h.01'/%3E%3C/svg%3E");
+    --ico-wallet: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4Z'/%3E%3C/svg%3E");
+    --ico-warehouse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z'/%3E%3Cpath d='M6 18h12'/%3E%3Cpath d='M6 14h12'/%3E%3Crect width='12' height='12' x='6' y='10'/%3E%3C/svg%3E");
+    --ico-clock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='12 6 12 12 16 14'/%3E%3C/svg%3E");
+    --ico-trending-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 17 13.5 8.5 8.5 13.5 2 7'/%3E%3Cpolyline points='16 17 22 17 22 11'/%3E%3C/svg%3E");
+  }
+
+  /* ===== shared: topnav ===== */
+  .topnav { display:flex; align-items:center; gap:14px; padding:14px 28px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:30; }
+  .customer-mark { width:26px; height:26px; border-radius:7px; background:linear-gradient(155deg,#5b6472,#2b323c); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10.5px; font-weight:700; letter-spacing:.2px; }
+  .customer-mark::before { content:'MT'; }
+  .customer-name { font-size:13.5px; font-weight:700; color:var(--ink); white-space:nowrap; }
+  .topnav > .nav-divider:first-of-type { margin-left:2px; }
+  .brand-title { font-size:13px; font-weight:600; color:var(--ink-muted); white-space:nowrap; }
+  .tabs { display:flex; gap:4px; flex-shrink:0; margin-left:8px; }
+  .tab { padding:7px 14px; border-radius:8px; color:var(--ink-muted); font-weight:600; font-size:13.5px; white-space:nowrap; cursor:pointer; display:flex; align-items:center; gap:7px; }
   .tab.active { background:var(--accent-soft); color:var(--accent); }
+  .tab::before { content:''; display:inline-block; width:15px; height:15px; flex-shrink:0; background-color:currentColor; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  .tab[data-tab="overview"]::before { -webkit-mask-image:var(--ico-grid); mask-image:var(--ico-grid); }
+  .tab[data-tab="cargo"]::before { -webkit-mask-image:var(--ico-package); mask-image:var(--ico-package); }
+  .tab[data-tab="operation"]::before { -webkit-mask-image:var(--ico-clipboard); mask-image:var(--ico-clipboard); }
+  .tab[data-tab="cost"]::before { -webkit-mask-image:var(--ico-wallet); mask-image:var(--ico-wallet); }
+  .tab[data-tab="inventory"]::before { -webkit-mask-image:var(--ico-warehouse); mask-image:var(--ico-warehouse); }
   .nav-divider { width:1px; align-self:stretch; background:var(--border); margin:2px 2px; }
   .topnav-spacer { flex:1; }
-  .search { display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:8px 12px; width:320px; }
-  .search input { border:none; background:transparent; outline:none; font-size:13px; color:var(--ink); width:100%; font-family:inherit; }
-  .search input::placeholder { color:var(--ink-faint); }
-  .search .sicon { color:var(--ink-faint); font-size:13px; }
 
   /* ===== shared: tab-panel switching ===== */
   .tab-panel { display:none; }
@@ -71,28 +94,41 @@
   .jump-btn { display:flex; align-items:center; gap:7px; border:1px solid var(--border); background:var(--surface); border-radius:9px; padding:8px 13px; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--ink); font-family:inherit; }
   .jump-btn:hover { border-color:var(--border-strong); }
   .jump-btn .mi { width:8px; height:8px; border-radius:2px; }
+  [data-jump="sec-sea"] .mi, [data-jump="sec-air"] .mi { width:14px; height:14px; border-radius:0; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  [data-jump="sec-sea"] .mi { background-color:var(--accent2) !important; -webkit-mask-image:var(--ico-ship); mask-image:var(--ico-ship); }
+  [data-jump="sec-air"] .mi { background-color:var(--accent) !important; -webkit-mask-image:var(--ico-plane); mask-image:var(--ico-plane); }
+  [data-jump="sec-prep"] .mi, [data-jump="sec-arrival"] .mi, [data-jump="sec-monthly"] .mi, [data-jump="sec-dnd"] .mi { width:14px; height:14px; border-radius:0; background-color:var(--ink-muted) !important; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  [data-jump="sec-prep"] .mi { -webkit-mask-image:var(--ico-clipboard); mask-image:var(--ico-clipboard); }
+  [data-jump="sec-arrival"] .mi { -webkit-mask-image:var(--ico-truck); mask-image:var(--ico-truck); }
+  [data-jump="sec-monthly"] .mi { -webkit-mask-image:var(--ico-wallet); mask-image:var(--ico-wallet); }
+  [data-jump="sec-dnd"] .mi { -webkit-mask-image:var(--ico-clock); mask-image:var(--ico-clock); }
   .jump-btn .cnt { color:var(--ink-faint); font-weight:500; }
   .back-btn { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--surface); border-radius:9px; padding:7px 12px; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--ink-muted); font-family:inherit; margin-bottom:16px; }
   .back-btn:hover { color:var(--ink); border-color:var(--border-strong); }
 
   .section-block { margin-bottom:38px; scroll-margin-top:20px; }
   .section-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:8px; }
-  .section-title { font-size:16.5px; font-weight:700; }
+  .section-title { font-size:16.5px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  #sec-prep .section-title::before, #sec-arrival .section-title::before, #sec-monthly .section-title::before, #sec-dnd .section-title::before { content:''; display:inline-block; width:17px; height:17px; flex-shrink:0; background-color:var(--ink-muted); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  #sec-prep .section-title::before { -webkit-mask-image:var(--ico-clipboard); mask-image:var(--ico-clipboard); }
+  #sec-arrival .section-title::before { -webkit-mask-image:var(--ico-truck); mask-image:var(--ico-truck); }
+  #sec-monthly .section-title::before { -webkit-mask-image:var(--ico-wallet); mask-image:var(--ico-wallet); }
+  #sec-dnd .section-title::before { -webkit-mask-image:var(--ico-clock); mask-image:var(--ico-clock); }
   .section-sub { font-size:12px; color:var(--ink-faint); margin-bottom:16px; }
 
   .summary { display:grid; grid-template-columns:1.3fr repeat(3,1fr); gap:12px; margin-bottom:26px; }
-  .stat { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:15px 17px; cursor:pointer; transition:border-color .12s ease; }
+  .stat { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 17px; cursor:pointer; transition:border-color .12s ease; display:flex; flex-direction:column; align-items:center; text-align:center; }
   .stat:hover { border-color:var(--border-strong); }
-  .stat-label { font-size:11.5px; color:var(--ink-muted); margin-bottom:9px; text-transform:uppercase; letter-spacing:.02em; font-weight:700; }
-  .stat-figures { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .stat-label { font-size:11.5px; color:var(--ink-muted); margin-bottom:16px; text-transform:uppercase; letter-spacing:.02em; font-weight:700; }
+  .stat-figures { display:flex; align-items:baseline; justify-content:center; gap:5px; flex-wrap:wrap; }
   .stat-figures .total-v { font-size:21px; font-weight:700; letter-spacing:-.01em; }
   .stat-figures .total-l { font-size:11px; color:var(--ink-faint); }
-  .stat-figures .delayed-v { font-size:21px; font-weight:700; color:var(--crit); letter-spacing:-.01em; }
+  .stat-figures .delayed-v { font-size:21px; font-weight:700; color:var(--crit); letter-spacing:-.01em; margin-left:9px; }
   .stat-figures .delayed-l { font-size:11px; color:var(--crit); opacity:.85; }
-  .stat-hero { display:flex; flex-direction:column; justify-content:center; }
+  .stat-hero { justify-content:center; }
   .stat-hero .stat-figures .total-v { font-size:28px; }
   .stat-hero .stat-figures .delayed-v { font-size:28px; }
-  .split-row { display:flex; gap:14px; margin-top:10px; font-size:11.5px; color:var(--ink-muted); }
+  .split-row { display:flex; justify-content:center; gap:14px; margin-top:16px; font-size:11.5px; color:var(--ink-muted); }
   .split-row b { color:var(--ink); }
   .trend-line { margin-top:9px; font-size:11.5px; color:var(--ink-muted); }
   .trend-line.up { color:var(--crit); }
@@ -116,7 +152,8 @@
 
   .cell-id { font-weight:700; }
   .cell-sub { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
-  .chev { color:var(--ink-faint); text-align:right; }
+  .chev { color:var(--ink-faint); text-align:right; font-size:0; }
+  .chev::before { content:''; display:inline-block; width:15px; height:15px; background-color:currentColor; -webkit-mask-image:var(--ico-chevron-right); mask-image:var(--ico-chevron-right); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; }
   .list-row.selected .chev { color:var(--accent); }
 
   .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:100px; font-size:11.5px; font-weight:700; white-space:nowrap; }
@@ -147,7 +184,6 @@
   .block-title { font-size:15px; font-weight:700; }
   .block-sub { font-size:12px; color:var(--ink-faint); }
 
-  .fab { position:fixed; right:26px; bottom:26px; width:52px; height:52px; border-radius:50%; background:var(--accent); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-size:21px; box-shadow:var(--shadow); z-index:20; }
   .toast { position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(12px); background:var(--ink); color:var(--bg); padding:11px 18px; border-radius:9px; font-size:12.5px; opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease; box-shadow:var(--shadow); white-space:nowrap; z-index:20; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
@@ -156,8 +192,11 @@
 
   /* ===== 화물 탭 전용 ===== */
   .unit-toggle { display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:3px; gap:2px; }
-  .unit-btn { border:none; background:transparent; cursor:pointer; padding:7px 14px; border-radius:7px; font-size:12.5px; font-weight:600; color:var(--ink-muted); font-family:inherit; }
+  .unit-btn { border:none; background:transparent; cursor:pointer; padding:7px 14px; border-radius:7px; font-size:12.5px; font-weight:600; color:var(--ink-muted); font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
   .unit-btn.active { background:var(--surface); color:var(--ink); box-shadow:var(--shadow); }
+  .unit-btn[data-invtab]::before { content:''; display:inline-block; width:13px; height:13px; flex-shrink:0; background-color:currentColor; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  .unit-btn[data-invtab="projection"]::before { -webkit-mask-image:var(--ico-trending-down); mask-image:var(--ico-trending-down); }
+  .unit-btn[data-invtab="inbound"]::before { -webkit-mask-image:var(--ico-package); mask-image:var(--ico-package); }
   .unit-hint { font-size:11.5px; color:var(--ink-faint); margin-top:6px; max-width:540px; }
 
   .item-empty { padding:44px 20px; text-align:center; color:var(--ink-faint); font-size:13px; border:1px dashed var(--border-strong); border-radius:12px; }
@@ -187,11 +226,18 @@
   .mode-chip { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:100px; }
   .mode-chip.sea { background:var(--accent2-soft); color:var(--accent2); }
   .mode-chip.air { background:var(--accent-soft); color:var(--accent); }
+  [data-leg="pre"] .mode-chip::before, [data-leg="main"] .mode-chip::before, [data-leg="on"] .mode-chip::before { content:''; display:inline-block; width:9px; height:9px; flex-shrink:0; background-color:currentColor; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  [data-leg="main"] .mode-chip.sea::before { -webkit-mask-image:var(--ico-ship); mask-image:var(--ico-ship); }
+  [data-leg="main"] .mode-chip.air::before { -webkit-mask-image:var(--ico-plane); mask-image:var(--ico-plane); }
+  [data-leg="pre"] .mode-chip::before, [data-leg="on"] .mode-chip::before { -webkit-mask-image:var(--ico-truck); mask-image:var(--ico-truck); }
 
   .mode-section { margin-bottom:34px; scroll-margin-top:20px; }
   .mode-head { display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
   .mode-title { font-size:15.5px; font-weight:700; display:flex; align-items:center; gap:8px; }
   .mode-title .mi { width:9px; height:9px; border-radius:2px; }
+  #sec-sea .mode-title .mi, #sec-air .mode-title .mi { width:16px; height:16px; border-radius:0; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  #sec-sea .mode-title .mi { background-color:var(--accent2) !important; -webkit-mask-image:var(--ico-ship); mask-image:var(--ico-ship); }
+  #sec-air .mode-title .mi { background-color:var(--accent) !important; -webkit-mask-image:var(--ico-plane); mask-image:var(--ico-plane); }
   .mode-count { font-size:12px; color:var(--ink-faint); }
   .status-tabs { display:flex; gap:4px; margin-left:auto; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:3px; }
   .status-btn { border:none; background:transparent; cursor:pointer; padding:6px 12px; border-radius:7px; font-size:12px; font-weight:600; color:var(--ink-muted); font-family:inherit; }
@@ -204,7 +250,7 @@
   .list-table.active { display:block; }
   .cols-loading { grid-template-columns: 1.4fr .9fr 1.1fr .85fr .95fr .8fr 18px; }
   .cols-transit { grid-template-columns: 1.4fr .8fr 1.1fr 1.1fr .55fr 1.3fr .9fr 18px; }
-  .cols-arrived { grid-template-columns: 1.5fr .9fr 1fr 1fr .6fr .9fr 18px; }
+  .cols-arrived { grid-template-columns: 1.5fr .9fr 1fr 1fr .9fr 18px; }
 
   .ts-chip { display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--ink-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:3px 8px; }
   .ts-chip.has-ts { color:var(--accent2); background:var(--accent2-soft); border-color:var(--accent2-soft-border); }
@@ -250,10 +296,10 @@
 
   /* ===== 업무 탭 전용 ===== */
   .schedule-entry-btn { display:flex; align-items:center; gap:7px; border:1px solid var(--accent-soft-border); background:var(--accent-soft); color:var(--accent); border-radius:9px; padding:8px 14px; cursor:pointer; font-size:12.5px; font-weight:700; font-family:inherit; }
+  .schedule-entry-btn::before { content:''; display:inline-block; width:13px; height:13px; flex-shrink:0; background-color:currentColor; -webkit-mask-image:var(--ico-search); mask-image:var(--ico-search); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
   .schedule-entry-btn:hover { border-color:var(--accent); }
 
-  .cols-po { grid-template-columns: 1.3fr 1.6fr .9fr 1.1fr 1fr; }
-  .cols-booking { grid-template-columns: 1.1fr 1.1fr .8fr 1fr 1.7fr .9fr 1fr 18px; }
+  .cols-booking { grid-template-columns: 1.1fr 1.1fr 1.3fr .8fr 1fr 1.7fr .9fr 1fr 18px; }
   .cols-arrival { grid-template-columns: 1.3fr 1.2fr 1.3fr .8fr 1fr 18px; }
   .cols-schedule { grid-template-columns: .9fr 1.2fr .8fr .8fr .7fr .5fr .9fr 1fr; }
 
@@ -375,6 +421,7 @@
   .inv-summary-card .ifig.ss .v { color:var(--warn); }
 
   .ptimeline-table { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  #inv-d-timeline-rows, #inv-d-shipment-rows { max-height:380px; overflow-y:auto; display:block; }
   .ptimeline-row { display:grid; grid-template-columns: 1fr 1fr 1fr 1.3fr 1.4fr; gap:10px; align-items:center; padding:11px 16px; border-bottom:1px solid var(--border); font-size:12.5px; }
   .ptimeline-row:last-child { border-bottom:none; }
   .ptimeline-row.head { background:var(--surface-2); font-size:10.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
@@ -417,7 +464,9 @@
 
 <div class="app">
   <div class="topnav">
-    <div class="brand-mark"></div>
+    <div class="customer-mark"></div>
+    <div class="customer-name">Meridian Trading Co.</div>
+    <div class="nav-divider"></div>
     <div class="brand-title">Visibility Control Tower</div>
     <div class="tabs">
       <div class="tab" data-tab="overview">Overview</div>
@@ -429,10 +478,6 @@
       <div class="tab" data-tab="inventory">재고</div>
     </div>
     <div class="topnav-spacer"></div>
-    <div class="search">
-      <span class="sicon">⌕</span>
-      <input type="text" id="global-search" placeholder="B/L · Container · Item · PO No 검색" />
-    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -481,17 +526,17 @@
             <span><span class="mode-chip air">Air</span> <b class="num">32</b></span>
           </div>
         </div>
-        <div class="stat">
+        <div class="stat" data-leg="pre">
           <div class="stat-label">Pre-carriage</div>
           <div class="stat-figures"><span class="total-v num">28</span><span class="total-l">건</span><span class="delayed-v num">4</span><span class="delayed-l">지연</span></div>
           <div class="split-row"><span><span class="mode-chip sea">Sea</span> <b class="num">22</b>/<span class="num" style="color:var(--crit)">3</span></span><span><span class="mode-chip air">Air</span> <b class="num">6</b>/<span class="num" style="color:var(--crit)">1</span></span></div>
         </div>
-        <div class="stat">
+        <div class="stat" data-leg="main">
           <div class="stat-label">Main-carriage</div>
           <div class="stat-figures"><span class="total-v num">61</span><span class="total-l">건</span><span class="delayed-v num">9</span><span class="delayed-l">지연</span></div>
           <div class="split-row"><span><span class="mode-chip sea">Sea</span> <b class="num">46</b>/<span class="num" style="color:var(--crit)">7</span></span><span><span class="mode-chip air">Air</span> <b class="num">15</b>/<span class="num" style="color:var(--crit)">2</span></span></div>
         </div>
-        <div class="stat">
+        <div class="stat" data-leg="on">
           <div class="stat-label">On-carriage</div>
           <div class="stat-figures"><span class="total-v num">39</span><span class="total-l">건</span><span class="delayed-v num">4</span><span class="delayed-l">지연</span></div>
           <div class="split-row"><span><span class="mode-chip sea">Sea</span> <b class="num">28</b>/<span class="num" style="color:var(--crit)">3</span></span><span><span class="mode-chip air">Air</span> <b class="num">11</b>/<span class="num" style="color:var(--crit)">1</span></span></div>
@@ -501,7 +546,7 @@
       <!-- ===== SEA ===== -->
       <section class="mode-section" id="sec-sea">
         <div class="mode-head">
-          <div class="mode-title"><span class="mi" style="background:var(--accent2)"></span>해상 <span class="mode-count num">96 · Container 84 / HBL 12</span></div>
+          <div class="mode-title"><span class="mi" style="background:var(--accent2)"></span>해상 <span class="mode-count num">96</span></div>
           <div class="status-tabs" data-scope="sea">
             <button class="status-btn" data-status="loading">Pre-carriage</button>
             <button class="status-btn active" data-status="transit">Main-carriage</button>
@@ -571,13 +616,12 @@
 
           <!-- On-carriage -->
           <div class="list-table" data-scope="sea" data-status="arrived">
-            <div class="list-row head cols-arrived"><div>Container / HBL</div><div>POL → POD</div><div>FDEST ETA</div><div>D&D LFD</div><div>TS</div><div>상태</div><div></div></div>
+            <div class="list-row head cols-arrived"><div>Container / HBL</div><div>POL → POD</div><div>FDEST ETA</div><div>D&D LFD</div><div>상태</div><div></div></div>
             <div class="list-row cols-arrived" data-row="s-a1">
               <div><div class="cell-id num">HLXU3308719</div><div class="cell-sub num">BL HDMUBUS0330871</div><div class="cell-sub num">PO-24650</div></div>
               <div class="num">Long Beach → Phoenix DC</div>
               <div class="num">7/26</div>
               <div class="num" style="color:var(--warn); font-weight:700;">7/31</div>
-              <div><span class="ts-chip has-ts">TS 1</span></div>
               <div><span class="pill warn"><span class="dot" style="background:var(--warn)"></span>LFD 임박</span></div>
               <div class="chev">›</div>
             </div>
@@ -586,7 +630,6 @@
               <div class="num">Hamburg → Munich DC</div>
               <div class="num">7/24</div>
               <div class="num">8/02</div>
-              <div><span class="ts-chip">TS 0</span></div>
               <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>정상</span></div>
               <div class="chev">›</div>
             </div>
@@ -645,13 +688,12 @@
           </div>
 
           <div class="list-table" data-scope="air" data-status="arrived">
-            <div class="list-row head cols-arrived"><div>HBL</div><div>POL → POD</div><div>FDEST ETA</div><div>D&D LFD</div><div>TS</div><div>상태</div><div></div></div>
+            <div class="list-row head cols-arrived"><div>HBL</div><div>POL → POD</div><div>FDEST ETA</div><div>D&D LFD</div><div>상태</div><div></div></div>
             <div class="list-row cols-arrived" data-row="a-a1">
               <div><div class="cell-id num">SEL-AIR-87990</div><div class="cell-sub num">PO-24700</div></div>
               <div class="num">Narita → Tokyo DC</div>
               <div class="num">7/25, 09:10</div>
               <div>해당없음</div>
-              <div><span class="ts-chip">TS 0</span></div>
               <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>정상</span></div>
               <div class="chev">›</div>
             </div>
@@ -772,19 +814,20 @@
       <!-- ===== MAIN VIEW ===== -->
       <div id="op-main-view">
         <div class="note">
-          <b>검토 포인트</b> — PO는 <b>부킹 여부까지만</b> 보여주는 입구 리스트이고, Cut-off·통관·B/L처럼 그 이후 단계는 전부
-          <b>부킹 단위</b>로 별도 리스트에 담았습니다(부킹 1개에 PO 여러 개가 묶일 수 있어서). 게이트인·On-board 같은 화물의
-          물리적 이동은 <b>화물 탭 소관</b>이라 여기선 다루지 않습니다(업무 탭 = 능동적 행정 액션만). "도착 준비" 섹션은 화물 탭과
-          <b>같은 컨테이너/HBL 데이터</b>를 "통관·Inland Routing 액션" 관점으로 재구성한 것이라 별도 데이터가 아닙니다.
-          Item 단위 연결(PO→부킹→B/L→컨테이너)과 Inland 스케줄 마스터는 아직 <b>미해결 데이터 의존성</b>입니다(있다는 전제로 설계).
+          <b>검토 포인트</b> — 포워더가 화주로부터 PO를 직접 받는 경우는 드물어서, 최상위 리스트는 <b>부킹</b>입니다. Item/수량은
+          부킹 시점엔 미확정이고, <b>CI/PL이 확보되는 수출통관 준비 시점</b>에 채워집니다. 관련 PO No가 있으면 참고용 라벨로만
+          표시합니다. 게이트인·On-board 같은 화물의 물리적 이동은 <b>화물 탭 소관</b>이라 여기선 다루지 않습니다(업무 탭 = 능동적
+          행정 액션만). "도착 준비" 섹션은 화물 탭과 <b>같은 컨테이너/HBL 데이터</b>를 "통관·Inland Routing 액션" 관점으로
+          재구성한 것이라 별도 데이터가 아닙니다. Item 단위 연결(CI/PL→부킹→B/L→컨테이너)과 Inland 스케줄 마스터는 아직
+          <b>미해결 데이터 의존성</b>입니다(있다는 전제로 설계).
         </div>
 
         <div class="controlbar">
           <div class="jumpbar">
-            <button class="jump-btn" data-jump="sec-prep">선적 준비로 이동</button>
-            <button class="jump-btn" data-jump="sec-arrival">도착 준비로 이동</button>
+            <button class="jump-btn" data-jump="sec-prep"><span class="mi"></span>선적 준비로 이동</button>
+            <button class="jump-btn" data-jump="sec-arrival"><span class="mi"></span>도착 준비로 이동</button>
           </div>
-          <button class="schedule-entry-btn" id="sched-standalone-btn">⌕ 스케줄 조회 (Port-to-Port)</button>
+          <button class="schedule-entry-btn" id="sched-standalone-btn">스케줄 조회 (Port-to-Port)</button>
         </div>
 
         <div class="summary">
@@ -800,8 +843,8 @@
             </div>
           </div>
           <div class="stat" data-jump="sec-prep">
-            <div class="stat-label">PO</div>
-            <div class="stat-figures"><span class="total-v num">7</span><span class="total-l">건</span><span class="delayed-v num">2</span><span class="delayed-l">미부킹</span></div>
+            <div class="stat-label">Item 확정 (CI/PL 확보)</div>
+            <div class="stat-figures"><span class="total-v num">2</span><span class="total-l">/4건</span><span class="delayed-v num">2</span><span class="delayed-l">미확정</span></div>
           </div>
           <div class="stat" data-jump="sec-prep">
             <div class="stat-label">부킹</div>
@@ -818,81 +861,21 @@
           <div class="section-head">
             <div class="section-title">선적 준비</div>
           </div>
-          <div class="section-sub">PO → 부킹 → 서류 Cut-off → 수출통관 → B/L 발급까지, 전부 Pre-carriage 시점의 행정 액션입니다.</div>
+          <div class="section-sub">부킹 → 서류 Cut-off → 수출통관(CI/PL 확보로 Item 확정) → B/L 발급까지, 전부 Pre-carriage 시점의 행정 액션입니다.</div>
 
-          <!-- PO 리스트 -->
-          <div class="subblock">
-            <div class="subblock-head">
-              <div class="subblock-title">PO 리스트 <span class="cnt num">7건 · 미부킹 2건</span></div>
-              <div class="subblock-hint">부킹 여부만 표시 — 부킹된 PO는 아래 부킹 리스트로 연결됩니다.</div>
-            </div>
-            <div class="list">
-              <div class="list-row head cols-po"><div>PO No</div><div>Item / 수량</div><div>부킹 여부</div><div>연결 부킹</div><div></div></div>
-
-              <div class="list-row static cols-po">
-                <div class="cell-id num">PO-25201</div>
-                <div>스테인리스 힌지 세트 <span class="cell-sub num">1,800 EA</span></div>
-                <div><span class="pill crit"><span class="dot" style="background:var(--crit)"></span>미부킹</span></div>
-                <div class="cell-sub">-</div>
-                <div><button class="mini-btn primary" data-sched-po="PO-25201" data-sched-pol="Busan" data-sched-pod="Long Beach">스케줄 조회</button></div>
-              </div>
-              <div class="list-row static cols-po">
-                <div class="cell-id num">PO-25202</div>
-                <div>방수 커넥터 <span class="cell-sub num">4,200 EA</span></div>
-                <div><span class="pill crit"><span class="dot" style="background:var(--crit)"></span>미부킹</span></div>
-                <div class="cell-sub">-</div>
-                <div><button class="mini-btn primary" data-sched-po="PO-25202" data-sched-pol="Ningbo" data-sched-pod="Rotterdam">스케줄 조회</button></div>
-              </div>
-              <div class="list-row static cols-po">
-                <div class="cell-id num">PO-25011</div>
-                <div>알루미늄 프레임 부품 <span class="cell-sub num">900 EA</span></div>
-                <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>부킹됨</span></div>
-                <div><span class="po-chip num">BK-6011</span></div>
-                <div></div>
-              </div>
-              <div class="list-row static cols-po">
-                <div class="cell-id num">PO-25050</div>
-                <div>유리 커버 패널 <span class="cell-sub num">1,300 EA</span></div>
-                <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>부킹됨</span></div>
-                <div><span class="po-chip num">BK-6012</span></div>
-                <div></div>
-              </div>
-              <div class="list-row static cols-po">
-                <div class="cell-id num">PO-24815</div>
-                <div>알루미늄 브래킷 세트 외 2종 <span class="cell-sub num">4,840 EA</span></div>
-                <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>부킹됨</span></div>
-                <div><span class="po-chip num">BK-5567</span></div>
-                <div></div>
-              </div>
-              <div class="list-row static cols-po">
-                <div class="cell-id num">PO-24902</div>
-                <div>정밀 나사 세트 <span class="cell-sub num">2,000 EA</span></div>
-                <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>부킹됨</span></div>
-                <div><span class="po-chip num">BK-5568</span></div>
-                <div></div>
-              </div>
-              <div class="list-row static cols-po">
-                <div class="cell-id num">PO-25090</div>
-                <div>스틸 힌지 브라켓 <span class="cell-sub num">800 EA</span></div>
-                <div><span class="pill warn"><span class="dot" style="background:var(--warn)"></span>부킹 2건에 분할</span></div>
-                <div><span class="po-chip num">BK-6011</span> <span class="po-chip num">BK-6020</span></div>
-                <div></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 부킹 리스트 -->
+          <!-- 부킹 리스트 (최상위) -->
           <div class="subblock">
             <div class="subblock-head">
               <div class="subblock-title">부킹 리스트 <span class="cnt num">4건</span></div>
-              <div class="subblock-hint">실제 프로세스 진행 상황(Cut-off·통관·B/L)은 여기서 관리합니다.</div>
+              <div class="subblock-hint">최상위 리스트입니다. Item/수량은 부킹 시점엔 미확정이며, 수출통관 준비 중 CI/PL이 확보되면 채워집니다. 관련 PO No는 CI/PL에 적힌 참고용 번호입니다.</div>
             </div>
             <div class="list">
-              <div class="list-row head cols-booking"><div>부킹 No</div><div>연결 PO</div><div>상태</div><div>스페이스 신호</div><div>Cut-off (SI / VGM / CY)</div><div>수출통관</div><div>B/L</div><div></div></div>
+              <div class="list-row head cols-booking"><div>부킹 No</div><div>관련 PO No</div><div>Item / 수량</div><div>상태</div><div>스페이스 신호</div><div>Cut-off (SI / VGM / CY)</div><div>수출통관</div><div>B/L</div><div></div></div>
 
               <div class="list-row cols-booking" data-detail="bk-6011">
                 <div><div class="cell-id num">BK-6011</div><div class="cell-sub">Busan → Rotterdam · CMAU0488226</div></div>
                 <div><span class="po-chip num">PO-25011</span> <span class="po-chip num">PO-25090</span></div>
+                <div><span class="pill neutral">미확정</span><div class="cell-sub" style="margin-top:4px;">CI/PL 확보 전</div></div>
                 <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>확정</span></div>
                 <div>
                   <div class="space-signal"><div class="space-bars"><span class="on"></span><span class="on"></span><span></span><span></span></div><span style="font-size:11px;font-weight:700;">보통</span></div>
@@ -911,6 +894,7 @@
               <div class="list-row cols-booking" data-detail="bk-6012">
                 <div><div class="cell-id num">BK-6012</div><div class="cell-sub">Ningbo → Antwerp · TEMU9012334</div></div>
                 <div><span class="po-chip num">PO-25050</span></div>
+                <div><span class="pill neutral">미확정</span><div class="cell-sub" style="margin-top:4px;">CI/PL 확보 전</div></div>
                 <div><span class="pill crit"><span class="dot" style="background:var(--crit)"></span>롤오버</span></div>
                 <div>
                   <div class="space-signal"><div class="space-bars crit"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span style="font-size:11px;font-weight:700;">타이트</span></div>
@@ -929,6 +913,7 @@
               <div class="list-row cols-booking" data-detail="bk-5567">
                 <div><div class="cell-id num">BK-5567</div><div class="cell-sub">Busan → Long Beach · TCLU5520134</div></div>
                 <div><span class="po-chip num">PO-24815</span></div>
+                <div>알루미늄 브래킷 세트 외 2종 <span class="cell-sub num">4,840 EA</span></div>
                 <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>확정</span></div>
                 <div>
                   <div class="space-signal"><div class="space-bars ok"><span class="on"></span><span></span><span></span><span></span></div><span style="font-size:11px;font-weight:700;">원활</span></div>
@@ -947,6 +932,7 @@
               <div class="list-row cols-booking" data-detail="bk-5568">
                 <div><div class="cell-id num">BK-5568</div><div class="cell-sub">Shanghai → Hamburg · MSKU7712901</div></div>
                 <div><span class="po-chip num">PO-24902</span></div>
+                <div>정밀 나사 세트 <span class="cell-sub num">2,000 EA</span></div>
                 <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>확정</span></div>
                 <div>
                   <div class="space-signal"><div class="space-bars ok"><span class="on"></span><span></span><span></span><span></span></div><span style="font-size:11px;font-weight:700;">원활</span></div>
@@ -1154,8 +1140,8 @@
 
       <div class="controlbar">
         <div class="jumpbar">
-          <button class="jump-btn" data-jump="sec-monthly">월별 현황으로 이동</button>
-          <button class="jump-btn" data-jump="sec-dnd">체화료(D&D)로 이동</button>
+          <button class="jump-btn" data-jump="sec-monthly"><span class="mi"></span>월별 현황으로 이동</button>
+          <button class="jump-btn" data-jump="sec-dnd"><span class="mi"></span>체화료(D&D)로 이동</button>
         </div>
       </div>
 
@@ -1426,9 +1412,11 @@
     <div class="main">
       <div class="note">
         <b>검토 포인트</b> — 화물/업무/비용이 컨테이너·B/L 단위인 것과 달리, 이 탭은 <b>Item(SKU) 단위</b>로 같은 운송
-        이벤트를 재구성한 화면입니다(별도 데이터 아님). Inbound 인식 시점은 화물 탭의 <b>FDEST ETA(P95, 내륙운송 포함
-        최종 목적지 도착 기준)</b>를 그대로 재사용합니다. Outbound(예상 출고)는 수요예측이든 확정 출고계획이든 소스를
-        특정하지 않고 "고객 시스템에서 주어지는 값"으로 가정했습니다 — 이 값의 정확도에 재고 투영 정확도가 달려있습니다.
+        이벤트를 재구성한 화면입니다(별도 데이터 아님). Inbound는 <b>On-board가 확인된 물량부터</b> 반영하고, 인식 시점은
+        <b>현재 FDEST ETA</b>를 사용합니다(Init. ETA는 최초 예상 대비 변화 확인용). Outbound(예상 출고)는 수요예측이든
+        확정 출고계획이든 소스를 특정하지 않고 "고객 시스템에서 주어지는 값"으로 가정했습니다 — 이 값의 정확도에 재고
+        투영 정확도가 달려있습니다. Item/On-hand/Outbound/Safety Stock 수치는 <code>raw data/Tracking.xlsx</code>의
+        실제 Model·수량·FDEST ETA에 합성 W&amp;D 데이터를 결합한 것입니다(<code>synthetic-data/</code> 참고).
       </div>
 
       <div class="controlbar">
@@ -1474,7 +1462,7 @@
           <div class="block-head" style="margin-bottom:10px;">
             <div>
               <div class="block-title" style="font-size:13.5px;">Projected Inventory Timeline</div>
-              <div class="block-sub">Projected(t) = On-hand + Σ Inbound(≤t, FDEST ETA P95) − Σ Outbound(≤t)</div>
+              <div class="block-sub">Projected(t) = On-hand + Σ Inbound(≤t, 현재 FDEST ETA 기준, On-board 확인분만) − Σ Outbound(≤t)</div>
             </div>
           </div>
           <div class="shortage-banner" id="inv-d-banner"></div>
@@ -1503,7 +1491,7 @@
             </div>
           </div>
           <div class="list">
-            <div class="list-row head cols-item"><div>화물</div><div>Container / HBL · PO</div><div>단계</div><div>수량</div><div>FDEST ETA (P95)</div><div></div></div>
+            <div class="list-row head cols-item"><div>화물</div><div>Container / HBL · PO</div><div>단계</div><div>수량</div><div>FDEST ETA</div><div></div></div>
             <div id="inv-d-shipment-rows"></div>
           </div>
         </div>
@@ -1511,9 +1499,9 @@
 
       <!-- ===== INBOUND ===== -->
       <section id="inv-inbound" style="display:none;">
-        <div class="section-sub" style="margin-bottom:14px;">FDEST ETA(P95) 기준 정렬 — Container-Item Mapping이 없는 건은 동일 B/L 내 가장 늦은 ETA로 보수적으로 계산됩니다.</div>
+        <div class="section-sub" style="margin-bottom:14px;">FDEST ETA(현재값) 기준 정렬 — Delay Status는 Init. ETA 대비 현재 ETA가 늦어졌는지로 판정합니다.</div>
         <div class="list">
-          <div class="list-row head cols-inbound"><div>Item</div><div>Qty</div><div>FDEST ETA (P95 / P50)</div><div>Delay Status</div><div></div></div>
+          <div class="list-row head cols-inbound"><div>Item</div><div>Qty</div><div>FDEST ETA (Init. ETA)</div><div>Delay Status</div><div></div></div>
           <div id="inv-inbound-rows"></div>
         </div>
         <div class="ptimeline-pending" id="inv-inbound-pending"></div>
@@ -1521,7 +1509,6 @@
     </div>
   </div>
 
-  <div class="fab">✦</div>
   <div class="toast" id="toast"></div>
 </div>
 
@@ -1545,22 +1532,12 @@
       cost: document.getElementById("tab-cost"),
       inventory: document.getElementById("tab-inventory"),
     };
-    const placeholders = {
-      overview: "검색",
-      cargo: "B/L · Container · Item · PO No 검색",
-      operation: "PO · 부킹 · Container · HBL 검색",
-      cost: "PO · Container · HBL 검색",
-      inventory: "Item · SKU 검색",
-    };
-    const searchInput = document.getElementById("global-search");
-
     tabButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const key = btn.getAttribute("data-tab");
         tabButtons.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         Object.keys(panels).forEach(k => panels[k].classList.toggle("active", k === key));
-        searchInput.placeholder = placeholders[key] || "검색";
         window.scrollTo({ top: 0, behavior: "instant" });
       });
     });
@@ -2074,55 +2051,181 @@
   (function () {
     const root = document.getElementById("tab-inventory");
 
-    // ---- item catalog (mock data) ----
-    // FDEST ETA = 화물 탭과 동일 값(내륙운송 포함 최종 목적지 도착, P95). Pre-carriage 화물은 미정.
-    // Outbound 값은 소스를 특정하지 않은 가정치(수요예측/확정 출고계획 등 — PRD §8.4 참고).
+    // ---- item catalog ----
+    // On-hand/Outbound/Safety Stock = 합성(SYNTHETIC, synthetic-data/ 참고).
+    // shipments의 qty/FDEST ETA/Init. ETA는 raw data/Tracking.xlsx 실제값(Container+PO 단위로 집계).
+    // 전량 On-board 확인된 물량(POL ATD 존재)이라 전부 Inbound 후보. MICROWAVE OVEN 마지막 행만
+    // On-board 미확정 Pre-carriage Pipeline 예시(계산 제외, 별도 표시용).
     const itemCatalog = {
-      "SKU-8841-BLK": {
-        desc: "알루미늄 브래킷 세트",
-        onhand: 250,
-        safetyStock: 500,
-        outbound: [
-          { date:"7/28", qty:200 },
-          { date:"8/01", qty:400 },
-          { date:"8/04", qty:300 },
-          { date:"8/05", qty:150 },
-          { date:"8/08", qty:280 },
-          { date:"8/11", qty:220 },
-        ],
+      "REFRIGERATOR": {
+        productType: "CSKD",
+        onhand: 100000,
+        safetyStock: 90000,
+        dailyOutbound: 2500,
         shipments: [
-          { id:"TEMU9012334", po:"PO-25050", mode:"sea", stage:"loading", stageLabel:"Pre-carriage", qty:600, fdestP50:null, fdestP95:null, delayed:false },
-          { id:"HLXU3308719", po:"PO-24650", mode:"sea", stage:"arrived", stageLabel:"On-carriage", qty:500, fdestP50:"7/30", fdestP95:"7/31", delayed:false },
-          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:1200, fdestP50:"8/03", fdestP95:"8/05", delayed:true },
-          { id:"SEL-AIR-88231", po:"PO-24960", mode:"air", stage:"transit", stageLabel:"Main-carriage", qty:300, fdestP50:"8/07", fdestP95:"8/09", delayed:true },
-          { id:"TCKU9944110", po:"PO-25090", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:800, fdestP50:"8/10", fdestP95:"8/12", delayed:false },
+          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stageLabel:"Main-carriage", qty:130800, fdestInitEta:"8/10", fdestEta:"8/17", whDate:null, delayed:true },
+          { id:"HAMU1769015", po:"DNPX26001925", mode:"sea", stageLabel:"Main-carriage", qty:135000, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"TGBU6371452", po:"DNPX26001925", mode:"sea", stageLabel:"Main-carriage", qty:135000, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"HAMU2277719", po:"DNPX26001767", mode:"sea", stageLabel:"Main-carriage", qty:1000, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
+          { id:"HAMU2920450", po:"DNPX26001840", mode:"sea", stageLabel:"Main-carriage", qty:768, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
+          { id:"HAMU2954023", po:"DNPX26002011", mode:"sea", stageLabel:"Main-carriage", qty:22000, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
+          { id:"HAMU4168635", po:"DNPX26001535", mode:"sea", stageLabel:"Main-carriage", qty:1000, fdestInitEta:"8/13", fdestEta:"8/19", whDate:null, delayed:true },
+          { id:"HLBU2379670", po:"DNPX26001927", mode:"sea", stageLabel:"Main-carriage", qty:64600, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
+          { id:"UETU6404866", po:"DNPX26002073", mode:"sea", stageLabel:"Main-carriage", qty:3360, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
+          { id:"HAMU1442362", po:"DNPX26001923", mode:"sea", stageLabel:"Main-carriage", qty:120, fdestInitEta:"8/26", fdestEta:"8/26", whDate:null, delayed:false },
         ],
       },
-      "SKU-8842-BLK": {
-        desc: "알루미늄 브래킷 세트 (소형)",
+      "RO COMPRESSOR(ROTARY COMPRESSOR)": {
+        productType: "CSKD",
+        onhand: 78000,
+        safetyStock: 60000,
+        dailyOutbound: 7800,
+        shipments: [
+          { id:"MSKU7712901", po:"PO-24902", mode:"sea", stageLabel:"Main-carriage", qty:2160, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"MRSU2153031", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"MRSU2153068", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"MRSU2153073", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"MRSU2153160", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"HLXU8606341", po:"DNPU26000102", mode:"sea", stageLabel:"Main-carriage", qty:18800, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"MRSU2153005", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"HAMU1196588", po:"DNPU26000167", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"HAMU2920450", po:"DNPU26000154", mode:"sea", stageLabel:"Main-carriage", qty:5760, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
+          { id:"UACU6014729", po:"DNPU26000201", mode:"sea", stageLabel:"Main-carriage", qty:4608, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
+          { id:"FANU1183772", po:"DNPU26000167", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
+          { id:"HAMU2277719", po:"DNPU26000226", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
+          { id:"HLXU8223445", po:"DNPU26000154", mode:"sea", stageLabel:"Main-carriage", qty:113000, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
+          { id:"TIIU5329544", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MRSU8206592", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MRSU4240290", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"TIIU5577896", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"TRHU4804074", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"UETU6821725", po:"DNPU26000228", mode:"sea", stageLabel:"Main-carriage", qty:2602, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU3982081", po:"DNPU26000174", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU3223845", po:"DNPU26000209", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU0176185", po:"DNPU26000209", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"GAOU7269116", po:"DNPU26000228", mode:"sea", stageLabel:"Main-carriage", qty:2602, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU9086436", po:"DNPU26000209", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"HAMU1442362", po:"DNPU26000121", mode:"sea", stageLabel:"Main-carriage", qty:109500, fdestInitEta:"8/26", fdestEta:"8/26", whDate:null, delayed:false },
+          { id:"MNBU3545482", po:"DNPU26000185", mode:"sea", stageLabel:"Main-carriage", qty:7159, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MNBU3483441", po:"DNPU26000185", mode:"sea", stageLabel:"Main-carriage", qty:7159, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MRSU6261538", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MRSU6369311", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MRSU7304850", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"SUDU8035574", po:"DNPU26000185", mode:"sea", stageLabel:"Main-carriage", qty:7159, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"FFAU5583198", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"CAAU7946642", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+        ],
+      },
+      "MOTOR": {
+        productType: "CSKD",
+        onhand: 30000,
+        safetyStock: 28000,
+        dailyOutbound: 3600,
+        shipments: [
+          { id:"MNBU4623804", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:1800, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"MNBU0531166", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:1800, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"MMAU1453201", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"SUDU8036185", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"SUDU6046733", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MRSU5514781", po:"DNPU26000214", mode:"sea", stageLabel:"Main-carriage", qty:30000, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU4565755", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU4535128", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU4345869", po:"DNPU26000225", mode:"sea", stageLabel:"Main-carriage", qty:13069, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU3978369", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU3898659", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"TLLU1194925", po:"DNPU26000225", mode:"sea", stageLabel:"Main-carriage", qty:13069, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU3697696", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU3390884", po:"DNPU26000225", mode:"sea", stageLabel:"Main-carriage", qty:13069, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU3058864", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU0472037", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU0419120", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU0178450", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"MNBU0083518", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
+          { id:"SUDU8244764", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MNBU4424628", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MNBU0633152", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MNBU9031500", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MRSU2703204", po:"DNPU26000224", mode:"sea", stageLabel:"Main-carriage", qty:19200, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"SUDU6208670", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"SUDU8174862", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MNBU3814128", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+          { id:"MNBU4009479", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
+        ],
+      },
+      "PARTS FOR REFRIGERATOR": {
+        productType: "CSKD",
+        onhand: 9500,
+        safetyStock: 10500,
+        dailyOutbound: 1300,
+        shipments: [
+          { id:"CSNU6277348", po:"DNPX26001820", mode:"sea", stageLabel:"Main-carriage", qty:1300, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"GCXU5289239", po:"DNPX26001682", mode:"sea", stageLabel:"Main-carriage", qty:1173, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"OOCU5724864", po:"DNPX26001411", mode:"sea", stageLabel:"Main-carriage", qty:900, fdestInitEta:"8/26", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"OOCU7510938", po:"DNPX26001820", mode:"sea", stageLabel:"Main-carriage", qty:22725, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"OOLU9603260", po:"DNPX26001679", mode:"sea", stageLabel:"Main-carriage", qty:5650, fdestInitEta:"8/26", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"TEMU7702724", po:"DNPX26001820", mode:"sea", stageLabel:"Main-carriage", qty:22725, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"UETU5751053", po:"DNPX26001682", mode:"sea", stageLabel:"Main-carriage", qty:1173, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
+          { id:"FFAU2823823", po:"DNPX26001816", mode:"sea", stageLabel:"Main-carriage", qty:1170, fdestInitEta:"9/02", fdestEta:"8/26", whDate:null, delayed:false },
+          { id:"OOCU5769658", po:"DNPX26001816", mode:"sea", stageLabel:"Main-carriage", qty:1170, fdestInitEta:"9/02", fdestEta:"8/26", whDate:null, delayed:false },
+        ],
+      },
+      "REFRIGERATORS COMPRESSOR": {
+        productType: "SET",
+        onhand: 3100,
+        safetyStock: 2400,
+        dailyOutbound: 220,
+        shipments: [
+          { id:"HAMU4427485", po:"DNPX26001553", mode:"sea", stageLabel:"Main-carriage", qty:3024, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
+          { id:"HLBU3339646", po:"DNPX26000232", mode:"sea", stageLabel:"Main-carriage", qty:864, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
+          { id:"HLBU3339646", po:"DNPX26001619", mode:"sea", stageLabel:"Main-carriage", qty:2094, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
+          { id:"TLLU5217320", po:"DNPX26001552", mode:"sea", stageLabel:"Main-carriage", qty:3336, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
+          { id:"UASU1026462", po:"DNPX26000232", mode:"sea", stageLabel:"Main-carriage", qty:108, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
+          { id:"UASU1026462", po:"DNPX26001619", mode:"sea", stageLabel:"Main-carriage", qty:3396, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
+        ],
+      },
+      "MICROWAVE OVEN": {
+        productType: "CSKD",
         onhand: 1800,
-        safetyStock: 1000,
-        outbound: [
-          { date:"7/29", qty:300 },
-          { date:"8/06", qty:350 },
-        ],
+        safetyStock: 1500,
+        dailyOutbound: 60,
         shipments: [
-          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:3000, fdestP50:"8/03", fdestP95:"8/05", delayed:true },
-        ],
-      },
-      "SKU-9010-GRY": {
-        desc: "체결 부속 키트",
-        onhand: 900,
-        safetyStock: 800,
-        outbound: [
-          { date:"7/29", qty:150 },
-          { date:"8/06", qty:180 },
-        ],
-        shipments: [
-          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stage:"transit", stageLabel:"Main-carriage", qty:640, fdestP50:"8/03", fdestP95:"8/05", delayed:true },
+          { id:"HAMU1263259", po:"DNPY26001211", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
+          { id:"HAMU2719723", po:"DNPY26001214", mode:"sea", stageLabel:"Main-carriage", qty:1080, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
+          { id:null, po:"(TBD)", mode:"sea", stageLabel:"Pre-carriage", qty:20000, fdestInitEta:null, fdestEta:null, whDate:null, delayed:false },
         ],
       },
     };
+
+    // ---- Outbound: 합성 데이터를 요일 패턴 + 약간의 변동으로 자연스럽게 생성 ----
+    // (기존엔 매일 동일 수량이라 Projected 추세선이 완전한 직선으로 보이는 문제가 있었음)
+    const OUT_START = new Date(2026, 7, 7);   // 2026-08-07
+    const OUT_END = new Date(2026, 8, 30);    // 2026-09-30
+    const DOW_FACTOR = [0.35, 1.15, 1.2, 1.15, 1.2, 1.25, 0.4]; // Sun..Sat, 평균 약 1.0(주말 감소)
+
+    function seededRand(str) {
+      let h = 1779033703 ^ str.length;
+      for (let i = 0; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+        h = (h << 13) | (h >>> 19);
+      }
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
+    }
+
+    function generateOutbound(sku, item) {
+      const events = [];
+      const d = new Date(OUT_START);
+      while (d <= OUT_END) {
+        const label = (d.getMonth() + 1) + "/" + String(d.getDate()).padStart(2, "0");
+        const jitter = 0.88 + seededRand(sku + label) * 0.24; // 0.88 ~ 1.12
+        const qty = Math.max(0, Math.round(item.dailyOutbound * DOW_FACTOR[d.getDay()] * jitter));
+        if (qty > 0) events.push({ date: label, qty });
+        d.setDate(d.getDate() + 1);
+      }
+      return events;
+    }
 
     function parseMD(md) {
       const [m, d] = md.split("/").map(Number);
@@ -2130,13 +2233,13 @@
     }
 
     // ---- shared calc: combined In/Out events sorted by date, with Projected balance ----
-    function buildTimeline(item) {
-      const determined = item.shipments.filter(s => s.fdestP95).sort((a, b) => parseMD(a.fdestP95) - parseMD(b.fdestP95));
-      const pending = item.shipments.filter(s => !s.fdestP95);
+    function buildTimeline(sku, item) {
+      const determined = item.shipments.filter(s => s.fdestEta).sort((a, b) => parseMD(a.fdestEta) - parseMD(b.fdestEta));
+      const pending = item.shipments.filter(s => !s.fdestEta);
 
       const events = [];
-      determined.forEach(s => events.push({ date: s.fdestP95, type: "in", qty: s.qty, ref: "입고 · " + s.id }));
-      (item.outbound || []).forEach(o => events.push({ date: o.date, type: "out", qty: o.qty, ref: "예상 출고" }));
+      determined.forEach(s => events.push({ date: s.fdestEta, type: "in", qty: s.qty, ref: "입고 · " + s.id }));
+      generateOutbound(sku, item).forEach(o => events.push({ date: o.date, type: "out", qty: o.qty, ref: "예상 출고" }));
       events.sort((a, b) => parseMD(a.date) - parseMD(b.date));
 
       let balance = item.onhand || 0;
@@ -2187,9 +2290,6 @@
       const plotW = W - padL - padR;
       const plotH = H - padT - padB;
 
-      // Single shared scale for bars AND the Projected line — Inbound is a positive
-      // deviation from 0, Outbound a negative one, so both sit naturally against the
-      // same zero baseline the Projected balance is measured on.
       const domainVals = [0, item.onhand, item.safetyStock];
       buckets.forEach(b => domainVals.push(b.balance, b.in, -b.out));
       let vMax = Math.max(...domainVals);
@@ -2201,7 +2301,7 @@
       const n = buckets.length;
       const xStep = plotW / n;
       const xAt = (i) => padL + xStep * (i + 0.5);
-      const barW = Math.min(27, xStep * 0.336);
+      const barW = Math.min(27, xStep * 0.7);
       const zeroY = y(0);
 
       let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:100%; display:block;">';
@@ -2213,8 +2313,9 @@
       svg += '<line class="pchart-refline-ss" x1="' + padL + '" y1="' + ssY + '" x2="' + (W - padR) + '" y2="' + ssY + '"></line>';
       svg += '<text class="pchart-label" x="' + (W - padR) + '" y="' + (ssY - 4) + '" text-anchor="end">Safety Stock ' + item.safetyStock.toLocaleString() + '</text>';
 
-      // Same date's Inbound/Outbound bars share one x (stacked above/below the zero line,
-      // not offset left-right), so the Projected dot for that date sits centered on top of them.
+      // n이 클 때(일별 출고 데이터라 최대 55개) 라벨이 다 겹치지 않도록 일부만 x축 라벨 표시
+      const labelStep = Math.max(1, Math.ceil(n / 12));
+
       buckets.forEach((b, i) => {
         const cx = xAt(i);
         if (b.in > 0) {
@@ -2227,7 +2328,9 @@
           svg += '<rect class="pbar-out" x="' + (cx - barW / 2) + '" y="' + zeroY + '" width="' + barW + '" height="' + (yBottom - zeroY) + '">' +
             '<title>Outbound ' + b.date + ': −' + b.out.toLocaleString() + ' EA</title></rect>';
         }
-        svg += '<text class="pchart-date-label" x="' + cx + '" y="' + (H - 10) + '" text-anchor="middle">' + b.date + '</text>';
+        if (i % labelStep === 0 || i === n - 1) {
+          svg += '<text class="pchart-date-label" x="' + cx + '" y="' + (H - 10) + '" text-anchor="middle">' + b.date + '</text>';
+        }
       });
 
       const pts = buckets.map((b, i) => xAt(i) + ',' + y(b.balance)).join(" ");
@@ -2235,7 +2338,7 @@
       buckets.forEach((b, i) => {
         const dotClass = b.tier ? " " + b.tier : "";
         const tierNote = b.tier === "crit" ? " (Shortage)" : b.tier === "warn" ? " (Safety Stock 이하)" : "";
-        svg += '<circle class="pproj-dot' + dotClass + '" cx="' + xAt(i) + '" cy="' + y(b.balance) + '" r="4">' +
+        svg += '<circle class="pproj-dot' + dotClass + '" cx="' + xAt(i) + '" cy="' + y(b.balance) + '" r="' + (n > 20 ? 2.4 : 4) + '">' +
           '<title>Projected ' + b.date + ': ' + b.balance.toLocaleString() + ' EA' + tierNote + '</title></circle>';
       });
 
@@ -2248,7 +2351,7 @@
       const skus = Object.keys(itemCatalog);
       let critCount = 0, warnCount = 0, inboundCount = 0;
       skus.forEach(sku => {
-        const tl = buildTimeline(itemCatalog[sku]);
+        const tl = buildTimeline(sku, itemCatalog[sku]);
         const s = statusOf(tl);
         if (s.tier === "crit") critCount++;
         else if (s.tier === "warn") warnCount++;
@@ -2266,11 +2369,11 @@
       const rowsEl = document.getElementById("inv-item-rows");
       rowsEl.innerHTML = Object.keys(itemCatalog).map(sku => {
         const item = itemCatalog[sku];
-        const tl = buildTimeline(item);
+        const tl = buildTimeline(sku, item);
         const s = statusOf(tl);
         const pillClass = s.tier === "ok" ? "ok" : s.tier;
         return '<div class="list-row cols-inv-item" data-sku="' + sku + '">' +
-          '<div class="isku-cell"><div class="sku num">' + sku + '</div><div class="idesc">' + item.desc + '</div></div>' +
+          '<div class="isku-cell"><div class="sku">' + sku + '</div><div class="idesc">Product Type ' + item.productType + '</div></div>' +
           '<div class="num">' + item.onhand.toLocaleString() + ' EA</div>' +
           '<div class="num">Inbound ' + tl.inboundTotal.toLocaleString() + ' EA / SS ' + item.safetyStock.toLocaleString() + ' EA</div>' +
           '<div><span class="pill ' + pillClass + '"><span class="dot" style="background:var(--' + pillClass + ')"></span>' + s.label + '</span></div>' +
@@ -2285,16 +2388,15 @@
 
     // ---- Projection: item detail (Projected Timeline) ----
     const itemDetail = document.getElementById("inv-item-detail");
-    let selectedItemRow = null;
 
     function openItemDetail(sku) {
       const item = itemCatalog[sku];
       if (!item) return;
-      const tl = buildTimeline(item);
+      const tl = buildTimeline(sku, item);
       const s = statusOf(tl);
 
       document.getElementById("inv-d-sku").textContent = sku;
-      document.getElementById("inv-d-desc").textContent = item.desc;
+      document.getElementById("inv-d-desc").textContent = "Product Type " + item.productType;
       const badgeEl = document.getElementById("inv-d-badge");
       const pillClass = s.tier === "ok" ? "ok" : s.tier;
       badgeEl.className = "pill " + pillClass;
@@ -2320,7 +2422,7 @@
       }).join("");
 
       document.getElementById("inv-d-pending").textContent = tl.pending.length
-        ? "일정 미정(Pre-carriage) " + tl.pendingTotal.toLocaleString() + " EA (" + tl.pending.length + "건) — 위 Projected 계산에는 포함되지 않음"
+        ? "일정 미정(Pre-carriage, On-board 미확정) " + tl.pendingTotal.toLocaleString() + " EA (" + tl.pending.length + "건) — 위 Projected 계산에는 포함되지 않음"
         : "";
 
       const bannerEl = document.getElementById("inv-d-banner");
@@ -2338,12 +2440,12 @@
       const shipEl = document.getElementById("inv-d-shipment-rows");
       shipEl.innerHTML = item.shipments.map(sp => {
         const modeChip = '<span class="mode-chip ' + sp.mode + '">' + (sp.mode === "sea" ? "Sea" : "Air") + '</span>';
-        const fdest = sp.fdestP95
-          ? '<div class="fdest-cell"><span class="num">' + sp.fdestP95 + '</span><div class="p50-inline">P50 ' + sp.fdestP50 + '</div></div>'
-          : '<div class="fdest-cell pending">미정</div>';
-        return '<div class="list-row cols-item" data-container="' + sp.id + '">' +
+        const fdest = sp.fdestEta
+          ? '<div class="fdest-cell"><span class="num">' + sp.fdestEta + '</span>' + (sp.delayed ? '<div class="p50-inline">Init. ETA ' + sp.fdestInitEta + '</div>' : '') + '</div>'
+          : '<div class="fdest-cell pending">미정 (On-board 미확정)</div>';
+        return '<div class="list-row cols-item" data-container="' + (sp.id || "") + '">' +
           '<div>' + modeChip + '</div>' +
-          '<div><div class="cell-id num">' + sp.id + '</div><div class="cell-sub num">' + sp.po + '</div></div>' +
+          '<div><div class="cell-id num">' + (sp.id || "(TBD)") + '</div><div class="cell-sub num">' + sp.po + '</div></div>' +
           '<div><span class="stage-pill">' + sp.stageLabel + '</span></div>' +
           '<div class="num">' + sp.qty.toLocaleString() + ' EA</div>' +
           fdest +
@@ -2351,13 +2453,14 @@
           '</div>';
       }).join("");
       shipEl.querySelectorAll(".list-row[data-container]").forEach(row => {
-        row.addEventListener("click", () => jumpToCargoContainer(row.getAttribute("data-container")));
+        const cid = row.getAttribute("data-container");
+        if (!cid) return;
+        row.addEventListener("click", () => jumpToCargoContainer(cid));
       });
 
       document.querySelectorAll("#inv-item-rows .list-row[data-sku]").forEach(r => r.classList.remove("selected"));
       const target = root.querySelector('#inv-item-rows .list-row[data-sku="' + sku + '"]');
       if (target) target.classList.add("selected");
-      selectedItemRow = target;
 
       itemDetail.classList.add("open");
       itemDetail.scrollIntoView({ behavior:"smooth", block:"nearest" });
@@ -2368,12 +2471,12 @@
       const rows = [];
       Object.keys(itemCatalog).forEach(sku => {
         const item = itemCatalog[sku];
-        item.shipments.filter(s => s.fdestP95).forEach(s => rows.push({ sku, desc:item.desc, ...s }));
+        item.shipments.filter(s => s.fdestEta).forEach(s => rows.push({ sku, ...s }));
       });
-      rows.sort((a, b) => parseMD(a.fdestP95) - parseMD(b.fdestP95));
+      rows.sort((a, b) => parseMD(a.fdestEta) - parseMD(b.fdestEta));
 
       const pendingCount = Object.keys(itemCatalog).reduce((n, sku) =>
-        n + itemCatalog[sku].shipments.filter(s => !s.fdestP95).length, 0);
+        n + itemCatalog[sku].shipments.filter(s => !s.fdestEta).length, 0);
 
       const rowsEl = document.getElementById("inv-inbound-rows");
       rowsEl.innerHTML = rows.map(r => {
@@ -2381,9 +2484,9 @@
           ? '<span class="pill crit"><span class="dot" style="background:var(--crit)"></span>지연</span>'
           : '<span class="pill ok"><span class="dot" style="background:var(--ok)"></span>정상</span>';
         return '<div class="list-row cols-inbound" data-container="' + r.id + '">' +
-          '<div class="isku-cell"><div class="sku num">' + r.sku + '</div><div class="idesc">' + r.desc + '</div></div>' +
+          '<div class="isku-cell"><div class="sku">' + r.sku + '</div><div class="idesc">' + r.id + ' · ' + r.po + '</div></div>' +
           '<div class="num">' + r.qty.toLocaleString() + ' EA</div>' +
-          '<div class="eta-cell"><span class="num">' + r.fdestP95 + '</span><div class="p50-inline" style="margin-top:2px;">P50 <span class="num">' + r.fdestP50 + '</span></div></div>' +
+          '<div class="eta-cell"><span class="num">' + r.fdestEta + '</span><div class="p50-inline" style="margin-top:2px;">Init. <span class="num">' + r.fdestInitEta + '</span></div></div>' +
           '<div>' + delayPill + '</div>' +
           '<div class="chev">›</div>' +
           '</div>';
@@ -2393,11 +2496,11 @@
       });
 
       document.getElementById("inv-inbound-pending").textContent = pendingCount
-        ? "이 외에 Pre-carriage 단계라 FDEST ETA 미정인 입고 " + pendingCount + "건은 목록에서 제외됨(계산 근거 약함)"
+        ? "이 외에 On-board 미확정(Pre-carriage)이라 FDEST ETA 미정인 입고 " + pendingCount + "건은 목록에서 제외됨(계산 근거 약함)"
         : "";
     }
 
-    // ---- drill-down: Item → Inbound → B/L → Container → Transportation Tracking ----
+    // ---- drill-down: Item → Inbound → B/L / Container → Transportation Tracking ----
     function jumpToCargoContainer(containerId) {
       document.querySelector('.tab[data-tab="cargo"]').click();
       const row = Array.from(document.querySelectorAll('#tab-cargo .list-row[data-row]')).find(r => {
@@ -2405,7 +2508,7 @@
         return idEl && idEl.textContent.trim() === containerId;
       });
       if (!row) {
-        showToast("Transportation Tracking: " + containerId + " — 이 목업 데이터엔 상세가 없습니다 (mock)");
+        showToast("Transportation Tracking: " + containerId + " — 이 목업 데이터엔 상세가 없습니다 (실 데이터 컨테이너, 화물 탭 mock에는 미포함)");
         return;
       }
       const table = row.closest(".list-table");
@@ -2429,7 +2532,7 @@
         secInbound.style.display = key === "inbound" ? "" : "none";
         document.getElementById("inv-hint").textContent = key === "projection"
           ? "Item별 일자별 재고 추이 — Safety Stock 이하(주의)와 음수 재고(Shortage)를 색으로 구분해 강조합니다."
-          : "Item별 입고 예정 리스트 — FDEST ETA(P95) 기준. 클릭하면 해당 화물의 Transportation Tracking으로 이동합니다.";
+          : "Item별 입고 예정 리스트 — 현재 FDEST ETA 기준. 클릭하면 해당 화물의 Transportation Tracking으로 이동합니다.";
       });
     });
 
