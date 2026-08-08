@@ -297,11 +297,10 @@ Item 단위로 결합하여 **미래 재고(Projected Inventory)** 와 예상 **
 보여주는 재고 계획(Planning) 뷰. Transportation이 "운송 운영" 관점이라면
 Inventory는 "재고 계획" 관점 — 같은 이벤트를 다른 단위(Item)로 재구성한 것.
 
-> 2026-08-07 세션에서 별도로 시작했던 `ItemLevel_InventoryManagement_PRD.md`
-> (재고관리만 떼어내 실 raw data로 검증한 축소판 PRD)를 이 §8로 통합했다
-> (2026-08-07 세션, 재고 탭이 이미 같은 목업 파일에 구현되어 있어 문서를
-> 별도로 유지할 이유가 없어짐). 아래 내용은 그 통합본 기준 — 이 문서 §8이
-> 기준본이며 별도 파일은 더 이상 존재하지 않는다.
+> 이 §8은 한때 별도 파일(`ItemLevel_InventoryManagement_PRD.md`)로
+> 분리되어 있던 Item 단위 재고관리 요구사항을 통합한 것이다. 별도 파일은
+> 더 이상 존재하지 않으며, 이 문서 §8이 유일한 기준본이다(통합 경위는
+> PROGRESS.md 참고).
 
 핵심은 Forwarding에서 **Item별 Inbound 수량과 FDEST ETA를 최대한 정확하게
 제공**하는 것이다. 이를 W&D 재고 데이터와 결합하면 고객은 특정 Item의 재고가
@@ -309,7 +308,7 @@ Inventory는 "재고 계획" 관점 — 같은 이벤트를 다른 단위(Item)�
 수 있다. 장기적으로는 Shortage 발생 시 기존 Supply Pipeline과 신규 조달
 가능성을 함께 검토해 고객의 **발주 의사결정**까지 지원하는 것이 목표지만,
 실제 PO 생성·공급처 전달·Booking 등 **발주 실행 자체는 Target Vision 범위
-밖**이다(§8.11 발전 방향 참고).
+밖**이다(§8.10 발전 방향 참고).
 
 ### 8.1 도메인 모델
 
@@ -412,7 +411,9 @@ FDEST 도착과 실제 창고 입고 사이에는 시차(버퍼)가 있을 수 �
 원칙에 포함한다. raw data에 실입고일(**W/H In Date**) 필드가 실제로 존재하는
 것을 확인했으므로, **있으면 그 값을 1순위로 쓰고, 없으면 FDEST ATA + 버퍼
 (2순위), 그마저 없으면 FDEST ETA + 버퍼(3순위)**로 추정한다. 버퍼의 구체적
-일수는 아직 확정하지 않았다(§10 참고).
+일수는 아직 확정하지 않았다 — 확보한 raw data 스냅샷엔 완료건(FDEST ATA
+존재)이 아직 없어 실측 검증도 못한 상태다(§10 참고, 검증 이력은
+PROGRESS.md).
 
 향후 필요하면 다음 두 Projection을 분리해 제공할 수 있다(현재는 Confirmed
 Projection만 계산):
@@ -525,25 +526,7 @@ MVP의 목적은 완성된 시스템을 만드는 것이 아니라 다음 가설
 경험을 먼저 만들고, 개발 과정에서 실제 데이터의 구조와 한계를 확인하면서
 다음 버전을 구체화한다.
 
-### 8.10 raw data 검증 결과 (2026-08-07)
-
-`raw data/Tracking.xlsx`(155건, 110컬럼) 실사 검증 결과:
-
-- 전량 On-board 이후 상태(POL ATD 결측 0건) — 이 스냅샷엔 Pre-carriage
-  케이스가 없다.
-- 완료건(F.DEST ATA 존재)도 0건 — §8.4 입고버퍼 로직을 실측 검증할 데이터가
-  아직 없다.
-- 완전 동일 키(Container+Item+Model+QTY+HouseBL+Invoice) 중복 행 0건.
-- 부족한 케이스(Pre-carriage, 완료건+버퍼, 완전동일 중복, QTY 결측 등)는
-  `synthetic-data/tracking_synthetic_edge_cases.csv`로 보완했다.
-- 재고 탭 화면 데모용으로는 `synthetic-data/`(실제 Model 6종 + 실제
-  Inbound 수치에 합성 On-hand/Outbound/Safety Stock 결합)를 사용,
-  `visibility_control_tower_mockup.html` 재고 탭에 반영 완료 — Normal/Risk/
-  Shortage 상태가 모두 나오도록 구성했고 On-hand/Safety Stock을 실제 입고
-  Lot 크기에 비례하도록 조정해서 과도한 재고 축적처럼 보이지 않게 다듬었다
-  (2026-08-07 세션, PROGRESS.md 참고).
-
-### 8.11 MVP 이후 발전 방향
+### 8.10 MVP 이후 발전 방향
 
 ```
 MVP: 실제 Forwarding Excel + Synthetic W&D + Current FDEST ETA + Inventory Trend
@@ -559,25 +542,6 @@ Target Vision: Shortage 발생 → 기존 Supply Pipeline 확인 → 추가 조�
 
 Target Vision은 **Recommendation까지**이며 실제 발주 실행은 향후 별도 확장
 영역으로 둔다.
-
-### 8.12 재고관리 Agent — 논의 시작 (2026-08-07 세션, 설계 착수 전)
-
-"재고 상태를 보고 발주/발주중단 여부를 판단하는 에이전트를 만들면 어떨까"라는
-질문에서 시작된 논의. 결론:
-
-- **단순 임계값 판단(재고<Safety Stock→발주 알림, 과다재고→발주 중단 권고)은
-  에이전트가 아니라 룰 베이스(if/else)로 충분** — §8.8에서 이미 정한 "MVP
-  핵심 계산은 결정론적으로 처리"라는 원칙과 같은 결론. 이 수준은 지금의
-  Normal/Risk/Shortage 판정(§8.5)이 사실상 이미 하고 있음.
-- **에이전트가 실제로 값어치를 하는 지점은 한 단계 위**: Port Congestion,
-  News, ETA Confidence 하락, 기존 Supply Pipeline 상태처럼 정형화되지 않은
-  여러 신호를 종합해서 "이 Shortage가 앞으로 더 나빠질지, 항공 전환·대체
-  공급처 검토가 필요한지" 같은 판단이 필요한 권고를 만드는 일 — 이는 이미
-  위 §8.11 Advanced/Target Vision 단계("AI/Agent Monitoring", "발주 의사결정
-  지원")에 방향만 잡혀 있고 아직 설계되지 않은 영역과 일치한다.
-- **다음 세션에서 별도로 이어갈 주제**로 남김 — 이 세션에서는 방향성 합의만
-  하고 구체 설계(에이전트가 보는 입력 신호, 판단 로직, 출력 형태 등)는
-  시작하지 않았다.
 
 ## 9. 참고 프로토타입 — vessel-tracker (실 AIS 연동)
 
@@ -608,14 +572,15 @@ Target Vision은 **Recommendation까지**이며 실제 발주 실행은 향후 �
 | Inventory | In과 Out의 낙관/비관 방향을 맞출지 | 미정 — Outbound 소스가 그 정도 세분화된 값(예: P50/P95)을 주는지에 달려있음(§8.5) |
 | Inventory | Safety Stock 데이터 정합성 | ERP/W&D 마스터 데이터 등록 여부에 의존, 미등록 Item 처리 방식은 §8.7 참고 |
 | Inventory | "Items at Risk" 지표 정의 | 이번 버전에서는 제외(§8.7), 필요 시 추후 재정의 |
-| Inventory | 실제 On-board 상태를 어떤 데이터 필드로 판정할지 | 미정 — 현재 샘플은 POL ATD 존재 여부로 판단 중(§8.10) |
-| Inventory | **입고버퍼시간의 구체적 일수**(§8.4) | 실입고일(W/H In Date) 데이터가 없는 경우 FDEST ATA/ETA에 며칠을 더할지 미확정. raw data 스냅샷엔 완료건(ATA 존재)이 0건이라 실측 검증 불가 상태(§8.10) |
-| Inventory | **POD 양하 시 Shortage 임박도 기반 우선순위 배정 로직**(§8.11 Next) | MVP 범위에서는 제외, Phase 2 이관 |
+| Inventory | 실제 On-board 상태를 어떤 데이터 필드로 판정할지 | 미정 — 현재 샘플은 POL ATD 존재 여부로 판단 중 |
+| Inventory | **입고버퍼시간의 구체적 일수**(§8.4) | 실입고일(W/H In Date) 데이터가 없는 경우 FDEST ATA/ETA에 며칠을 더할지 미확정. raw data 스냅샷엔 완료건(ATA 존재)이 0건이라 실측 검증 불가 상태(검증 이력은 PROGRESS.md) |
+| Inventory | **POD 양하 시 Shortage 임박도 기반 우선순위 배정 로직**(§8.10 Next) | MVP 범위에서는 제외, Phase 2 이관 |
 | Inventory | **선사 ETA 자체 보정 방법론**(§8.6) | MVP 범위에서는 제외 |
 | Inventory | News 데이터의 실제 연결 방식 | 미정 — "이런 데이터가 있다면"이라는 가정 하 화면 컨셉만 정의 |
 | Inventory | Port Congestion/Calling Schedule과 ETA 변화의 정량적 인과모델 | 미정 — §8.2 참고, 자동 단정하지 않는다는 원칙만 확정 |
 | Inventory | Pre-carriage 데이터를 향후 Planning Projection에 포함하는 상세 규칙 | 미정 — §8.4 Confirmed/Planning Projection 분리 개념만 정의 |
-| Inventory | 자체 ETA Prediction 모델, 실제 발주 의사결정 기능의 상세 구조 | 미정 — §8.11 Advanced/Target Vision 단계 과제 |
+| Inventory | 자체 ETA Prediction 모델, 실제 발주 의사결정 기능의 상세 구조 | 미정 — §8.10 Advanced/Target Vision 단계 과제 |
+| Inventory | **재고관리 Agent의 필요 범위** | 단순 임계값 판단(발주 알림/중단)은 §8.5 판정 로직으로 충분, 룰 베이스면 됨. Port Congestion·News·ETA Confidence·Supply Pipeline을 종합해 발주를 권고하는 판단 영역만 Agent가 필요 — §8.10 Advanced/Target Vision과 겹치는 미착수 영역, 다음 세션에서 설계 시작 |
 | 공통 | 선박 스케줄·컨테이너 트래킹·AIS·항만 혼잡도 그래프DB 연동 방식 | 상세 설계 안 됨 — "이런 데이터가 있다면"이라는 가정 하 최종 이미지만 정의 |
 | 공통 | 대안 루트 추천용 비교 데이터(대안 스케줄, 실시간 선복, 운임, 탄소계수) | 데이터/제휴 확보 과제, 기능 설계 이전 단계 |
 | Overview | 구성 방식(설계자 우선순위 선정 vs 사용자 커스터마이즈) | Transportation·Inventory 도메인 설계 완료 후 논의 |
@@ -659,8 +624,8 @@ Target Vision은 **Recommendation까지**이며 실제 발주 실행은 향후 �
 3. §10에 정리된 Inventory 미확정 사항(입고버퍼 일수, POD 양하 우선순위,
    ETA 자체보정 등) 개발 착수 시 순서대로 확정.
 4. Inventory Engine 실제 구현 착수 시 `synthetic-data/`를 입력으로 단위테스트
-   작성(§8.10 raw data 검증 결과 참고).
+   작성(raw data 검증 이력은 PROGRESS.md 참고).
 5. 화물/업무/비용/재고 탭이 다 정리되면 → 통합 Overview 재구성.
-6. **재고관리 Agent 설계 — 다음 세션에서 새로 시작**(§8.12 참고). 입력
-   신호(Port Congestion/News/ETA Confidence/Supply Pipeline)와 판단
-   로직·출력 형태를 처음부터 논의해야 함.
+6. **재고관리 Agent 설계 — 다음 세션에서 새로 시작**(§10 "재고관리 Agent의
+   필요 범위" 행 참고). 입력 신호(Port Congestion/News/ETA Confidence/
+   Supply Pipeline)와 판단 로직·출력 형태를 처음부터 논의해야 함.
