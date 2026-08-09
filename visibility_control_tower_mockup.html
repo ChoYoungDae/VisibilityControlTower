@@ -41,6 +41,10 @@
   .app {
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
     background: var(--bg); color: var(--ink); min-height: 100vh; font-size: 14px; line-height: 1.5;
+    /* Full HD(1920x1080) 대시보드 기준 — 전체를 확대해 가독성을 높임(px 지정된
+       모든 폰트/여백/아이콘이 같은 비율로 커짐). 표준 CSS 배율 속성이 아니라
+       Chromium 계열(zoom 지원 브라우저)에서만 적용됨 — 목업 프리뷰 용도로 충분. */
+    zoom: 1.25;
   }
   .num { font-family: "SFMono-Regular","JetBrains Mono",ui-monospace,Consolas,monospace; font-variant-numeric: tabular-nums; }
 
@@ -80,11 +84,17 @@
   .nav-divider { width:1px; align-self:stretch; background:var(--border); margin:2px 2px; }
   .topnav-spacer { flex:1; }
 
+  .topnav-search { display:flex; align-items:center; gap:9px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:8px 13px; width:300px; flex-shrink:0; }
+  .topnav-search:focus-within { border-color:var(--accent); background:var(--surface); }
+  .topnav-search::before { content:''; display:inline-block; width:15px; height:15px; flex-shrink:0; background-color:var(--ink-faint); -webkit-mask-image:var(--ico-search); mask-image:var(--ico-search); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  .topnav-search input { border:none; background:transparent; outline:none; font-family:inherit; font-size:13px; color:var(--ink); width:100%; }
+  .topnav-search input::placeholder { color:var(--ink-faint); }
+
   /* ===== shared: tab-panel switching ===== */
   .tab-panel { display:none; }
   .tab-panel.active { display:block; }
 
-  .main { max-width:1260px; margin:0 auto; padding:24px 28px 130px; }
+  .main { max-width:1500px; margin:0 auto; padding:24px 28px 130px; }
 
   .note { background:var(--accent-soft); border:1px solid var(--accent-soft-border); border-radius:10px; padding:11px 15px; font-size:12.5px; margin-bottom:20px; line-height:1.6; color:var(--ink); }
   .note b { color:var(--accent); }
@@ -406,11 +416,21 @@
 
   /* ===== 재고 탭 전용 ===== */
   .cols-proj { grid-template-columns: 1.6fr .8fr .8fr .9fr 1.1fr 18px; }
-  .cols-inbound { grid-template-columns: 1.6fr .8fr 1.2fr 1fr 18px; }
+  .cols-inbound { grid-template-columns: 1.6fr .8fr 1.2fr .9fr 92px 18px; }
   .cols-inv-item { grid-template-columns: 1.4fr .9fr 1.4fr .6fr 18px; }
 
   .isku-cell .sku { font-weight:700; }
   .isku-cell .idesc { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+
+  /* ---- Inbound 신뢰도 설명 Agent (§8.6.1) ---- */
+  .conf-trigger { font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:100px; border:1px solid var(--border-strong); background:var(--surface-2); color:var(--ink-muted); cursor:pointer; white-space:nowrap; }
+  .conf-trigger:hover { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
+  .conf-trigger.auto { border-color:var(--crit); color:var(--crit); background:var(--crit-soft); }
+  .conf-trigger.auto:hover { background:var(--crit-soft); color:var(--crit); border-color:var(--crit); }
+  .conf-list { margin:0; padding-left:18px; font-size:13px; line-height:1.65; color:var(--ink); }
+  .conf-list li { margin-bottom:6px; }
+  .conf-list.empty { list-style:none; padding-left:0; color:var(--ink-muted); }
+  .conf-caveat { margin-top:18px; padding-top:14px; border-top:1px dashed var(--border); font-size:11px; color:var(--ink-faint); line-height:1.55; }
 
   .inv-summary-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
   .inv-summary-card .isku { font-weight:700; font-size:15px; }
@@ -478,6 +498,9 @@
       <div class="tab" data-tab="inventory">재고</div>
     </div>
     <div class="topnav-spacer"></div>
+    <div class="topnav-search">
+      <input type="text" id="topnav-search-input" placeholder="B/L, Container No, Item 검색" />
+    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -1499,12 +1522,29 @@
 
       <!-- ===== INBOUND ===== -->
       <section id="inv-inbound" style="display:none;">
-        <div class="section-sub" style="margin-bottom:14px;">FDEST ETA(현재값) 기준 정렬 — Delay Status는 Init. ETA 대비 현재 ETA가 늦어졌는지로 판정합니다.</div>
+        <div class="section-sub" style="margin-bottom:14px;">FDEST ETA(현재값) 기준 정렬 — Delay Status는 Init. ETA 대비 현재 ETA가 늦어졌는지로 판정합니다. Shortage Item의 입고 건은 근거/신뢰도가 자동 분석되어 있고(⚡ 표시), 그 외는 "근거 보기"를 눌러야 분석됩니다.</div>
         <div class="list">
-          <div class="list-row head cols-inbound"><div>Item</div><div>Qty</div><div>FDEST ETA (Init. ETA)</div><div>Delay Status</div><div></div></div>
+          <div class="list-row head cols-inbound"><div>Item</div><div>Qty</div><div>FDEST ETA (Init. ETA)</div><div>Delay Status</div><div>근거</div><div></div></div>
           <div id="inv-inbound-rows"></div>
         </div>
         <div class="ptimeline-pending" id="inv-inbound-pending"></div>
+
+        <!-- ===== Inbound 신뢰도 설명 Agent 결과 (§8.6.1) ===== -->
+        <div class="detail" id="inv-conf-detail">
+          <div class="detail-head">
+            <div>
+              <h3 id="conf-title">—</h3>
+              <div class="route" id="conf-sub">—</div>
+            </div>
+            <span class="pill ok" id="conf-badge"><span class="dot" style="background:var(--ok)"></span>정상</span>
+          </div>
+          <div style="font-size:13.5px; font-weight:600; margin-bottom:16px;" id="conf-summary"></div>
+          <div class="block-title" style="font-size:12.5px; color:var(--ink-muted); margin-bottom:8px;">리스크 포인트</div>
+          <ul class="conf-list" id="conf-risk"></ul>
+          <div class="block-title" style="font-size:12.5px; color:var(--ink-muted); margin:18px 0 8px;">근거</div>
+          <ul class="conf-list" id="conf-evidence"></ul>
+          <div class="conf-caveat" id="conf-caveat"></div>
+        </div>
       </section>
     </div>
   </div>
@@ -1521,6 +1561,15 @@
     clearTimeout(showToast._h);
     showToast._h = setTimeout(() => t.classList.remove("show"), 2600);
   }
+
+  // ===== shared: topnav search (mock — 아직 실제 조회 동작 없음) =====
+  (function () {
+    const input = document.getElementById("topnav-search-input");
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || !input.value.trim()) return;
+      showToast("⌕ \"" + input.value.trim() + "\" 검색 (mock) — B/L·Container No·Item 통합 조회는 아직 동작하지 않는 UI입니다");
+    });
+  })();
 
   // ===== shared: top-level tab switching =====
   (function () {
@@ -1603,11 +1652,23 @@
         e.stopPropagation();
         const name = v.textContent.trim();
         const mmsi = VESSEL_MMSI[name];
-        if (mmsi) {
-          window.open(VESSEL_TRACKER_BASE + "?mmsi=" + mmsi + "&name=" + encodeURIComponent(name), "_blank");
-        } else {
+        const row = v.closest(".list-row");
+        const table = v.closest(".list-table");
+        const routeText = row ? (row.querySelectorAll(":scope > div")[1]?.textContent.trim() || "") : "";
+        const [pol, pod] = routeText.includes("→") ? routeText.split("→").map(s => s.trim()) : [null, null];
+        const stage = table ? table.getAttribute("data-status") : null;
+
+        if (!mmsi) {
           showToast("🗺️ " + name + " — MMSI 매핑 없음 (항공 편명은 AIS 추적 대상 아님)");
+          return;
         }
+        const params = new URLSearchParams({ mmsi, name });
+        if (pol && pod) {
+          params.set("pol", pol);
+          params.set("pod", pod);
+          params.set("stage", stage || "transit");
+        }
+        window.open(VESSEL_TRACKER_BASE + "?" + params.toString(), "_blank");
       });
     });
 
@@ -2466,6 +2527,92 @@
       itemDetail.scrollIntoView({ behavior:"smooth", block:"nearest" });
     }
 
+    // ---- Inbound 신뢰도 설명 Agent (§8.6.1 프로토타입) ----
+    // 실제 파이프라인(CP_Vessel_List 실측 Gap/Risk Alert + Port Congestion 추세 +
+    // WebSearch 정성적 원인)은 별도 raw data 연동이 필요해 이 목업에는 아직 안 붙어있음.
+    // 여기서는 이미 목업 데이터에 있는 Init ETA vs 현재 FDEST ETA 비교만으로
+    // 확정된 화면 텍스트 구조(등급 배지 → 요약 → 리스크 포인트 → 근거)를 보여줌.
+    const itemTierCache = {};
+    function getItemTier(sku) {
+      if (itemTierCache[sku]) return itemTierCache[sku];
+      const item = itemCatalog[sku];
+      if (!item) return "ok";
+      const tier = statusOf(buildTimeline(sku, item)).tier;
+      itemTierCache[sku] = tier;
+      return tier;
+    }
+
+    function parseDateMD(md) {
+      if (!md) return null;
+      const [m, d] = md.split("/").map(Number);
+      return new Date(2026, m - 1, d);
+    }
+
+    function analyzeShipmentConfidence(sku, sp) {
+      const tier = getItemTier(sku);
+      const initD = parseDateMD(sp.fdestInitEta);
+      const etaD = parseDateMD(sp.fdestEta);
+      const gap = (initD && etaD) ? Math.round((etaD - initD) / 86400000) : null;
+
+      let grade = "ok", gradeLabel = "정상", summary, riskPoints = [], evidence = [];
+
+      if (sp.delayed) {
+        grade = "warn"; gradeLabel = "주의";
+        summary = "선적 시점 예상보다 " + gap + "일 늦어진 상태입니다.";
+        riskPoints.push("Init ETA(" + sp.fdestInitEta + ") 대비 현재 FDEST ETA(" + sp.fdestEta + ")가 " + gap + "일 늦어진 것으로 확인됨.");
+        riskPoints.push("추가로 더 밀릴 가능성이 있어 회복 시점 판단 시 유의가 필요함.");
+        evidence.push("Init. ETA " + sp.fdestInitEta + " → 현재 FDEST ETA " + sp.fdestEta + " (" + gap + "일 밀림).");
+      } else if (gap !== null && gap < 0) {
+        summary = "선적 시점 예상보다 " + Math.abs(gap) + "일 당겨졌습니다. 리스크 요인은 없습니다.";
+        evidence.push("Init. ETA " + sp.fdestInitEta + " → 현재 FDEST ETA " + sp.fdestEta + " (" + Math.abs(gap) + "일 당겨짐) — 이 Item·항로 기준 정상 변동 범위로 판단됨(이상 신호 아님).");
+      } else {
+        summary = "선적 시점 예상과 동일합니다. 예정대로 진행 중이며 리스크 요인은 없습니다.";
+        evidence.push("Init. ETA와 현재 FDEST ETA가 동일 — 변동 없음.");
+      }
+
+      return { tier, grade, gradeLabel, summary, riskPoints, evidence };
+    }
+
+    function findShipment(sku, id) {
+      const item = itemCatalog[sku];
+      if (!item) return null;
+      return item.shipments.find(s => s.id === id) || null;
+    }
+
+    const confDetail = document.getElementById("inv-conf-detail");
+    function openConfidenceDetail(sku, id) {
+      const sp = findShipment(sku, id);
+      if (!sp) return;
+      const a = analyzeShipmentConfidence(sku, sp);
+
+      document.getElementById("conf-title").textContent = (sp.id || "(TBD)") + " · " + sku;
+      document.getElementById("conf-sub").textContent = sp.po + " · FDEST ETA " + (sp.fdestEta || "미정");
+
+      const badgeEl = document.getElementById("conf-badge");
+      badgeEl.className = "pill " + a.grade;
+      badgeEl.innerHTML = '<span class="dot" style="background:var(--' + a.grade + ')"></span>' + a.gradeLabel;
+
+      document.getElementById("conf-summary").textContent = a.summary;
+
+      const riskEl = document.getElementById("conf-risk");
+      if (a.riskPoints.length) {
+        riskEl.className = "conf-list";
+        riskEl.innerHTML = a.riskPoints.map(t => "<li>" + t + "</li>").join("");
+      } else {
+        riskEl.className = "conf-list empty";
+        riskEl.innerHTML = "<li>현재 확인된 리스크 포인트 없음.</li>";
+      }
+
+      document.getElementById("conf-evidence").innerHTML = a.evidence.map(t => "<li>" + t + "</li>").join("");
+
+      document.getElementById("conf-caveat").textContent = a.tier === "crit"
+        ? "⚡ 이 Item은 현재 Shortage 상태라 회복 시점에 걸린 입고 건으로 자동 분석되었습니다. (프로토타입: Init/현재 FDEST ETA 비교 기반 — 프로덕션에서는 CP_Vessel_List 실측 Gap/Risk Alert, Port Congestion 추세, WebSearch 정성적 근거가 추가됩니다.)"
+        : "요청하신 이 건만 분석했습니다. (프로토타입: Init/현재 FDEST ETA 비교 기반 — 프로덕션에서는 CP_Vessel_List 실측 Gap/Risk Alert, Port Congestion 추세, WebSearch 정성적 근거가 추가됩니다.)";
+
+      confDetail.classList.add("open");
+      confDetail.scrollIntoView({ behavior:"smooth", block:"nearest" });
+    }
+
     // ---- Inbound: shipment list across all items ----
     function renderInboundList() {
       const rows = [];
@@ -2480,19 +2627,35 @@
 
       const rowsEl = document.getElementById("inv-inbound-rows");
       rowsEl.innerHTML = rows.map(r => {
-        const delayPill = r.delayed
-          ? '<span class="pill crit"><span class="dot" style="background:var(--crit)"></span>지연</span>'
-          : '<span class="pill ok"><span class="dot" style="background:var(--ok)"></span>정상</span>';
+        const isAuto = getItemTier(r.sku) === "crit";
+        let pillHtml, triggerHtml;
+        if (isAuto) {
+          const a = analyzeShipmentConfidence(r.sku, r);
+          pillHtml = '<span class="pill ' + a.grade + '"><span class="dot" style="background:var(--' + a.grade + ')"></span>' + a.gradeLabel + '</span>';
+          triggerHtml = '<button type="button" class="conf-trigger auto" data-conf-sku="' + r.sku + '" data-conf-id="' + r.id + '" title="Shortage Item — 자동 분석됨">⚡ 근거 보기</button>';
+        } else {
+          pillHtml = r.delayed
+            ? '<span class="pill crit"><span class="dot" style="background:var(--crit)"></span>지연</span>'
+            : '<span class="pill ok"><span class="dot" style="background:var(--ok)"></span>정상</span>';
+          triggerHtml = '<button type="button" class="conf-trigger" data-conf-sku="' + r.sku + '" data-conf-id="' + r.id + '">근거 보기</button>';
+        }
         return '<div class="list-row cols-inbound" data-container="' + r.id + '">' +
           '<div class="isku-cell"><div class="sku">' + r.sku + '</div><div class="idesc">' + r.id + ' · ' + r.po + '</div></div>' +
           '<div class="num">' + r.qty.toLocaleString() + ' EA</div>' +
           '<div class="eta-cell"><span class="num">' + r.fdestEta + '</span><div class="p50-inline" style="margin-top:2px;">Init. <span class="num">' + r.fdestInitEta + '</span></div></div>' +
-          '<div>' + delayPill + '</div>' +
+          '<div>' + pillHtml + '</div>' +
+          '<div>' + triggerHtml + '</div>' +
           '<div class="chev">›</div>' +
           '</div>';
       }).join("");
       rowsEl.querySelectorAll(".list-row[data-container]").forEach(row => {
         row.addEventListener("click", () => jumpToCargoContainer(row.getAttribute("data-container")));
+      });
+      rowsEl.querySelectorAll(".conf-trigger[data-conf-sku]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openConfidenceDetail(btn.getAttribute("data-conf-sku"), btn.getAttribute("data-conf-id"));
+        });
       });
 
       document.getElementById("inv-inbound-pending").textContent = pendingCount

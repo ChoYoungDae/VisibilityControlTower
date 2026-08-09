@@ -1,8 +1,9 @@
 # Visibility Control Tower PRD
 
 - 작성일: 2026-08-03 · 최종 개정: 2026-08-09
-- 버전: v2.3 — §9.8(MVP 이후 발전 방향, 방향성 라벨만 있던 로드맵) 삭제.
-  유일하게 요구사항성이 있던 문장("발주 실행은 범위 밖")은 §12로 이동
+- 버전: v2.4 — §9.8(MVP 이후 발전 방향, 방향성 라벨만 있던 로드맵) 삭제.
+  유일하게 요구사항성이 있던 문장("발주 실행은 범위 밖")은 §12로 이동.
+  §10 vessel-tracker 한계에 SeaVantage 계정 whitelist 미등록 사실 반영
   (경위는 [`PROGRESS.md`](PROGRESS.md)).
 - 근거 문서: [`VisibilityControlTower_기획.md`](VisibilityControlTower_기획.md), [`PROGRESS.md`](PROGRESS.md)
 - 상태: 화물/업무/비용/재고 탭 모두 `visibility_control_tower_mockup.html`에
@@ -709,8 +710,9 @@ Inbound 정보가 재고 관리에 실제로 도움이 된다는 것을 증명**
   - `/ship/snapshot/:shipId`의 `range` 파라미터 단위가 문서에 없어 분(minute)
     으로 가정하고 기본값 60을 쓴다(`SEAVANTAGE_SNAPSHOT_RANGE`로 조정 가능)
     — 실계정 테스트로 확인 필요.
-  - 실제 계정정보(`.env`)가 아직 채워지지 않아 실 데이터 연결은 미검증
-    상태다. 선박이 최근 신호를 보내지 않았으면 조회가 안 될 수 있다.
+  - **현재 SeaVantage API를 실제로 쓸 수 없다** — 계정이 whitelist에
+    등록되지 않아 호출 자체가 막혀 있다. 등록 전까지는 실 데이터 연결
+    검증이 불가능하다(whitelist 등록은 SeaVantage 측 처리 대기).
   - 이전 구현(aisstream.io)은 한국 해역 AIS 수신 커버리지가 없어 교체했다.
     그때 쓰던 "커버리지 있는 지역만 구독하는 데모 모드" 우회는 SeaVantage
     에서는 불필요해져 제거했다.

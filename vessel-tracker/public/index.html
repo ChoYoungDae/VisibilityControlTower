@@ -33,7 +33,7 @@
     <h1>Vessel Live Position (prototype)</h1>
 
     <div id="named-controls" class="named-badge" style="display:none">
-      <span>실시간 연결 데모 — 클릭한 선박: <b id="named-vessel">—</b></span>
+      <span>클릭한 선박: <b id="named-vessel">—</b></span>
       <button id="stop-named" class="secondary">Stop</button>
       <button id="show-manual" class="link-btn">MMSI로 직접 조회</button>
     </div>
@@ -41,9 +41,8 @@
     <div id="manual-controls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <input id="mmsi" type="text" placeholder="MMSI (e.g. 368207620)" value="368207620" />
       <button id="track">Track (단일 선박)</button>
-      <button id="track-live" class="secondary">실시간 트래픽 보기 (지역 기준)</button>
       <button id="stop" class="secondary">Stop</button>
-      <span class="hint">Docs sample MMSIs: 368207620 · 367719770 · 211476060 — 실제 신호라 시간이 걸릴 수 있음</span>
+      <span class="hint">실제 SeaVantage 데이터라 선박이 최근 신호를 보내지 않았으면 조회가 안 될 수 있음</span>
     </div>
   </div>
   <div class="note" id="note" style="display:none"></div>
@@ -53,15 +52,157 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"></script>
   <script>
     let map = null;
-    let marker = null;       // single-vessel mode
-    const liveMarkers = new Map(); // mmsi -> mapboxgl.Marker, for live-region mode
+    let marker = null;
     let ws = null;
-    let mode = null; // 'single' | 'live'
-    let liveSeenCount = 0;
-    let fallbackTimer = null; // pending "no live signal, fall back to region demo" timeout
 
-    function clearFallbackTimer() {
-      if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+    // Rough port coordinates [lon, lat] for the routes used in the mockup.
+    // Only covers ports that appear on rows with a clickable vessel name —
+    // good enough to place a plausible marker when the real AIS API
+    // (SeaVantage) isn't reachable, not meant to be survey-grade.
+    const PORT_COORDS = {
+      "qingdao": [120.33, 36.07],
+      "rotterdam": [4.48, 51.92],
+      "ningbo": [121.55, 29.87],
+      "antwerp": [4.40, 51.22],
+      "busan": [129.04, 35.10],
+      "long beach": [-118.19, 33.77],
+      "shanghai": [121.47, 31.23],
+      "hamburg": [9.99, 53.55],
+    };
+
+    function findPort(name) {
+      return PORT_COORDS[(name || "").trim().toLowerCase()] || null;
+    }
+
+    // Great-circle (spherical) interpolation, not flat lon/lat lerp — a real
+    // ship on a Busan->Long Beach route bulges north past Hokkaido rather
+    // than cutting straight across Japan, because the shortest path on a
+    // sphere isn't a straight line on an equirectangular lon/lat grid.
+    const toRad = (d) => (d * Math.PI) / 180;
+    const toDeg = (r) => (r * 180) / Math.PI;
+
+    function llToVec([lon, lat]) {
+      const la = toRad(lat), lo = toRad(lon);
+      return [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
+    }
+    function vecToLl([x, y, z]) {
+      return [toDeg(Math.atan2(y, x)), toDeg(Math.atan2(z, Math.sqrt(x * x + y * y)))];
+    }
+    function greatCirclePoint(from, to, t) {
+      const v1 = llToVec(from), v2 = llToVec(to);
+      let dot = v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+      dot = Math.max(-1, Math.min(1, dot));
+      const theta = Math.acos(dot);
+      if (theta < 1e-9) return from.slice();
+      const sinTheta = Math.sin(theta);
+      const a = Math.sin((1 - t) * theta) / sinTheta;
+      const b = Math.sin(t * theta) / sinTheta;
+      return vecToLl([a * v1[0] + b * v2[0], a * v1[1] + b * v2[1], a * v1[2] + b * v2[2]]);
+    }
+    function bearingBetween([lon1, lat1], [lon2, lat2]) {
+      const phi1 = toRad(lat1), phi2 = toRad(lat2), dLon = toRad(lon2 - lon1);
+      const y = Math.sin(dLon) * Math.cos(phi2);
+      const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLon);
+      return (toDeg(Math.atan2(y, x)) + 360) % 360;
+    }
+
+    // Deterministic 0..1 pseudo-random from a string, so the same vessel
+    // always lands at the same mock spot instead of jumping around on
+    // every click/reload.
+    function seededFraction(seed) {
+      let h = 0;
+      for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+      return (h % 1000) / 1000;
+    }
+
+    // No real AIS feed is reachable right now (SeaVantage account not wired
+    // up), so this places the vessel at a plausible point along its POL->POD
+    // route instead of calling the live API. Clearly labeled as an estimate.
+    function showMockPosition({ pol, pod, stage, name, mmsi }) {
+      const from = findPort(pol);
+      const to = findPort(pod);
+      if (!from || !to) {
+        setStatus(`${pol} → ${pod} 좌표를 몰라 추정 위치를 표시할 수 없습니다.`, "error");
+        return;
+      }
+
+      // Pre-carriage: still near origin port. Main-carriage: mid-ocean,
+      // with a bit of per-vessel jitter so it isn't dead-center every time.
+      // On-carriage isn't reachable from a vessel-link click today, but
+      // handled here for completeness.
+      let t;
+      if (stage === "loading") t = 0.05 + seededFraction(mmsi) * 0.05;
+      else if (stage === "arrived") t = 0.92 + seededFraction(mmsi) * 0.05;
+      else t = 0.35 + seededFraction(mmsi) * 0.3;
+
+      const [lon, lat] = greatCirclePoint(from, to, t);
+      // Local heading: bearing of a short arc straddling t, not the initial
+      // departure bearing — the great-circle heading keeps changing along
+      // the route (e.g. swinging from NE to E as it arcs over the Pacific).
+      const delta = 0.01;
+      const bearing = bearingBetween(
+        greatCirclePoint(from, to, Math.max(0, t - delta)),
+        greatCirclePoint(from, to, Math.min(1, t + delta))
+      );
+
+      setNote(`⚠️ 추정 위치 — 실제 AIS 신호가 아니라 ${pol} → ${pod} 항로상 진행 단계(${stage})를 바탕으로 대략 배치한 좌표입니다. 지도의 점선은 실제 항적이 아니라 출발항부터 이 추정 위치까지를 이어본 가상의 선입니다.`);
+      setStatus(`${name || "MMSI " + mmsi} · 추정 위치 ${lat.toFixed(2)}, ${lon.toFixed(2)}`, "ok");
+
+      clearMarker();
+      drawMockRoute(from, to, t);
+      const popupHtml = `<b>${name || "Unknown"}</b><br>MMSI ${mmsi}<br><i>추정 위치 (실시간 AIS 아님)</i>`;
+      marker = new mapboxgl.Marker({ element: createVesselEl("#b9821d"), rotationAlignment: "map" })
+        .setLngLat([lon, lat])
+        .setRotation(bearing)
+        .setPopup(new mapboxgl.Popup({ offset: 16 }).setHTML(popupHtml))
+        .addTo(map);
+      map.flyTo({ center: [lon, lat], zoom: 4 });
+    }
+
+    // Draws a dashed line from the origin port to the estimated current
+    // position — not a real track, just a visual aid for "how far along"
+    // the mock placement implies. Sampled in small steps (rather than a
+    // single straight segment) so it follows the same antimeridian-aware
+    // path as the marker itself.
+    function drawMockRoute(from, to, t) {
+      const steps = 40;
+      const coords = [];
+      let prevLon = null;
+      for (let i = 0; i <= steps; i++) {
+        const s = (t * i) / steps;
+        let [lon, lat] = greatCirclePoint(from, to, s);
+        // Keep longitude continuous point-to-point (rather than each one
+        // independently wrapped to -180..180) so the line doesn't jump back
+        // across the whole map when the great circle crosses the antimeridian.
+        if (prevLon !== null) {
+          let diff = lon - prevLon;
+          if (diff > 180) lon -= 360;
+          else if (diff < -180) lon += 360;
+        }
+        prevLon = lon;
+        coords.push([lon, lat]);
+      }
+      const geojson = { type: "Feature", geometry: { type: "LineString", coordinates: coords } };
+
+      const addOrUpdate = () => {
+        const source = map.getSource("mock-route");
+        if (source) {
+          source.setData(geojson);
+        } else {
+          map.addSource("mock-route", { type: "geojson", data: geojson });
+          map.addLayer({
+            id: "mock-route-line",
+            type: "line",
+            source: "mock-route",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": "#b9821d", "line-width": 2.5, "line-dasharray": [1.5, 1.5], "line-opacity": 0.85 },
+          });
+        }
+      };
+      // The "standard" style loads its layers asynchronously — adding a
+      // source/layer before it's ready throws, so defer if needed.
+      if (map.isStyleLoaded()) addOrUpdate();
+      else map.once("style.load", addOrUpdate);
     }
 
     const statusEl = document.getElementById("status");
@@ -75,11 +216,11 @@
       noteEl.style.display = msg ? "" : "none";
     }
 
-    function clearMarkers() {
+    function clearMarker() {
       if (marker) { marker.remove(); marker = null; }
-      liveMarkers.forEach(m => m.remove());
-      liveMarkers.clear();
-      liveSeenCount = 0;
+      if (map && map.getSource("mock-route")) {
+        map.getSource("mock-route").setData({ type: "Feature", geometry: { type: "LineString", coordinates: [] } });
+      }
     }
 
     // Custom hull-shaped icon (bow pointing "up" = 0° COG) so mapboxgl.Marker's
@@ -124,46 +265,23 @@
         if (data.type === "status") setStatus(data.message, "ok");
         if (data.type === "error") setStatus(data.message, "error");
         if (data.type === "position") {
-          clearFallbackTimer();
-          if (mode === "single") {
-            setStatus(
-              `${data.shipName || "MMSI " + data.mmsi} · ${data.lat.toFixed(4)}, ${data.lon.toFixed(4)} · SOG ${data.sog ?? "—"} kn · ${data.timeUtc}`,
-              "ok"
-            );
-            const lngLat = [data.lon, data.lat];
-            const popupHtml = `<b>${data.shipName || "Unknown"}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`;
-            if (!marker) {
-              marker = new mapboxgl.Marker({ element: createVesselEl("#0b6e5c"), rotationAlignment: "map" })
-                .setLngLat(lngLat)
-                .setRotation(data.cog ?? 0)
-                .setPopup(new mapboxgl.Popup({ offset: 16 }).setHTML(popupHtml))
-                .addTo(map);
-              map.flyTo({ center: lngLat, zoom: 8 });
-            } else {
-              marker.setLngLat(lngLat);
-              marker.setRotation(data.cog ?? 0);
-              marker.getPopup().setHTML(popupHtml);
-            }
-          } else if (mode === "live") {
-            const lngLat = [data.lon, data.lat];
-            const label = data.shipName || ("MMSI " + data.mmsi);
-            const popupHtml = `<b>${label}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`;
-            if (!liveMarkers.has(data.mmsi)) {
-              liveSeenCount++;
-              const m = new mapboxgl.Marker({ element: createVesselEl("#1976d2"), rotationAlignment: "map" })
-                .setLngLat(lngLat)
-                .setRotation(data.cog ?? 0)
-                .setPopup(new mapboxgl.Popup({ offset: 16 }).setHTML(popupHtml))
-                .addTo(map);
-              liveMarkers.set(data.mmsi, m);
-              if (liveMarkers.size === 1) map.flyTo({ center: lngLat, zoom: 7 });
-            } else {
-              const m = liveMarkers.get(data.mmsi);
-              m.setLngLat(lngLat);
-              m.setRotation(data.cog ?? 0);
-              m.getPopup().setHTML(popupHtml);
-            }
-            setStatus(`실시간 연결 확인됨 — 지금까지 ${liveSeenCount}척 수신 · 최근: ${label} (${data.lat.toFixed(3)}, ${data.lon.toFixed(3)})`, "ok");
+          setStatus(
+            `${data.shipName || "MMSI " + data.mmsi} · ${data.lat.toFixed(4)}, ${data.lon.toFixed(4)} · SOG ${data.sog ?? "—"} kn · ${data.timeUtc}`,
+            "ok"
+          );
+          const lngLat = [data.lon, data.lat];
+          const popupHtml = `<b>${data.shipName || "Unknown"}</b><br>MMSI ${data.mmsi}<br>SOG ${data.sog ?? "—"} kn · COG ${data.cog ?? "—"}°`;
+          if (!marker) {
+            marker = new mapboxgl.Marker({ element: createVesselEl("#0b6e5c"), rotationAlignment: "map" })
+              .setLngLat(lngLat)
+              .setRotation(data.cog ?? 0)
+              .setPopup(new mapboxgl.Popup({ offset: 16 }).setHTML(popupHtml))
+              .addTo(map);
+            map.flyTo({ center: lngLat, zoom: 8 });
+          } else {
+            marker.setLngLat(lngLat);
+            marker.setRotation(data.cog ?? 0);
+            marker.getPopup().setHTML(popupHtml);
           }
         }
       });
@@ -172,57 +290,21 @@
       ws.addEventListener("error", () => setStatus("WebSocket error.", "error"));
     }
 
-    function trackSingle() {
-      clearFallbackTimer();
+    function trackMmsi(mmsi) {
       if (ws) ws.close();
-      clearMarkers();
-      mode = "single";
+      clearMarker();
       setNote("");
       setStatus("Connecting...", "");
-      connect(() => {
-        const mmsi = document.getElementById("mmsi").value.trim();
-        if (!mmsi) { setStatus("Enter an MMSI first.", "error"); return; }
-        ws.send(JSON.stringify({ type: "track", mmsi }));
-      });
+      connect(() => ws.send(JSON.stringify({ type: "track", mmsi })));
     }
 
-    // Try tracking the actual MMSI first — if it hasn't reported within the
-    // window, most likely it's outside this data source's receiver coverage
-    // (e.g. Korean waters), so fall back to the region-traffic demo instead
-    // of leaving the user staring at an empty map forever.
-    function trackNamed(mmsi, name) {
-      clearFallbackTimer();
-      if (ws) ws.close();
-      clearMarkers();
-      mode = "single";
-      setNote("실시간 위치 확인 중... (신호가 없으면 15초 후 지역 트래픽 데모로 전환됩니다)");
-      setStatus("Connecting...", "");
-      connect(() => {
-        ws.send(JSON.stringify({ type: "track-in-region", mmsi }));
-      });
-      fallbackTimer = setTimeout(() => {
-        fallbackTimer = null;
-        trackLive(name);
-      }, 15000);
-    }
-
-    function trackLive(clickedName) {
-      clearFallbackTimer();
-      if (ws) ws.close();
-      clearMarkers();
-      mode = "live";
-      setNote(
-        (clickedName ? clickedName + "의 실제 실시간 위치는 이 지역(한국 해역)에 AIS 수신 커버리지가 없어 확인할 수 없습니다. " : "") +
-        "대신 실제로 신호가 잡히는 도버 해협·싱가포르 해협 실시간 트래픽을 보여줘서 aisstream.io 연결 자체가 살아있는지 확인합니다."
-      );
-      setStatus("Connecting...", "");
-      connect(() => {
-        ws.send(JSON.stringify({ type: "track-live" }));
-      });
+    function trackSingle() {
+      const mmsi = document.getElementById("mmsi").value.trim();
+      if (!mmsi) { setStatus("Enter an MMSI first.", "error"); return; }
+      trackMmsi(mmsi);
     }
 
     function stopTracking() {
-      clearFallbackTimer();
       if (ws) {
         ws.send(JSON.stringify({ type: "stop" }));
         ws.close();
@@ -231,7 +313,6 @@
     }
 
     document.getElementById("track").addEventListener("click", trackSingle);
-    document.getElementById("track-live").addEventListener("click", () => trackLive(null));
     document.getElementById("stop").addEventListener("click", stopTracking);
     document.getElementById("stop-named").addEventListener("click", stopTracking);
     document.getElementById("show-manual").addEventListener("click", () => {
@@ -240,23 +321,27 @@
       setNote("");
     });
 
-    // Arrived from the cargo screen with a vessel name. Try tracking the real
-    // MMSI first (works if this vessel happens to be in this data source's
-    // receiver coverage right now); trackNamed() auto-falls-back to the
-    // live-region demo if no report shows up in time.
+    // Arrived from the cargo screen with a vessel name/MMSI (+ optionally
+    // pol/pod/stage for the route the mockup row was showing).
     function startFromQuery() {
       const params = new URLSearchParams(location.search);
       const qName = params.get("name");
       const qMmsi = params.get("mmsi");
+      const qPol = params.get("pol");
+      const qPod = params.get("pod");
+      const qStage = params.get("stage");
       if (qMmsi || qName) {
         document.getElementById("mmsi").value = qMmsi || "";
         document.getElementById("named-vessel").textContent = qName || ("MMSI " + qMmsi);
         document.getElementById("manual-controls").style.display = "none";
         document.getElementById("named-controls").style.display = "flex";
-        if (qMmsi) {
-          trackNamed(qMmsi, qName || ("MMSI " + qMmsi));
+
+        if (qPol && qPod) {
+          showMockPosition({ pol: qPol, pod: qPod, stage: qStage, name: qName, mmsi: qMmsi });
+        } else if (qMmsi) {
+          trackMmsi(qMmsi);
         } else {
-          trackLive(qName);
+          setStatus(`${qName}의 MMSI를 알 수 없어 조회할 수 없습니다.`, "error");
         }
       }
     }

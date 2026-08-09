@@ -2,23 +2,19 @@ require("dotenv").config();
 
 const path = require("path");
 const express = require("express");
-const { WebSocketServer, WebSocket } = require("ws");
+const { WebSocketServer } = require("ws");
 
 const PORT = process.env.PORT || 8787;
-const AISSTREAM_API_KEY = process.env.AISSTREAM_API_KEY;
 const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
-const AISSTREAM_URL = "wss://stream.aisstream.io/v0/stream";
-
-// aisstream.io's FiltersShipMMSI parameter hasn't reliably returned results in testing,
-// and there's effectively no receiver coverage in Korean waters (confirmed via manual
-// probing — 0 messages over 60s+ with and without filters). Region-based BoundingBoxes
-// subscriptions do work reliably. So for a live "does the connection actually work" demo,
-// we subscribe to known-busy straits with real coverage and show whichever real vessel
-// reports next, rather than waiting on one specific MMSI that may never be heard from.
-const LIVE_DEMO_BBOXES = [
-  [[50.5, 0.5], [51.3, 2.0]],   // Dover Strait / English Channel
-  [[1.0, 103.5], [1.5, 104.2]], // Singapore Strait
-];
+const SEAVANTAGE_USERNAME = process.env.SEAVANTAGE_USERNAME;
+const SEAVANTAGE_PASSWORD = process.env.SEAVANTAGE_PASSWORD;
+const SEAVANTAGE_BASE_URL = process.env.SEAVANTAGE_BASE_URL || "https://svmp.seavantage.com/api/v1";
+const POLL_INTERVAL_MS = Number(process.env.SEAVANTAGE_POLL_INTERVAL_MS) || 15000;
+// /ship/snapshot/:shipId requires a dateTime + a "range" whose unit isn't
+// documented (assumed minutes) — how far back from dateTime a position report
+// still counts as current. Widened default so a slightly-stale AIS report
+// still comes back instead of a false "no data".
+const SNAPSHOT_RANGE = Number(process.env.SEAVANTAGE_SNAPSHOT_RANGE) || 60;
 
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
@@ -29,8 +25,8 @@ app.get("/config", (_req, res) => {
 
 const server = app.listen(PORT, () => {
   console.log(`vessel-tracker listening on http://localhost:${PORT}`);
-  if (!AISSTREAM_API_KEY) {
-    console.warn("AISSTREAM_API_KEY is not set — copy .env.example to .env and add your key.");
+  if (!SEAVANTAGE_USERNAME || !SEAVANTAGE_PASSWORD) {
+    console.warn("SEAVANTAGE_USERNAME/SEAVANTAGE_PASSWORD is not set — copy .env.example to .env and add your SeaVantage account.");
   }
   if (!MAPBOX_TOKEN) {
     console.warn("MAPBOX_TOKEN is not set — copy .env.example to .env and add your token.");
@@ -39,12 +35,110 @@ const server = app.listen(PORT, () => {
 
 const wss = new WebSocketServer({ server, path: "/ws" });
 
-wss.on("connection", (client) => {
-  let upstream = null;
+function authHeader() {
+  const token = Buffer.from(`${SEAVANTAGE_USERNAME}:${SEAVANTAGE_PASSWORD}`).toString("base64");
+  return `Basic ${token}`;
+}
 
-  const closeUpstream = () => {
-    if (upstream && upstream.readyState === WebSocket.OPEN) upstream.close();
-    upstream = null;
+async function svGet(pathAndQuery) {
+  const res = await fetch(`${SEAVANTAGE_BASE_URL}${pathAndQuery}`, {
+    headers: { Authorization: authHeader(), Accept: "application/json" },
+  });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || (body && body.error)) {
+    const message = (body && (body.error_message || body.message)) || `HTTP ${res.status}`;
+    const err = new Error(message);
+    err.status = res.status;
+    throw err;
+  }
+  return body;
+}
+
+function isoNow() {
+  return new Date().toISOString().replace(/\.\d+Z$/, "Z");
+}
+
+// SVMP has no "get position by MMSI" endpoint. You resolve MMSI/IMO/name to a
+// shipId once via /ship/search, then poll /ship/snapshot/:shipId for that
+// one ship's latest position, worldwide — no bounding box needed. This cache
+// avoids re-searching on every poll tick.
+const shipIdCache = new Map();
+
+async function resolveShipId(mmsi) {
+  if (shipIdCache.has(mmsi)) return shipIdCache.get(mmsi);
+  const body = await svGet(`/ship/search?keyword=${encodeURIComponent(mmsi)}`);
+  const candidates = body.response || [];
+  const match = candidates.find((s) => String(s.mmsi) === String(mmsi)) || candidates[0];
+  if (!match) return null;
+  shipIdCache.set(mmsi, match.shipId);
+  return match.shipId;
+}
+
+async function fetchShipPosition(shipId) {
+  const body = await svGet(`/ship/snapshot/${shipId}?dateTime=${encodeURIComponent(isoNow())}&range=${SNAPSHOT_RANGE}`);
+  return body.response || body;
+}
+
+function toPositionMessage(ship) {
+  const p = ship.position || {};
+  return {
+    type: "position",
+    mmsi: String(p.mmsi ?? ship.mmsi ?? ""),
+    shipName: (p.shipName ?? ship.shipName ?? "").trim(),
+    lat: p.latitude,
+    lon: p.longitude,
+    sog: p.speedOverGround,
+    cog: p.courseOverGround,
+    heading: p.trueHeading,
+    timeUtc: p.timestamp,
+  };
+}
+
+wss.on("connection", (client) => {
+  let pollTimer = null;
+
+  const stopPolling = () => {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  };
+
+  const startTrackingMmsi = async (mmsi) => {
+    stopPolling();
+
+    if (!SEAVANTAGE_USERNAME || !SEAVANTAGE_PASSWORD) {
+      client.send(JSON.stringify({ type: "error", message: "Server has no SEAVANTAGE_USERNAME/SEAVANTAGE_PASSWORD configured (.env)." }));
+      return;
+    }
+
+    client.send(JSON.stringify({ type: "status", message: `Looking up MMSI ${mmsi} on SeaVantage...` }));
+    let shipId;
+    try {
+      shipId = await resolveShipId(mmsi);
+    } catch (err) {
+      client.send(JSON.stringify({ type: "error", message: "SeaVantage ship search failed: " + err.message }));
+      return;
+    }
+    if (!shipId) {
+      client.send(JSON.stringify({ type: "error", message: `MMSI ${mmsi} not found on SeaVantage.` }));
+      return;
+    }
+
+    const poll = async () => {
+      try {
+        const ship = await fetchShipPosition(shipId);
+        if (!ship || !ship.position || typeof ship.position.latitude !== "number") {
+          client.send(JSON.stringify({ type: "status", message: `Waiting for a recent position report for MMSI ${mmsi}...` }));
+          return;
+        }
+        client.send(JSON.stringify(toPositionMessage(ship)));
+      } catch (err) {
+        client.send(JSON.stringify({ type: "error", message: "SeaVantage API error: " + err.message }));
+      }
+    };
+
+    client.send(JSON.stringify({ type: "status", message: `Subscribed. Polling MMSI ${mmsi} every ${POLL_INTERVAL_MS / 1000}s...` }));
+    await poll();
+    pollTimer = setInterval(poll, POLL_INTERVAL_MS);
   };
 
   client.on("message", (raw) => {
@@ -56,224 +150,15 @@ wss.on("connection", (client) => {
     }
 
     if (msg.type === "stop") {
-      closeUpstream();
-      return;
-    }
-
-    if (msg.type === "track-live") {
-      closeUpstream();
-
-      if (!AISSTREAM_API_KEY) {
-        client.send(JSON.stringify({ type: "error", message: "Server has no AISSTREAM_API_KEY configured (.env)." }));
-        return;
-      }
-
-      client.send(JSON.stringify({ type: "status", message: "Connecting to aisstream.io (live region feed)..." }));
-      const ws = new WebSocket(AISSTREAM_URL);
-      upstream = ws;
-
-      ws.on("open", () => {
-        if (upstream !== ws) return;
-        ws.send(JSON.stringify({
-          APIKey: AISSTREAM_API_KEY,
-          BoundingBoxes: LIVE_DEMO_BBOXES,
-          FilterMessageTypes: ["PositionReport"],
-        }));
-        client.send(JSON.stringify({ type: "status", message: "Subscribed to live traffic (Dover Strait + Singapore Strait). Waiting for the next real report..." }));
-      });
-
-      ws.on("message", (data) => {
-        if (upstream !== ws) return;
-        let payload;
-        try {
-          payload = JSON.parse(data.toString());
-        } catch {
-          return;
-        }
-        if (payload.MessageType !== "PositionReport") return;
-
-        const meta = payload.MetaData || payload.Metadata || {};
-        const report = (payload.Message && payload.Message.PositionReport) || {};
-        const lat = report.Latitude ?? meta.Latitude ?? meta.latitude;
-        const lon = report.Longitude ?? meta.Longitude ?? meta.longitude;
-        if (typeof lat !== "number" || typeof lon !== "number") return;
-
-        client.send(JSON.stringify({
-          type: "position",
-          mmsi: String(meta.MMSI ?? meta.mmsi ?? ""),
-          shipName: (meta.ShipName ?? meta.ship_name ?? "").trim(),
-          lat,
-          lon,
-          sog: report.Sog,
-          cog: report.Cog,
-          heading: report.TrueHeading,
-          timeUtc: meta.time_utc ?? meta.Time_Utc,
-        }));
-      });
-
-      ws.on("error", (err) => {
-        if (upstream !== ws) return;
-        client.send(JSON.stringify({ type: "error", message: "aisstream.io connection error: " + err.message }));
-      });
-
-      ws.on("close", () => {
-        if (upstream !== ws) return;
-        client.send(JSON.stringify({ type: "status", message: "aisstream.io connection closed." }));
-      });
-
-      return;
-    }
-
-    // Subscribes to the same known-good region BoundingBoxes as "track-live"
-    // (aisstream.io's global FiltersShipMMSI subscription has proven unreliable —
-    // see the comment on the "track" handler below — but a target MMSI known to
-    // be sailing through Dover/Singapore does show up in the region feed), and
-    // forwards only reports matching msg.mmsi.
-    if (msg.type === "track-in-region" && msg.mmsi) {
-      closeUpstream();
-
-      if (!AISSTREAM_API_KEY) {
-        client.send(JSON.stringify({ type: "error", message: "Server has no AISSTREAM_API_KEY configured (.env)." }));
-        return;
-      }
-
-      client.send(JSON.stringify({ type: "status", message: `Connecting to aisstream.io for MMSI ${msg.mmsi} (region feed)...` }));
-      const targetMmsi = String(msg.mmsi);
-      const ws = new WebSocket(AISSTREAM_URL);
-      upstream = ws;
-
-      ws.on("open", () => {
-        if (upstream !== ws) return;
-        ws.send(JSON.stringify({
-          APIKey: AISSTREAM_API_KEY,
-          BoundingBoxes: LIVE_DEMO_BBOXES,
-          FilterMessageTypes: ["PositionReport"],
-        }));
-        client.send(JSON.stringify({ type: "status", message: `Subscribed. Waiting for position reports for MMSI ${targetMmsi}...` }));
-      });
-
-      ws.on("message", (data) => {
-        if (upstream !== ws) return;
-        let payload;
-        try {
-          payload = JSON.parse(data.toString());
-        } catch {
-          return;
-        }
-        if (payload.MessageType !== "PositionReport") return;
-
-        const meta = payload.MetaData || payload.Metadata || {};
-        const report = (payload.Message && payload.Message.PositionReport) || {};
-        const lat = report.Latitude ?? meta.Latitude ?? meta.latitude;
-        const lon = report.Longitude ?? meta.Longitude ?? meta.longitude;
-        if (typeof lat !== "number" || typeof lon !== "number") return;
-
-        const reportedMmsi = String(meta.MMSI ?? meta.mmsi ?? "");
-        if (reportedMmsi !== targetMmsi) return;
-
-        client.send(JSON.stringify({
-          type: "position",
-          mmsi: reportedMmsi,
-          shipName: (meta.ShipName ?? meta.ship_name ?? "").trim(),
-          lat,
-          lon,
-          sog: report.Sog,
-          cog: report.Cog,
-          heading: report.TrueHeading,
-          timeUtc: meta.time_utc ?? meta.Time_Utc,
-        }));
-      });
-
-      ws.on("error", (err) => {
-        if (upstream !== ws) return;
-        client.send(JSON.stringify({ type: "error", message: "aisstream.io connection error: " + err.message }));
-      });
-
-      ws.on("close", () => {
-        if (upstream !== ws) return;
-        client.send(JSON.stringify({ type: "status", message: "aisstream.io connection closed." }));
-      });
-
+      stopPolling();
       return;
     }
 
     if (msg.type === "track" && msg.mmsi) {
-      closeUpstream();
-
-      if (!AISSTREAM_API_KEY) {
-        client.send(JSON.stringify({ type: "error", message: "Server has no AISSTREAM_API_KEY configured (.env)." }));
-        return;
-      }
-
-      client.send(JSON.stringify({ type: "status", message: `Connecting to aisstream.io for MMSI ${msg.mmsi}...` }));
-      const targetMmsi = String(msg.mmsi);
-      const ws = new WebSocket(AISSTREAM_URL);
-      upstream = ws;
-
-      // Each handler below closes over `ws` (this specific socket), not the
-      // outer `upstream` variable — otherwise a fast-follow "track"/"stop"
-      // reassigns/nulls `upstream` before this socket's "open" fires, and
-      // upstream.send() throws on null and crashes the process.
-      ws.on("open", () => {
-        if (upstream !== ws) return;
-        ws.send(JSON.stringify({
-          APIKey: AISSTREAM_API_KEY,
-          BoundingBoxes: [[[-90, -180], [90, 180]]],
-          FiltersShipMMSI: [targetMmsi],
-          FilterMessageTypes: ["PositionReport"],
-        }));
-        client.send(JSON.stringify({ type: "status", message: `Subscribed. Waiting for position reports for MMSI ${targetMmsi}...` }));
-      });
-
-      ws.on("message", (data) => {
-        if (upstream !== ws) return;
-        let payload;
-        try {
-          payload = JSON.parse(data.toString());
-        } catch {
-          return;
-        }
-        if (payload.MessageType !== "PositionReport") return;
-
-        const meta = payload.MetaData || payload.Metadata || {};
-        const report = (payload.Message && payload.Message.PositionReport) || {};
-
-        // aisstream.io's live payloads don't match their own docs' casing
-        // (MetaData uses lowercase latitude/longitude in practice) — prefer
-        // Message.PositionReport, which has always come back capitalized.
-        const lat = report.Latitude ?? meta.Latitude ?? meta.latitude;
-        const lon = report.Longitude ?? meta.Longitude ?? meta.longitude;
-        if (typeof lat !== "number" || typeof lon !== "number") return;
-
-        // Belt-and-suspenders: FiltersShipMMSI hasn't reliably filtered in
-        // testing, so also filter server-side before forwarding to the client.
-        const reportedMmsi = String(meta.MMSI ?? meta.mmsi ?? "");
-        if (reportedMmsi !== targetMmsi) return;
-
-        client.send(JSON.stringify({
-          type: "position",
-          mmsi: reportedMmsi,
-          shipName: (meta.ShipName ?? meta.ship_name ?? "").trim(),
-          lat,
-          lon,
-          sog: report.Sog,
-          cog: report.Cog,
-          heading: report.TrueHeading,
-          timeUtc: meta.time_utc ?? meta.Time_Utc,
-        }));
-      });
-
-      ws.on("error", (err) => {
-        if (upstream !== ws) return;
-        client.send(JSON.stringify({ type: "error", message: "aisstream.io connection error: " + err.message }));
-      });
-
-      ws.on("close", () => {
-        if (upstream !== ws) return;
-        client.send(JSON.stringify({ type: "status", message: "aisstream.io connection closed." }));
-      });
+      startTrackingMmsi(String(msg.mmsi));
+      return;
     }
   });
 
-  client.on("close", closeUpstream);
+  client.on("close", stopPolling);
 });

@@ -1296,3 +1296,16 @@ PRD 재작업분을 커밋·푸시함(이 프로젝트에서 "배포" = GitHub p
   chapter, per PRD_수정지침.md". `git push origin master` 실행, 이전에
   밀려 있던 커밋 2개(`0b8b37f`/`5b022aa`, 2026-08-08 세션에서 이미 커밋만
   하고 안 밀었던 것)도 같이 나감. Fast-forward push, force 불필요.
+
+## 2026-08-09 세션(이어서 7) — vessel-tracker/mockup 커밋 + SeaVantage whitelist 이슈 확인
+
+`vessel-tracker/*`(SeaVantage 전환, 2026-08-06 세션)와
+`visibility_control_tower_mockup.html`(Inbound 신뢰도 Agent 프로토타입,
+2026-08-08 세션)을 별도 커밋으로 처리. 커밋하면서 사용자가 새 정보 제공:
+**SeaVantage API 계정이 whitelist에 등록되지 않아 현재 호출 자체가
+불가능**하다 — 단순히 `.env`에 계정정보를 안 채운 상태가 아니라, 계정을
+채워도 SeaVantage 측 whitelist 등록이 먼저 돼야 쓸 수 있는 상태.
+`VisibilityControlTower_PRD.md` §10(vessel-tracker) "알려진 한계"의 관련
+불릿을 이 사실로 정정(v2.3 → v2.4). `raw data/`는 이전 세션에서 확인한
+대로 이번에도 커밋하지 않음(공개 저장소 확인 전까지 보류, 사용자가
+"잘했어"로 그 판단 확인).

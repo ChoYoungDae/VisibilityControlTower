@@ -2,7 +2,7 @@
   "name": "vessel-tracker",
   "version": "0.1.0",
   "private": true,
-  "description": "Live vessel position prototype for the 화물 tab — proxies aisstream.io so the API key stays server-side.",
+  "description": "Live vessel position prototype for the 화물 tab — proxies the SeaVantage SVMP API so credentials stay server-side.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
