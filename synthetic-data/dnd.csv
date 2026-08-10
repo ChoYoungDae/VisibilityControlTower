@@ -1,0 +1,8 @@
+id,cid,po,route,status,free_time_expiry,days_remaining,days_elapsed,daily_rate,pending,badge_color,source_type
+lft-hlxu,HLXU3308719,PO-24650,Long Beach → Phoenix DC,임박(발생 전),2026-07-31,2.0,,180000,True,warn,SYNTHETIC
+lft-sel,SEL-AIR-87990,PO-24700,Narita → Tokyo DC,임박(발생 전),2026-07-30,1.0,,90000,True,crit,SYNTHETIC
+lft-fscu,FSCU1180042,PO-24511,Hamburg → Munich DC,임박(발생 전),2026-08-04,6.0,,165000,True,neutral,SYNTHETIC
+dnd-4week,CMAU5588234,PO-24390,Yantian → Savannah,4주 이상,2026-06-29,,33.0,213600,False,crit,SYNTHETIC
+dnd-3week,EISU7765310,PO-24870,Shanghai → New York,3주 이내,2026-07-13,,19.0,230500,False,warn,SYNTHETIC
+dnd-2week,OOLU2201884,PO-24988,Qingdao → Los Angeles,2주 이내,2026-07-21,,11.0,195500,False,warn,SYNTHETIC
+dnd-1week,MSKU4471002,PO-25077,Ningbo → Rotterdam,1주 이내,2026-07-28,,4.0,155000,False,neutral,SYNTHETIC

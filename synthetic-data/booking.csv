@@ -1,0 +1,5 @@
+booking_no,cid,route,stage,status,si_cutoff,si_note,si_class,vgm_cutoff,vgm_note,vgm_class,cy_cutoff,cy_note,cy_class,export_customs,bl_status,bl_no,rollover,source_type
+BK-6011,CMAU0488226,Busan → Rotterdam,Pre-carriage,진행중,D-2 (2026-08-05 18:00),선적서류 제출 마감,warn,2/3 컨테이너 제출,SOLAS 필수 — D-3 (2026-08-06),,D-4 (2026-08-07 12:00),물리적 반입 마감,,진행중 (심사 대기),미발급 — SI 승인 후 발급 예정,,False,SYNTHETIC
+BK-6012,TEMU9012334,Ningbo → Antwerp,롤오버,롤오버,재산정 중,블랭크 세일링으로 다음 항차 배정 대기,crit,재산정 중,새 sailing 확정 시 갱신,crit,재산정 중,새 sailing 확정 시 갱신,crit,대기 (재부킹 이후 진행),미발급,,True,SYNTHETIC
+BK-5567,TCLU5520134,Busan → Long Beach,Main-carriage,확정 · 서류 완료,완료,2026-07-22 제출 완료,done,3/3 컨테이너 제출,완료,done,완료,2026-07-23 게이트인 완료,done,완료,발급완료,ONEYSEL0552013,False,SYNTHETIC
+BK-5568,MSKU7712901,Shanghai → Hamburg,Main-carriage,확정 · 서류 완료,완료,2026-08-01 제출 완료,done,1/1 컨테이너 제출,완료,done,완료,2026-08-02 게이트인 완료,done,완료,발급완료,ONEYSHA0771290,False,SYNTHETIC

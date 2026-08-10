@@ -1,26 +1,40 @@
 # Visibility Control Tower · 진행 상황
 
-마지막 갱신: 2026-08-08 (같은 세션 이어서 — "재고 탭 Inbound 신뢰도 설명
-Agent"를 프로토타입 검증 → 화면 텍스트/트리거 정책 확정 → **실제
-`visibility_control_tower_mockup.html`에 구현까지 완료**(재고 탭 입고
-예정 리스트에 등급 배지·리스크 포인트·근거 드릴다운, Shortage 자동분석
-vs on-demand 구분). 이어서 **화면을 Full HD(1920×1080) 기준으로 확대
-(zoom 1.25, 본문 폭 1500px)**하고 **상단 검색창을 복원**(B/L·Container
-No·Item 검색 placeholder, mock 동작)까지 완료. 상세 경과는 아래 세션
-기록 섹션 참고. **아직 커밋 안 됨.**
+마지막 갱신: 2026-08-10 (같은 날 이어진 긴 세션 — 목업을 저장할 **DB 구성**
+논의로 시작해 **API 연동까지 실제로 완료**한 세션. 순서: (1) synthetic-data
+가 화물/업무/비용 탭엔 아예 없고 재고 탭 것도 목업과 어긋나 있던(drift) 걸
+확인·전량 채움/재동기화 → (2) 첨부 마스터 프롬프트를 계기로 "재고 투영
+Shortage 시점 + 우리가 잘 아는 Inbound 리드타임을 결합해 발주 시점/수량을
+추천"하는 컨셉으로 방향을 좁힘 → (3) 리드타임 이력 합성데이터 신설 +
+SQLite DB(`db/`)로 컨셉 계산 파이프라인 구현 → (4) **FastAPI(`api/`)를
+붙여 목업이 실제로 이 DB를 읽어 렌더링하도록 전환**(화물/업무/비용 탭
+detail 패널 + 재고 탭 전체) → (5) 발주 추천 배너에 "오늘 발주하면 언제
+도착하나(P50/P95)"까지 추가. 상세는 아래 세 개 세션 기록 섹션
+("synthetic-data Transportation 도메인 신설…", "발주 시점/수량 추천 컨셉
+논의…", "API 계층 신설…") 참고. **커밋·배포 아직 안 함** — 이번에 요청받아
+바로 이어서 진행.
 
-**세션 마지막에 나온 새 논의(다음 세션에서 이어갈 것)**: 사용자가 "그래프
-DB에 올리면 더 정확해지지 않냐"고 질문 → 결론은 그래프DB 자체보다 **"합성
-데이터가 아니라 더 폭넓은 실제 tracking data로 Inbound 신뢰도 파이프라인을
-다시 검증해보자"**는 제안이었음(§8.6.1 파이프라인은 유지, 입력 데이터를
-교체/확장). 사용자가 **완전히 새로운 tracking data를 제공할 예정** —
-필요하면 그 안의 선박에 대한 CP_Vessel_List 정보, Port Congestion 연결,
-뉴스 검색까지 같이 하자는 것. **다음 세션은 이 새 데이터를 받는 것부터
-시작.** 목업의 itemCatalog(합성 On-hand/Outbound/Safety Stock)를 이걸로
-교체할지는 아직 미정 — 사용자가 지난 질문에서 "일단 분석부터, 목업 반영은
-그 다음"이라는 뉘앙스였으나 확정 답변 전에 세션이 끝남. **다음 세션 시작
-시 이것부터 다시 확인**: (1) 새 데이터가 어떤 형태/경로로 오는지, (2) 이번
-에도 프로토타입 스크립트로 분석만 먼저 할지 목업까지 반영할지.
+---
+
+이전 갱신: 2026-08-10 (세션 — `visibility_control_tower_mockup.html`
+UI 피드백 연속 반영: Overview 탭에 화물/업무/비용/재고 요약 카드 통합 배치
+(Full HD 스크롤 없이), 비용↔재고 구분선, 화물 탭 현재/도착예정 Vessel·편명
+다를 때 색 구분, crit 상태 pill 은은한 pulse 애니메이션, 화물·업무 탭
+Item 명칭을 재고 탭 itemCatalog 기준으로 통일(깨져있던 재고 투영 링크
+버그 수정), 각 탭 요약 폰트 확대. 상세는 아래 "2026-08-10 세션" 섹션
+참고. **아직 커밋 안 됨.**
+
+**다음 세션 시작 시 바로 이어갈 것 (사용자가 명시적으로 지정, 2026-08-09
+세션 기준 — 이번 세션은 그 사이에 낀 UI 다듬기라 이 지정 자체는 안 바뀜)**:
+**§9.5 "Inbound 리스트 1차 노출 지표" 화면 설계** — PRD §9.5가 스스로
+"신뢰도 노출 강화 — 설계 필요"라며 `[구상]`으로 남겨둔 항목. 지금은 Shortage
+Item만 등급 배지가 드릴다운 열기 전에 보이고 Normal/Risk는 "정상/지연"
+pill뿐이라, §7의 핵심 산출물(신뢰도)이 화면에서 잘 안 드러남. 설계 필요
+3요소: (1) Inbound 건별 ETA 신뢰도의 1차 노출 지표, (2) Init ETA 대비 갭
+분포에서 이번 건의 위치, (3) 소스 간 상충 시 어느 값을 채택했는지 표시.
+**단, 오늘 §7.5에서 정정한 원칙(반증 없음≠확증, 집계 단위는 컨테이너/
+노선 기준, 표본 크기 유의)을 그대로 적용해서 설계할 것** — "지표"라고
+숫자 하나를 확정적으로 보여주려 하면 오늘과 같은 오류를 반복하기 쉬움.
 
 **커밋 여부 미확인** — 이번 세션 변경분(`visibility_control_tower_
 mockup.html`, `VisibilityControlTower_PRD.md`, 이 파일)을 커밋할지 아직
@@ -344,10 +358,13 @@ Transportation 기능요구사항·§9 Inventory 기능요구사항(§9.1~§9.7,
 
 **다음으로 할 것** (우선순위는 사용자와 상의, 구 PRD §14 항목을 아래
 기존 목록과 합쳐 중복 제거):
-1. **[구현] 재고 탭 Inbound 신뢰도 설명 Agent** (PRD §7.5) — 입고 예정
-   리스트 전체 건에 근거 텍스트 생성, CP_Vessel_List 미매칭 건 fallback
-   동작 확인, WebSearch 결과 기준일 표시·2주 필터 적용. 검증되면 화물 탭
-   지연 사유 분석 화면 구현으로 확장.
+1. **[구현] 재고 탭 Inbound 신뢰도 설명 Agent** (PRD §7.5) — 2026-08-09
+   세션(이어서 8)에서 실 raw data 조인 라이브 예시 **2건**(HAMU2277719/
+   CSNU6277348)까지는 반영 완료, 그 과정에서 §7.4/§7.5 방법론 자체를
+   정정함(상세는 해당 세션 기록). 남은 건 여전히 전체 건 자동화, CP_Vessel_
+   List 미매칭 건 fallback, WebSearch 기준일 표시·2주 필터 — 이번에
+   정정된 원칙(반증 없음≠확증, 컨테이너/노선 단위 집계, 최소 표본 수)을
+   그대로 적용해서 확장할 것.
 2. **[결정] CI/PL Intake Agent 착수 여부** (PRD §8.5) — Pantos 실제 CI/PL
    입수 경로(구조화 파일 vs 이미지/PDF) 확인 후, 경로 A(컬럼 매핑) 선행
    구현 여부 결정.
@@ -356,9 +373,12 @@ Transportation 기능요구사항·§9 Inventory 기능요구사항(§9.1~§9.7,
    정의. 1·2번과 데이터/설계 재사용.
 4. **[구현] Inventory Engine 단위테스트** (PRD §9.4) — `synthetic-data/`를
    입력으로 재고 계산식 검증.
-5. **[설계] 신뢰도 노출 강화 화면 설계** (PRD §9.5 "신뢰도 노출 강화") —
-   Inbound 건별 신뢰도 1차 노출, Init ETA 대비 갭 분포 위치, 소스 상충 시
-   채택값 표시 3요소의 화면 사양 확정.
+5. **[설계] §9.5 "신뢰도 노출 강화" 화면 설계 — 다음 세션 시작 지점(사용자
+   지정)**: Inbound 건별 신뢰도 1차 노출, Init ETA 대비 갭 분포 위치,
+   소스 상충 시 채택값 표시 3요소의 화면 사양 확정. 2026-08-09 세션
+   (이어서 8)에서 정정한 §7.4/§7.5 원칙(반증 없음≠확증, 집계 단위는
+   컨테이너/노선·선사 기준, 최소 표본 수 없이 확정 판정 금지)을 전제로
+   설계할 것 — 숫자 하나로 확정 판정하는 지표는 피해야 함.
 6. **[운영] PRD §11 미해결 이슈 정기 재점검** — 사용자 제안(2026-08-09):
    `[가정]` 태그가 붙은 영역이 언제 `[검증]`/`[설계]`로 "실현화"될 수
    있는지 지속 모니터링하는 게 중요하다는 지적 반영. PRD §11 표의 "데이터
@@ -1309,3 +1329,341 @@ PRD 재작업분을 커밋·푸시함(이 프로젝트에서 "배포" = GitHub p
 불릿을 이 사실로 정정(v2.3 → v2.4). `raw data/`는 이전 세션에서 확인한
 대로 이번에도 커밋하지 않음(공개 저장소 확인 전까지 보류, 사용자가
 "잘했어"로 그 판단 확인).
+
+## 2026-08-09 세션(이어서 8) — PRD vs 목업 갭 분석 + §7.5 Inbound 신뢰도 Agent 라이브 예시 실증, 방법론 오류 발견·PRD 정정
+
+**시작**: 사용자 요청으로 `VisibilityControlTower_PRD.md`(v2.4)와
+`visibility_control_tower_mockup.html`을 §단위로 대조해 갭 목록을 뽑음.
+주요 갭: (1) §7.5 3-소스(CP_Vessel_List/Port Congestion/WebSearch) 실연동
+미착수, (2) §9.5 "신뢰도 노출 강화" — PRD가 스스로 `[구상]`/"설계 필요"로
+표시한 화면 사양 부재, (3) §8.5 CI/PL Intake 화면 전혀 미착수, (4) Item
+상세 Inbound Schedule 서브리스트에 근거 드릴다운 미부착(PRD 요구사항인데
+미구현). PRD 자체는 `Artifact`로 렌더링해 사용자에게 공유(private).
+
+**(1)번을 다음 스텝으로 진행 — 방향은 "실측 검증"이 아니라 "라이브가 되면
+이런 형태로 보일 것"이라는 데모 2건**: `raw data/Tracking.xlsx`에서 실제
+사례 2건을 골라(HAMU2277719=REFRIGERATOR, 실제 지연 13일 / CSNU6277348=
+PARTS FOR REFRIGERATOR, Shortage Item·당겨짐 16일) `CP_Vessel_List.xlsx`·
+`Port Congestion.xlsx`를 파이썬으로 직접 조인, 그 결과를 목업의
+`analyzeShipmentConfidence`에 `liveEvidenceExamples` 하드코딩 테이블로
+반영. 이 두 건만 실제 raw data 조인 근거 텍스트로 뜨고, 나머지는 기존
+프로토타입 로직(Init/현재 FDEST ETA 비교) 유지.
+
+**방법론 오류 3연속 발견·수정 — 이 과정 자체가 §7.5/§7.4의 진짜 문제를
+드러냄** (사용자가 매번 정확히 짚어서 잡힘, 순서대로):
+1. **근거 없는 확증**: 처음엔 "CP_Vessel_List·Port Congestion이 정상이니
+   16일 당겨짐도 정상"이라고 썼는데, 그 둘은 서로 다른 질문(선박 상태 vs
+   갭이 통계적으로 정상 범위인지)이라 근거가 안 됨.
+2. **집계 단위 오류**: 그래서 "Item별 갭 분포"로 바꿨는데, 갭은 Item
+   속성이 아니라 컨테이너/B/L이 실제로 움직인 결과다 — Tracking.xlsx로
+   실측한 결과 같은 노선(POD MXZLO→F.DEST MXMTY)에서 Item마다 평균 갭이
+   MOTOR -4.8일/PARTS FOR REFRIGERATOR -14.1일/REFRIGERATORS COMPRESSOR
+   -19.0일로 확 갈렸는데, 이건 "Item 효과"가 아니라 표본이 작아 Item과
+   노선·선사 조합이 우연히 거의 1:1로 겹친 착시였음(게다가 "20건"이라던
+   표본도 실은 컨테이너 9개를 Item당 여러 줄로 중복 계산한 것). →
+   컨테이너 단위로 중복 제거 후 노선(POD→F.DEST)·선사 기준(n=9, 평균
+   -12.44일/표준편차 4.28일)으로 재계산.
+3. **순환논증(더 근본적 문제)**: "표본을 좁혀서 편차 안에 들어오면
+   신뢰할 만하다"는 것 자체가 결론(정상이다)을 먼저 정해놓고 거기 맞춰
+   기준 그룹을 고른 것이었고, 더 근본적으로는 **"과거에도 이례적이지
+   않았다"(반증 없음, 소극적 사실)와 "그래서 이번 값이 정확하다"(확증,
+   적극적 사실)는 애초에 다른 주장**이라는 걸 계속 섞어 썼음. 편차 안에
+   들어오는지 여부는 이 FDEST ETA가 맞다는 근거가 될 수 없음.
+
+**결론 — 문제는 목업이 아니라 PRD였음**: §7.4(ETA Confidence)는
+`[구상]` 단계로 "신뢰도 개념이 필요하다"는 방향만 있는데, §7.5는 마치 그
+신뢰도 판단 방법론이 이미 있는 것처럼 "정상 변동 범위(1 표준편차 이내)"를
+근거로 서술하고 있었음 — 그 빈틈을 통계로 메우려다 계속 무너진 것.
+`VisibilityControlTower_PRD.md`를 이번에 직접 정정(버전 태그는 안 올림,
+필요시 다음 세션에서):
+- §7.4에 "신뢰할 수 있다"의 판단 근거 자체가 미정이라는 미해결 문단 추가.
+- §7.5 "당겨짐 케이스" 전면 재작성 — 태그 `[검증]`→`[가정]`, 집계 단위를
+  Item→"컨테이너/B/L 단위 중복제거 + 노선·선사"로 정정, "정상 변동
+  범위"라는 확증 표현 삭제하고 "반증 없음 vs 확증"을 명시적으로 구분,
+  최소 표본 수 기준 필요성 추가.
+- §11 미해결 이슈 표에 새 행 추가: "화물 탭·Inventory | ETA/Inbound
+  신뢰도의 판단 근거 자체가 미정 — 갭 통계는 '반증 없음'만 말해줄 뿐
+  정확성을 확증하지 않음, 최소 표본 수 기준도 없음 | 설계 미정 | §7.4/§7.5".
+
+**목업도 같은 톤으로 정정**: `liveEvidenceExamples.CSNU6277348`에
+`routeGapStat`/`portGapStat`(컨테이너 단위 실측치) 추가, 근거 패널
+문구에서 "정상 변동 범위로 판단됨" 같은 확증형 표현을 전부 제거하고
+"반증되는 이상 신호는 없음"(소극적) + "표본이 작아 판정 기준 미정" 캐비어트로
+낮춤. grade/summary는 갭 통계가 아니라 CP_Vessel_List·Port Congestion
+실측 신호로만 결정하도록 로직 분리. 브라우저로 HAMU2277719(지연 케이스)/
+CSNU6277348(당겨짐 케이스) 둘 다 최종 텍스트 확인, 콘솔 에러 없음.
+
+**미커밋** — `visibility_control_tower_mockup.html`, `VisibilityControlTower_PRD.md`
+모두 이번 세션 변경분 미커밋 상태.
+
+## 2026-08-10 세션 — Overview 요약 통합 + 화물 탭 UI 다듬기
+
+PRD 작업이 아니라 `visibility_control_tower_mockup.html` 화면 자체를 사용자가
+직접 보며 준 연속 피드백을 그때그때 반영한 세션. Overview는 이전까지 "다른 탭
+설계가 다 끝난 뒤 마지막에 구성" placeholder였는데, 이번에 실제로 착수함.
+
+1. **Overview 탭 — 각 탭 상단 요약 카드를 그대로 모아 1차 구성**: 화물/업무/
+   비용/재고 4개 탭의 상단 `.summary` 스탯 카드를 `.ov-section` 블록으로
+   묶어 Overview에 세로로 배치. Full HD(1920×1080, `zoom:1.25` 적용 상태)
+   기준으로 스크롤 없이 한 화면에 들어가도록 `.ov-summary`에서 패딩·폰트를
+   축소한 압축 버전 사용. 카드 클릭 시 `.tab[data-tab]` 버튼을 프로그램적으로
+   클릭해 해당 탭으로 전환하고, `data-jump` 속성이 있으면 그 탭 안의 섹션까지
+   `scrollIntoView`. 재고 탭 요약은 하드코딩이 아니라 기존 `renderSummary()`
+   함수가 `#inv-summary`와 `#ov-inv-summary` 둘 다에 같은 HTML을 채우도록
+   수정해서 실제 itemCatalog 계산값과 항상 동기화되게 함(다른 3탭은 목업이라
+   정적 수치 그대로 복붙).
+   - **아직 다루지 않은 것**: Overview 구성 방식 결정 두 후보(설계자 우선순위
+     선정 vs 사용자 직접 선택) 중 이번엔 사실상 "각 탭 요약을 그대로 축약
+     배치"라는 세 번째(더 단순한) 방식으로 착수한 것 — 우선순위를 골라내는
+     설계 자체는 아직 없음. 다음에 이어서 다듬을 여지 있음.
+2. **비용↔재고 사이 구분선 추가**: 상단 topnav에서 화물/업무/비용 묶음과
+   재고 사이에 이미 있던 시각적 구분(Transportation 3탭 vs Inventory 도메인
+   분리, 위 "Inventory 도메인 신설" 참고)을 Overview 카드 배치에도 그대로
+   반영 — `.ov-divider`(1px 라인)를 비용/재고 섹션 사이에 추가.
+3. **화물 탭 — 현재 Vessel/편명과 도착예정(POD) Vessel/편명이 다르면 색
+   구분**: Main-carriage 리스트의 두 vessel-link 셀 텍스트를 JS로 비교해서
+   다르면(=환적으로 배·편이 바뀜) 둘 다 `.vessel-changed` 클래스를 추가,
+   기본 accent2(파랑)이 아니라 warn(주황)으로 표시 + 툴팁("환적 예정 —
+   도착 시 선박/편명이 변경됩니다"). 하드코딩이 아니라 렌더된 두 셀 텍스트를
+   런타임에 직접 비교하는 방식이라 데이터가 바뀌어도 항상 정확함. 해상
+   (TCLU5520134: ONE INNOVATION→MSC BRUNELLA)·항공(SEL-AIR-88231: LH 8286→
+   LH 0712) 둘 다 확인.
+4. **crit 상태 pill(지연/롤오버 등)에 은은한 pulse 애니메이션**: `.pill.crit`
+   전체에 `filter:brightness()`를 1↔1.35로 1.8초 주기 왕복하는
+   `@keyframes pill-crit-pulse` 추가. 배경색 자체를 테마별로 다시 정의하는
+   대신 상대 밝기 필터를 써서 라이트/다크 테마 양쪽에서 그대로 동작하고,
+   텍스트 대비도 깨지지 않음. `prefers-reduced-motion: reduce`면 애니메이션
+   끔. 클래스 하나에만 붙였기 때문에 지연/롤오버가 쓰이는 모든 탭(화물 등)에
+   자동 적용됨.
+5. **재고 탭 Item 명칭과 다른 탭 Item 명칭 불일치 수정 (버그)**: 화물 탭
+   컨테이너 상세(TCLU5520134)의 Item 목록과 업무 탭 부킹 리스트(BK-5567/
+   BK-5568)가 재고 탭 `itemCatalog`에 실제로 존재하지 않는 가상 SKU
+   (`SKU-8841-BLK` 등, "알루미늄 브래킷 세트")를 쓰고 있었음 — 재고 투영
+   링크(`data-item` → `openInventoryItem(sku)`)가 존재하지 않는 sku를
+   넘겨 조용히 깨져 있던 상태. `itemCatalog`를 기준 삼아(TCLU5520134 →
+   REFRIGERATOR 9,000EA 1건, MSKU7712901 → RO COMPRESSOR(ROTARY COMPRESSOR)
+   38,000EA 1건 — 둘 다 실제로는 각 컨테이너당 Item 1종만 연결돼 있었음,
+   기존의 "3종 혼합"·"외 2종" 표기 자체가 틀렸던 것) 화물 탭 item-row와
+   업무 탭 부킹 Item/수량 셀을 갱신. 브라우저로 화물 탭 → REFRIGERATOR
+   클릭 → 재고 탭 Item 상세(정확히 TCLU5520134가 Inbound Schedule에 포함)
+   까지 드릴다운 왕복 확인 완료.
+   - **범위 한정**: itemCatalog에 걸린 컨테이너가 화면에 노출된 건 이
+     둘뿐이라(나머지 화물 탭 예시 컨테이너는 itemCatalog에 없음) 이 2곳만
+     수정. 앞으로 화물/업무 탭에 새 예시 컨테이너를 추가할 때는 재고 탭
+     `itemCatalog`의 실제 shipment 목록(컨테이너ID→Item 매핑)을 먼저
+     확인하고 맞출 것 — 두 탭이 "같은 이벤트의 다른 집계 단위"라는 원칙
+     (위 "Inventory 도메인 신설" 참고)이 목업 예시 데이터에서도 깨지면 안 됨.
+6. **각 탭 상단 요약(Overview 포함) 폰트 확대**: `.stat-label`
+   11.5→12.5px, `.stat-figures .total-v`/`.delayed-v` 21→24px(hero
+   28→32px), `.total-l`/`.delayed-l` 11→12.5px, `.split-row`/`.trend-line`
+   11.5→12.5px. Overview 전용 `.ov-summary` 축소 오버라이드도 같은 비율로
+   같이 키움(17→19px, hero 21→23px) — 키운 뒤에도 Overview가 스크롤 없이
+   한 화면에 들어가는지 브라우저로 재확인 완료.
+
+**미커밋** — 위 6가지 전부 `visibility_control_tower_mockup.html` 한
+파일 안의 변경이고, 이번 세션도 커밋 요청 없었음 → 미커밋 상태로 유지.
+
+**다음 세션 참고**: Overview는 이제 "각 탭 요약 그대로 축약 배치"까지는
+됐지만, 원래 미정이었던 "구성 방식"(설계자 우선순위 선정 vs 사용자 직접
+선택, 위 "지금까지 결정된 UI/구조" 섹션 참고) 자체는 아직 답이 안 나온
+상태 — 이 배치가 최종안인지 다음에 다시 물어볼 것. 그 외 남은 항목은
+아래 "다음 단계" 섹션 그대로 유효(§9.5 신뢰도 노출 강화가 사용자가 지정한
+다음 착수 지점).
+
+## 2026-08-10 세션 (이어서) — synthetic-data Transportation 도메인 신설 + Inventory drift 수정
+
+**배경**: 사용자가 "목업 화면 데이터를 쌓을 DB를 구성하고 싶다"고 요청.
+DB 스키마부터 잡기 전에 "이미 화면에 나온 데이터가 `synthetic-data/`에
+전부 반영돼 있는지 먼저 확인하고, 부족하면 채워달라"는 선행 요청으로
+방향이 좁혀짐(DB 자체는 아직 설계 안 함 — 아래 "다음 단계" 참고).
+
+**조사 결과 (Explore 서브에이전트)**: `synthetic-data/`는 재고(Inventory)
+도메인만 커버하고 있었고, 화물/업무/비용(Transportation) 도메인은
+`visibility_control_tower_mockup.html`의 JS 객체(`rowData`/`VESSEL_MMSI`/
+`sectionStats`/`bookingData`/`arrivalData`/`dndData`)와 하드코딩된 HTML
+테이블 행에만 존재하고 대응 CSV가 전혀 없었음.
+
+**조치**:
+1. **`generate_synthetic_data_transportation.py` 신설** — 화물 탭 컨테이너/
+   HBL 트래킹 11건, 선박 MMSI 6척, 화물 탭 상단 섹션 통계, 업무 탭 부킹
+   4건(+PO 매핑)·도착준비 4건(+Inland Routing 옵션 6건)·Port-to-Port
+   스케줄 조회 예시 3건, 비용 탭 D&D 7건(+경과주 breakdown)·월별 물류비
+   6개월(운임/D&D/기타+TEU)을 새 CSV 11개로 생성. **전부 목업에 이미
+   하드코딩되어 있던 값을 그대로 옮긴 것**(새로 지어낸 시나리오 아님) —
+   화면과 DB 시딩값이 어긋나지 않게 하는 게 목적.
+2. **`generate_synthetic_data.py`(Inventory) drift 수정** — 2026-08-04
+   최초 생성 이후 목업 쪽 `itemCatalog`의 On-hand/Safety Stock/Daily
+   Outbound가 여러 세션에 걸쳐 입고·출고 규모 정합을 위해 손으로
+   다듬어졌는데(예: REFRIGERATOR on-hand 60,000→100,000), 이 CSV들은
+   구버전 수치 그대로 남아 있었음 — 목업 기준으로 전량 재동기화.
+   **TEMPERATURE SENSOR**(목업엔 있지만 CSV엔 없던 7번째 Item, 실제
+   `raw data/Tracking.xlsx`엔 없는 목업 전용 "정상" 대비 사례 — pandas로
+   원본 Model 컬럼 직접 조회해 확인)도 추가. `item_shipments.csv`(Item별
+   Inbound 화물 49건, Container-Item Mapping 근거)도 신규 생성.
+3. **README.md 갱신** — 새 파일 17개 전체를 표로 정리, drift 수정 이력
+   명시, 그리고 **의도적으로 안 채운 gap**을 별도 절로 남김: 화물 탭
+   `liveEvidenceExamples`(컨테이너 2건, HAMU2277719/CSNU6277348)는 raw
+   data를 실제로 조인한 **진짜 통계 분석 결과**라서 합성데이터로
+   대체하지 않음(대체하면 실제 근거를 조작하는 꼴이 됨) — Port
+   Congestion/CP_Vessel_List/Incident List 원본도 아직 정규화 전.
+   Overview·화물 탭 최상단 KPI(총 128건 등)는 배후 모집단 원본이 아예
+   없어 표본 CSV와 1:1로 안 맞는다는 한계도 명시.
+
+**검증**: 두 스크립트 모두 `python <script>.py`로 정상 실행 확인, 출력
+CSV의 한글 텍스트 깨짐 없음(UTF-8) 확인, `wd_onhand.csv` 등 갱신된
+수치가 목업 `itemCatalog`와 일치하는지 스팟 체크 완료.
+
+**미커밋** — `synthetic-data/*.csv`(신규 11개 + 갱신 6개)와 두 `.py`
+스크립트, `README.md`, 이 파일. 커밋 여부는 다음 세션 시작 시 확인할 것.
+
+## 2026-08-10 세션 (계속) — "발주 시점/수량 추천" 컨셉 논의 + SQLite DB 구현
+
+**배경**: 사용자가 첨부한 범용 AI Agent Platform 마스터 프롬프트(SQLite+
+Supabase+FastAPI+가벼운 ML 템플릿)를 검토하다가, 우리 프로젝트에 맞는
+예측 모델 후보를 논의함. 최종적으로 **"재고 투영이 알려주는 Shortage 시점·
+부족 수량"에 "우리가 이미 잘 아는 Inbound 리드타임(노선·캐리어별 P50/P95)"을
+결합해 "언제까지 얼마나 발주해야 하는지" 추천**하는 컨셉으로 합의함.
+
+**업무 범위 판단 (합의된 원칙, 다음에도 이 기준 유지)**:
+- ✅ **"언제"**: 리드타임 역산이라 우리 도메인(Transportation) 안.
+- ✅ **"얼마나"**: §9.4에 이미 "부족 수량"이 핵심 산출물로 정의돼 있어
+  새로 만드는 게 아니라 기존 산출물의 재조합 — 단, 계산에 쓰는
+  Outbound(소비량)는 **고객이 이미 준 값 그대로** 써야 함(우리가 새로
+  수요를 예측하면 §11 범위 밖을 침범하게 됨).
+- ❌ **"누구에게·실제 PO 발행"**: §12 범위 제외 그대로 유지. 추천까지만,
+  실행은 고객 시스템(ERP) 몫.
+
+**구현 (컨셉 데모)**:
+1. `synthetic-data/generate_synthetic_data_leadtime.py` 신설 — 지금까지
+   있던 데이터가 전부 "진행 중인 화물 스냅샷"이라 리드타임 분포를 낼
+   과거 완료 이력이 없었음. 목업에 실제 나온 노선·캐리어 6개를 재사용해
+   과거 완료 화물 116건(`shipment_history.csv`)을 합성하고, 노선별 P50/
+   P95(`lead_time_stats.csv`), Item→대표 노선 매핑(`item_primary_lane.csv`,
+   **데모 가정** — 실제 Container-Item Mapping 아님, 근거는 `assumption_note`
+   컬럼에 명시)을 생성.
+2. **`db/` 신설 — SQLite 컨셉 DB**. 지난 세션에 물어봤던 "DB 종류" 질문에
+   대한 답을 사용자가 명시하진 않았지만, "컨셉을 보여주는 게 중요하다"는
+   방향에 맞춰 가장 가벼운 SQLite로 바로 진행(이전에 권장안으로 제시했던
+   선택지, 별도 반대 없어 그대로 채택). `db/schema.sql`(Inventory+
+   Transportation+리드타임/발주추천 3개 도메인 전체 테이블) +
+   `db/build_db.py`(synthetic-data 전체 CSV 21개를 SQLite에 적재하고,
+   §9.4 Projected Inventory 공식을 그대로 Python으로 재구현해 Item별
+   Risk/Shortage 시점을 찾은 뒤 대표 노선의 리드타임 P95로 역산해
+   `reorder_recommendation` 테이블을 계산·채움 — AI/ML이 아니라 결정론적
+   계산 + 통계 리드타임 결합, §9.6 원칙과 동일).
+3. **실행·검증 완료**: `python build_db.py`로 `visibility_control_tower.db`
+   생성 확인, sqlite3로 직접 JOIN 쿼리해 7개 Item 전부 정상 결과 확인.
+   결과 패턴: TEMPERATURE SENSOR만 추천 없음(전 기간 Normal), 나머지
+   6개 Item은 전부 `urgency=urgent`(이미 권장 발주 시점을 지남) — 이유는
+   지금 mock 시나리오가 "기준일로부터 며칠 안에 Risk/Shortage"로
+   설계돼 있는데 리드타임이 25~45일이라 구조적으로 그럴 수밖에 없음(버그
+   아님, `db/README.md`에 한계로 명시).
+4. **컨셉 데모로서의 한계 3가지**(`db/README.md`에 정리, 다음에 다듬을
+   후보): Item→노선 매핑이 가정값, 리드타임이 Transportation 구간만
+   반영(공급처 생산·부킹 리드타임 미포함), 부족 수량이 "최초 임계값
+   돌파 시점"만 보고 이후 추가로 벌어지는 부족은 미반영.
+
+**결과물**: `synthetic-data/`에 CSV 3개 신규(`shipment_history.csv`/
+`lead_time_stats.csv`/`item_primary_lane.csv`) + 계산 결과 CSV 1개
+(`reorder_recommendation.csv`), `db/`(신규 디렉토리) `schema.sql`/
+`build_db.py`/`README.md`/`visibility_control_tower.db`(gitignore 대상
+추가함 — 재생성 가능한 빌드 산출물). `synthetic-data/README.md`도
+새 파일들 반영해 갱신.
+
+**미커밋** — 위 전부 아직 커밋 안 함.
+
+## 2026-08-10 세션 (계속) — API 계층 신설, 목업을 실제 DB 연동으로 전환
+
+**배경**: 앞선 "DB 스키마 정식 확장" 갈림길에서 사용자가 "DB 읽어서 API까지
+붙여보자, SQLite로"라고 명시적으로 결정. 도중에 "SQLite는 어디 설치하냐,
+외부 DB냐"는 질문이 나와 — SQLite는 설치형 서버가 아니라 그냥 로컬 파일
+(`db/visibility_control_tower.db`)이고, 브라우저가 로컬 파일을 직접 못 열어서
+`vessel-tracker`와 같은 패턴(로컬 프로세스가 중계)으로 API를 둔다고 설명하고
+진행함.
+
+**구현**:
+1. **CSV 보강** — API가 목업 원본 문구(뱃지 색상, 노선 표시 문구)를 그대로
+   복원할 수 있도록 `cargo_tracking.csv`에 `badge_color`/`route_display`,
+   `dnd.csv`에 `badge_color` 컬럼 추가(파생 로직으로 역산하면 `s-t3`의
+   "LCL", `a-t1`의 "항공" 같은 불규칙한 접미사를 못 맞춰서 원본 문구를
+   그대로 보존하는 쪽을 택함). `schema.sql`도 같이 갱신, CSV 재생성 +
+   DB 재빌드.
+2. **`api/main.py` 신설 (FastAPI)** — `pip install fastapi uvicorn`
+   설치 후 작성. `db/visibility_control_tower.db`를 읽어 목업이 쓰던 옛
+   하드코딩 JS 객체(rowData/VESSEL_MMSI/sectionStats/bookingData/
+   arrivalData/dndData/itemCatalog)와 **동일한 모양**의 JSON을 반환하는
+   엔드포인트 9개 + 신규 발주 추천 엔드포인트 2개. CORS 전체 허용(컨셉
+   데모 한정). 상세는 `api/README.md`.
+3. **목업 JS를 fetch 기반으로 전환** — 화물/업무/비용/재고 4개 탭의
+   IIFE를 전부 `async`로 바꾸고, 각 탭이 쓰던 하드코딩 리터럴(rowData 등
+   7개 객체)을 페이지 로드시 API fetch로 채우도록 교체. **다운스트림
+   렌더링 로직(클릭 핸들러, buildTimeline/statusOf 등 계산 함수)은 전혀
+   안 건드림** — API 응답 모양을 기존 JS가 기대하던 모양에 맞춰서 반환하게
+   만들었기 때문. API 연결 실패 시 화면 상단에 빨간 경고 배너 + 콘솔 안내
+   메시지가 뜨도록 각 탭에 try/catch 추가.
+4. **재고 탭에 "발주 시점/수량 추천" 신규 노출** — Item 상세의 재고 투영
+   배너(`inv-d-banner`) 바로 아래 새 배너(`inv-d-reco`) 추가. `/api/
+   inventory/reorder-recommendation`을 읽어 Item별로 표시(urgent/normal에
+   따라 색·문구 분기, 기준 노선은 "데모 가정" 캐비어트와 함께 노출).
+5. **연동 범위를 의도적으로 좁힘** — 화물/업무/비용 탭의 **리스트 행
+   자체**(컨테이너/부킹/D&D 목록)와 비용 탭 **월별 물류비 SVG 차트**는
+   여전히 정적 HTML로 남겨둠(detail 패널만 API 연동). 이유: 이 두 가지는
+   단계별 컬럼 구성이 다르거나 픽셀 좌표로 손으로 그려진 템플릿이라,
+   완전히 API로 재구성하려면 렌더링 로직 자체를 새로 짜야 해서 "컨셉
+   증명"이라는 목표를 넘어서는 작업량으로 판단 — `api/README.md`에
+   명시적으로 남겨둔 다음 단계 후보.
+
+**검증**: `.claude/launch.json`에 `"api"` 항목 추가 → Claude Browser
+미리보기 도구로 `mockup-static`(8123) 띄우고 API(8000)는 별도로 uvicorn
+실행 → 8개 API 엔드포인트 전부 200 확인, 화물/업무/비용 탭 detail 패널을
+JS로 직접 클릭해 목업 원본과 텍스트 100% 일치 확인(TCLU5520134/BK-6011/
+arr-tclu/dnd-4week 등), 재고 탭 7개 Item 전부 렌더링 확인, REFRIGERATOR
+Item 상세에서 신규 발주 추천 배너("권장 발주 시점이 이미 지났습니다 —
+권장 수량 0 EA, 기준 노선 Busan → Long Beach · ONE") 정상 노출 확인,
+콘솔 에러 없음.
+
+**결과물**: `api/`(신규 디렉토리) `main.py`/`README.md`/`requirements.txt`,
+`visibility_control_tower_mockup.html`(4개 탭 IIFE를 async+fetch로 전환,
+HTML에 `inv-d-reco` div 1개 추가), `synthetic-data/generate_synthetic_data_
+transportation.py`(badge_color/route_display 컬럼 추가) + 재생성된 CSV,
+`db/schema.sql`(컬럼 2개 추가) + 재빌드된 `.db`, `.claude/launch.json`
+(`"api"` 항목 추가), `db/README.md` 갱신.
+
+**미커밋(커밋 전 상태)** — 아래 "발주 시점/수량 추천 — 도착 예상일 보강"
+및 커밋 로그 참고.
+
+## 2026-08-10 세션 (마지막) — 발주 추천에 "오늘 발주 시 도착 예상일" 보강
+
+사용자 피드백: urgent(이미 권장 발주 시점을 지난 경우) 배너가 "지금 발주해도
+늦습니다"에서 끝나 있어서, "그럼 언제쯤 오는지"까지 보여달라는 요청.
+
+- `db/build_db.py`: `reorder_recommendation` 계산에 `if_ordered_today_
+  arrival_p50`/`if_ordered_today_arrival_p95`(기준일 + 해당 노선 리드타임
+  P50/P95) 두 필드 추가. `db/schema.sql`도 컬럼 2개 추가 후 DB 재빌드.
+- API(`api/main.py`)는 `SELECT r.*`라 코드 변경 없이 새 필드 자동 반영
+  (재빌드된 DB만 다시 읽으면 됨, 확인 완료).
+- 목업 JS(`inv-d-reco` 렌더링 부분)에 urgent 문구 뒤에 "오늘 발주 시 예상
+  도착: {P50} ~ {P95}(보수적 기준)" 추가.
+- 브라우저로 재확인 완료(REFRIGERATOR 기준 "오늘 발주 시 예상 도착:
+  2026-09-01(P50) ~ 2026-09-16(P95)"), 콘솔 에러 없음.
+
+**결과물**: `db/build_db.py`/`db/schema.sql`(+재빌드된 `.db`),
+`visibility_control_tower_mockup.html`(문구 갱신).
+
+## 다음 단계 (2026-08-10 세션 최신 — 위 §9.5 안내보다 우선)
+
+1. **`api/README.md`에 남겨둔 "정적 HTML로 남은 것" 3가지 중 우선순위
+   골라 이어가기** — 화물/업무/비용 리스트 행 자체를 API 렌더링으로
+   바꾸기(단계별 컬럼 템플릿을 JS로 재구현 필요), 월별 물류비 SVG 차트를
+   `monthly_cost.csv` 기반으로 재구성, Port-to-Port 스케줄 조회 결과
+   화면 연동.
+2. **`db/README.md`의 컨셉 데모 한계 3가지** — Item→노선 매핑이 가정값,
+   리드타임이 운송 구간만 반영, 부족 수량이 최초 임계값 돌파 시점만 봄.
+   특히 "Item→노선 매핑"은 실제 Container-Item Mapping(§9.1)이 생기기
+   전까지 근본적으로 못 고침(선행 의존성, §11과 같은 패턴).
+3. **PostgreSQL/Supabase 전환 여부** — 지금은 SQLite로 확정 진행 중이라
+   당장 급하지 않음, 실서비스 논의 시점에 재검토.
+
+§9.5 "Inbound 리스트 1차 노출 지표" 화면 설계(이전 세션에 지정된 다음
+착수 지점)는 이 DB/API 작업 이후로 순서만 밀린 것이지 취소된 게 아님 —
+논의가 정리되면 그다음으로 이어갈 것.

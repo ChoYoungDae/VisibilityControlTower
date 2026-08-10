@@ -1,0 +1,7 @@
+cid,mode,lead_time,cost,free_time,recommendation,selected,source_type
+TCLU5520134,트럭 (드레이지),5~7일,"₩620,000",3일,권장 예약: D-7,False,SYNTHETIC
+TCLU5520134,철도 (Inland Rail),9~12일,"₩410,000",5일,권장 예약: D-10,False,SYNTHETIC
+HLXU3308719,트럭 (드레이지),5~7일,"₩310,000",4일,실행됨 · 배차 완료,True,SYNTHETIC
+HLXU3308719,철도 (Inland Rail),9~12일,"₩205,000",5일,미선택,False,SYNTHETIC
+SEL-AIR-88231,트럭 (드레이지),2~3일,€180,2일,권장 예약: D-3,False,SYNTHETIC
+SEL-AIR-88231,철도 (Inland Rail),해당없음,,,단거리 구간이라 미제공,False,SYNTHETIC

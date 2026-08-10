@@ -1,0 +1,4 @@
+carrier,vessel,pol_etd,pod_eta,lead_time_days,ts_count,carbon_tco2e_per_teu,source_type
+ONE,ONE INNOVATION,2026-08-12,2026-08-29,17,1,1.8,SYNTHETIC
+MSC,MSC BRUNELLA,2026-08-14,2026-08-30,16,0,1.6,SYNTHETIC
+CMA CGM,CMA CGM AQUILA,2026-08-09,2026-08-31,22,2,2.4,SYNTHETIC

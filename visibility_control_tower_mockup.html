@@ -129,18 +129,18 @@
   .summary { display:grid; grid-template-columns:1.3fr repeat(3,1fr); gap:12px; margin-bottom:26px; }
   .stat { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 17px; cursor:pointer; transition:border-color .12s ease; display:flex; flex-direction:column; align-items:center; text-align:center; }
   .stat:hover { border-color:var(--border-strong); }
-  .stat-label { font-size:11.5px; color:var(--ink-muted); margin-bottom:16px; text-transform:uppercase; letter-spacing:.02em; font-weight:700; }
+  .stat-label { font-size:12.5px; color:var(--ink-muted); margin-bottom:16px; text-transform:uppercase; letter-spacing:.02em; font-weight:700; }
   .stat-figures { display:flex; align-items:baseline; justify-content:center; gap:5px; flex-wrap:wrap; }
-  .stat-figures .total-v { font-size:21px; font-weight:700; letter-spacing:-.01em; }
-  .stat-figures .total-l { font-size:11px; color:var(--ink-faint); }
-  .stat-figures .delayed-v { font-size:21px; font-weight:700; color:var(--crit); letter-spacing:-.01em; margin-left:9px; }
-  .stat-figures .delayed-l { font-size:11px; color:var(--crit); opacity:.85; }
+  .stat-figures .total-v { font-size:24px; font-weight:700; letter-spacing:-.01em; }
+  .stat-figures .total-l { font-size:12.5px; color:var(--ink-faint); }
+  .stat-figures .delayed-v { font-size:24px; font-weight:700; color:var(--crit); letter-spacing:-.01em; margin-left:9px; }
+  .stat-figures .delayed-l { font-size:12.5px; color:var(--crit); opacity:.85; }
   .stat-hero { justify-content:center; }
-  .stat-hero .stat-figures .total-v { font-size:28px; }
-  .stat-hero .stat-figures .delayed-v { font-size:28px; }
-  .split-row { display:flex; justify-content:center; gap:14px; margin-top:16px; font-size:11.5px; color:var(--ink-muted); }
+  .stat-hero .stat-figures .total-v { font-size:32px; }
+  .stat-hero .stat-figures .delayed-v { font-size:32px; }
+  .split-row { display:flex; justify-content:center; gap:14px; margin-top:16px; font-size:12.5px; color:var(--ink-muted); }
   .split-row b { color:var(--ink); }
-  .trend-line { margin-top:9px; font-size:11.5px; color:var(--ink-muted); }
+  .trend-line { margin-top:9px; font-size:12.5px; color:var(--ink-muted); }
   .trend-line.up { color:var(--crit); }
   .trend-line.down { color:var(--ok); }
 
@@ -170,7 +170,9 @@
   .pill .dot { width:6px; height:6px; border-radius:50%; }
   .pill.ok { background:var(--ok-soft); color:var(--ok); }
   .pill.warn { background:var(--warn-soft); color:var(--warn); }
-  .pill.crit { background:var(--crit-soft); color:var(--crit); }
+  .pill.crit { background:var(--crit-soft); color:var(--crit); animation:pill-crit-pulse 1.8s ease-in-out infinite; }
+  @keyframes pill-crit-pulse { 0%, 100% { filter:brightness(1); } 50% { filter:brightness(1.35); } }
+  @media (prefers-reduced-motion: reduce) { .pill.crit { animation:none; } }
   .pill.neutral { background:var(--surface-2); color:var(--ink-muted); }
   .pill.accent { background:var(--accent-soft); color:var(--accent); }
 
@@ -267,6 +269,8 @@
 
   .vessel-link { color:var(--accent2); font-weight:600; cursor:pointer; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:2px; }
   .vessel-link:hover { color:var(--accent); }
+  .vessel-link.vessel-changed { color:var(--warn); }
+  .vessel-link.vessel-changed:hover { color:var(--crit); }
   .eta-cell .num { font-weight:700; }
   .eta-cell .carrier-line { font-size:10.5px; color:var(--ink-faint); margin-bottom:2px; }
   .eta-cell .carrier-line .num { font-weight:600; color:var(--ink-muted); }
@@ -414,6 +418,31 @@
   .accrual-seg { height:100%; }
   .accrual-legend { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-faint); margin-top:6px; }
 
+  /* ===== Overview 탭 전용 ===== */
+  .ov-grid { display:flex; flex-direction:column; gap:14px; }
+  .ov-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:15px 20px 17px; cursor:pointer; transition:border-color .12s ease; }
+  .ov-section:hover { border-color:var(--border-strong); }
+  .ov-section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
+  .ov-section-title { font-size:14.5px; font-weight:700; display:flex; align-items:center; gap:8px; color:var(--ink); }
+  .ov-section-title .mi { width:16px; height:16px; flex-shrink:0; background-color:var(--ink-muted); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+  .ov-section[data-target-tab="cargo"] .ov-section-title .mi { -webkit-mask-image:var(--ico-package); mask-image:var(--ico-package); }
+  .ov-section[data-target-tab="operation"] .ov-section-title .mi { -webkit-mask-image:var(--ico-clipboard); mask-image:var(--ico-clipboard); }
+  .ov-section[data-target-tab="cost"] .ov-section-title .mi { -webkit-mask-image:var(--ico-wallet); mask-image:var(--ico-wallet); }
+  .ov-section[data-target-tab="inventory"] .ov-section-title .mi { -webkit-mask-image:var(--ico-warehouse); mask-image:var(--ico-warehouse); }
+  .ov-section-link { font-size:11.5px; color:var(--ink-faint); font-weight:600; }
+  .ov-section:hover .ov-section-link { color:var(--accent); }
+  .ov-summary.summary { margin-bottom:0; }
+  .ov-summary .stat { padding:13px 15px; cursor:pointer; }
+  .ov-summary .stat-label { margin-bottom:8px; font-size:11.5px; }
+  .ov-summary .stat-figures .total-v { font-size:19px; }
+  .ov-summary .stat-figures .delayed-v { font-size:19px; margin-left:7px; }
+  .ov-summary .stat-figures .total-l, .ov-summary .stat-figures .delayed-l { font-size:11.5px; }
+  .ov-summary .stat-hero .stat-figures .total-v { font-size:23px; }
+  .ov-summary .stat-hero .stat-figures .delayed-v { font-size:23px; }
+  .ov-summary .split-row { margin-top:10px; gap:10px; font-size:11.5px; }
+  .ov-summary .trend-line { margin-top:6px; font-size:11.5px; }
+  .ov-divider { height:1px; background:var(--border); margin:2px 0 4px; }
+
   /* ===== 재고 탭 전용 ===== */
   .cols-proj { grid-template-columns: 1.6fr .8fr .8fr .9fr 1.1fr 18px; }
   .cols-inbound { grid-template-columns: 1.6fr .8fr 1.2fr .9fr 92px 18px; }
@@ -507,12 +536,114 @@
   <!-- OVERVIEW (placeholder)                                        -->
   <!-- ============================================================ -->
   <div class="tab-panel" id="tab-overview">
-    <div class="main">
-      <div class="note">
-        <b>검토 포인트</b> — Overview 구성 방식은 아직 논의 전입니다. 화물/업무/비용 탭을 각각 상세 설계한 뒤,
-        그중 중요한 항목을 뽑아 재구성할 예정입니다(설계자 우선순위 선정 vs 사용자 직접 선택, 두 후보 중 미정 — PROGRESS.md 참고).
+    <div class="main" style="padding-bottom:24px;">
+      <div class="note" style="margin-bottom:16px;">
+        <b>검토 포인트</b> — 화물/업무/비용/재고 각 탭 상단 요약 카드를 그대로 모았습니다. 카드를 클릭하면 해당 탭의
+        관련 섹션으로 바로 이동합니다. Full HD 화면 기준으로 스크롤 없이 한 화면에 들어가도록 압축했습니다.
       </div>
-      <div class="item-empty">Overview는 화물/업무/비용 탭 설계가 모두 끝난 뒤 마지막 단계로 구성합니다.</div>
+
+      <div class="ov-grid">
+        <section class="ov-section" data-target-tab="cargo">
+          <div class="ov-section-head">
+            <div class="ov-section-title"><span class="mi"></span>화물</div>
+            <div class="ov-section-link">화물 탭에서 보기 ›</div>
+          </div>
+          <div class="summary ov-summary">
+            <div class="stat stat-hero">
+              <div class="stat-label">전체 화물 (해상+항공)</div>
+              <div class="stat-figures">
+                <span class="total-v num">128</span><span class="total-l">건</span>
+                <span class="delayed-v num">17</span><span class="delayed-l">지연</span>
+              </div>
+              <div class="split-row">
+                <span><span class="mode-chip sea">Sea</span> <b class="num">96</b></span>
+                <span><span class="mode-chip air">Air</span> <b class="num">32</b></span>
+              </div>
+            </div>
+            <div class="stat" data-jump="sec-sea">
+              <div class="stat-label">Pre-carriage</div>
+              <div class="stat-figures"><span class="total-v num">28</span><span class="total-l">건</span><span class="delayed-v num">4</span><span class="delayed-l">지연</span></div>
+            </div>
+            <div class="stat" data-jump="sec-sea">
+              <div class="stat-label">Main-carriage</div>
+              <div class="stat-figures"><span class="total-v num">61</span><span class="total-l">건</span><span class="delayed-v num">9</span><span class="delayed-l">지연</span></div>
+            </div>
+            <div class="stat" data-jump="sec-air">
+              <div class="stat-label">On-carriage</div>
+              <div class="stat-figures"><span class="total-v num">39</span><span class="total-l">건</span><span class="delayed-v num">4</span><span class="delayed-l">지연</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="ov-section" data-target-tab="operation">
+          <div class="ov-section-head">
+            <div class="ov-section-title"><span class="mi"></span>업무</div>
+            <div class="ov-section-link">업무 탭에서 보기 ›</div>
+          </div>
+          <div class="summary ov-summary">
+            <div class="stat stat-hero" data-jump="sec-prep">
+              <div class="stat-label">전체 업무 항목</div>
+              <div class="stat-figures">
+                <span class="total-v num">15</span><span class="total-l">건</span>
+                <span class="delayed-v num">7</span><span class="delayed-l">액션 필요</span>
+              </div>
+              <div class="split-row">
+                <span>선적 준비 <b class="num">11</b></span>
+                <span>도착 준비 <b class="num">4</b></span>
+              </div>
+            </div>
+            <div class="stat" data-jump="sec-prep">
+              <div class="stat-label">Item 확정 (CI/PL 확보)</div>
+              <div class="stat-figures"><span class="total-v num">2</span><span class="total-l">/4건</span><span class="delayed-v num">2</span><span class="delayed-l">미확정</span></div>
+            </div>
+            <div class="stat" data-jump="sec-prep">
+              <div class="stat-label">부킹</div>
+              <div class="stat-figures"><span class="total-v num">4</span><span class="total-l">건</span><span class="delayed-v num">2</span><span class="delayed-l">요주의</span></div>
+            </div>
+            <div class="stat" data-jump="sec-arrival">
+              <div class="stat-label">도착 준비</div>
+              <div class="stat-figures"><span class="total-v num">4</span><span class="total-l">건</span><span class="delayed-v num">3</span><span class="delayed-l">액션 필요</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="ov-section" data-target-tab="cost">
+          <div class="ov-section-head">
+            <div class="ov-section-title"><span class="mi"></span>비용</div>
+            <div class="ov-section-link">비용 탭에서 보기 ›</div>
+          </div>
+          <div class="summary ov-summary">
+            <div class="stat stat-hero" data-jump="sec-monthly">
+              <div class="stat-label">지난달(7월) 총 물류비</div>
+              <div class="stat-figures"><span class="total-v num">₩125.4M</span></div>
+              <div class="trend-line up">▲ 전월 대비 15% 증가</div>
+            </div>
+            <div class="stat" data-jump="sec-monthly">
+              <div class="stat-label">물동량 대비 비용</div>
+              <div class="stat-figures"><span class="total-v num">₩791K</span><span class="total-l">/ TEU</span></div>
+              <div class="trend-line up">▲ 17% 증가</div>
+            </div>
+            <div class="stat" data-jump="sec-dnd">
+              <div class="stat-label">체화료 발생중</div>
+              <div class="stat-figures"><span class="total-v num">4</span><span class="total-l">건</span><span class="delayed-v num">₩14.2M</span><span class="delayed-l">누적</span></div>
+            </div>
+            <div class="stat" data-jump="sec-dnd">
+              <div class="stat-label">Free Time 임박</div>
+              <div class="stat-figures"><span class="total-v num">3</span><span class="total-l">건</span><span class="delayed-v num">1</span><span class="delayed-l">D-1 이내</span></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="ov-divider"></div>
+
+        <section class="ov-section" data-target-tab="inventory">
+          <div class="ov-section-head">
+            <div class="ov-section-title"><span class="mi"></span>재고</div>
+            <div class="ov-section-link">재고 탭에서 보기 ›</div>
+          </div>
+          <div class="summary ov-summary" id="ov-inv-summary"></div>
+        </section>
+      </div>
     </div>
   </div>
 
@@ -801,27 +932,15 @@
         <div class="items-block">
           <div class="block-head" style="margin-bottom:10px;">
             <div>
-              <div class="block-title" style="font-size:13.5px;">Item / SKU (이 컨테이너에 실린 3종)</div>
+              <div class="block-title" style="font-size:13.5px;">Item / SKU (이 컨테이너에 실린 1종)</div>
               <div class="block-sub">이 컨테이너만의 재고 계산은 의미가 적어 — Item을 클릭하면 <b>재고</b> 탭의 Item 단위 통합 재고 투영으로 이동합니다</div>
             </div>
           </div>
 
-          <div class="item-row" data-item="SKU-8841-BLK">
-            <div><div class="item-sku num">SKU-8841-BLK</div><div class="item-desc">알루미늄 브래킷 세트</div></div>
-            <div><span class="num">1,200 EA</span> (이 컨테이너분)</div>
+          <div class="item-row" data-item="REFRIGERATOR">
+            <div><div class="item-sku num">REFRIGERATOR</div><div class="item-desc">Product Type CSKD</div></div>
+            <div><span class="num">9,000 EA</span> (이 컨테이너분)</div>
             <div class="cell-sub">최종목적지: Long Beach DC</div>
-            <div class="item-link">재고 투영에서 보기 ›</div>
-          </div>
-          <div class="item-row" data-item="SKU-8842-BLK">
-            <div><div class="item-sku num">SKU-8842-BLK</div><div class="item-desc">알루미늄 브래킷 세트 (소형)</div></div>
-            <div><span class="num">3,000 EA</span> (이 컨테이너분)</div>
-            <div class="cell-sub">최종목적지: Long Beach DC</div>
-            <div class="item-link">재고 투영에서 보기 ›</div>
-          </div>
-          <div class="item-row" data-item="SKU-9010-GRY">
-            <div><div class="item-sku num">SKU-9010-GRY</div><div class="item-desc">체결 부속 키트</div></div>
-            <div><span class="num">640 EA</span> (이 컨테이너분)</div>
-            <div class="cell-sub">최종목적지: Phoenix DC</div>
             <div class="item-link">재고 투영에서 보기 ›</div>
           </div>
         </div>
@@ -936,7 +1055,7 @@
               <div class="list-row cols-booking" data-detail="bk-5567">
                 <div><div class="cell-id num">BK-5567</div><div class="cell-sub">Busan → Long Beach · TCLU5520134</div></div>
                 <div><span class="po-chip num">PO-24815</span></div>
-                <div>알루미늄 브래킷 세트 외 2종 <span class="cell-sub num">4,840 EA</span></div>
+                <div>REFRIGERATOR <span class="cell-sub num">9,000 EA</span></div>
                 <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>확정</span></div>
                 <div>
                   <div class="space-signal"><div class="space-bars ok"><span class="on"></span><span></span><span></span><span></span></div><span style="font-size:11px;font-weight:700;">원활</span></div>
@@ -955,7 +1074,7 @@
               <div class="list-row cols-booking" data-detail="bk-5568">
                 <div><div class="cell-id num">BK-5568</div><div class="cell-sub">Shanghai → Hamburg · MSKU7712901</div></div>
                 <div><span class="po-chip num">PO-24902</span></div>
-                <div>정밀 나사 세트 <span class="cell-sub num">2,000 EA</span></div>
+                <div>RO COMPRESSOR(ROTARY COMPRESSOR) <span class="cell-sub num">38,000 EA</span></div>
                 <div><span class="pill ok"><span class="dot" style="background:var(--ok)"></span>확정</span></div>
                 <div>
                   <div class="space-signal"><div class="space-bars ok"><span class="on"></span><span></span><span></span><span></span></div><span style="font-size:11px;font-weight:700;">원활</span></div>
@@ -1489,6 +1608,7 @@
             </div>
           </div>
           <div class="shortage-banner" id="inv-d-banner"></div>
+          <div class="shortage-banner" id="inv-d-reco" style="display:none;"></div>
 
           <div class="pchart-wrap">
             <div class="pchart-legend">
@@ -1595,22 +1715,38 @@
   // ============================================================
   // 화물 탭 스크립트
   // ============================================================
-  (function () {
+  (async function () {
     const root = document.getElementById("tab-cargo");
+    const API_BASE = "http://localhost:8000";
 
-    const rowData = {
-      "s-l1": { title:"CMAU0488226", route:"PO-25011 · Qingdao → Rotterdam · Pre-carriage", badge:{c:"neutral",t:"Pre-carriage"} },
-      "s-l2": { title:"TEMU9012334", route:"PO-25050 · Ningbo → Antwerp · Pre-carriage 지연", badge:{c:"crit",t:"지연"} },
-      "s-t1": { title:"TCLU5520134", route:"PO-24815 · Busan → Long Beach · ONE 서비스", badge:{c:"crit",t:"지연"} },
-      "s-t2": { title:"MSKU7712901", route:"PO-24902 · Shanghai → Hamburg · ONE 서비스", badge:{c:"ok",t:"정상"} },
-      "s-t3": { title:"HBL-SE-330871", route:"PO-24770 · Ningbo → Busan · LCL", badge:{c:"ok",t:"정상"} },
-      "s-a1": { title:"HLXU3308719", route:"PO-24650 · Long Beach → Phoenix DC · On-carriage", badge:{c:"warn",t:"LFD 임박"} },
-      "s-a2": { title:"FSCU1180042", route:"PO-24511 · Hamburg → Munich DC · On-carriage", badge:{c:"ok",t:"정상"} },
-      "a-l1": { title:"SEL-AIR-88301", route:"PO-25102 · Incheon → Chicago · Pre-carriage", badge:{c:"neutral",t:"Pre-carriage"} },
-      "a-t1": { title:"SEL-AIR-88231", route:"PO-24960 · Incheon → Frankfurt · 항공", badge:{c:"warn",t:"지연"} },
-      "a-t2": { title:"SEL-AIR-88410", route:"PO-25033 · Incheon → Tokyo · 항공", badge:{c:"ok",t:"정상"} },
-      "a-a1": { title:"SEL-AIR-87990", route:"PO-24700 · Narita → Tokyo DC · On-carriage", badge:{c:"ok",t:"정상"} },
-    };
+    // 2026-08-10 세션부터 API 연동 — rowData/VESSEL_MMSI/sectionStats 전부
+    // 하드코딩 리터럴이었던 걸 fetch로 교체(모양은 그대로, 아래 로직 안 바뀜).
+    let rowData = {}, VESSEL_MMSI = {}, sectionStats = {};
+    try {
+      const [trackingRes, mmsiRes, statsRes] = await Promise.all([
+        fetch(API_BASE + "/api/cargo/tracking"),
+        fetch(API_BASE + "/api/cargo/vessel-mmsi"),
+        fetch(API_BASE + "/api/cargo/section-stats"),
+      ]);
+      const tracking = await trackingRes.json();
+      Object.keys(tracking).forEach(id => {
+        const r = tracking[id];
+        rowData[id] = { title: r.cid, route: r.po + " · " + r.route_display, badge: { c: r.badge_color, t: r.status_label } };
+      });
+      VESSEL_MMSI = await mmsiRes.json();
+      const statsRaw = await statsRes.json();
+      const STAGE_TO_STATUS = { pre: "loading", main: "transit", on: "arrived" };
+      Object.keys(statsRaw).forEach(scope => {
+        sectionStats[scope] = {};
+        Object.keys(statsRaw[scope]).forEach(stage => {
+          sectionStats[scope][STAGE_TO_STATUS[stage]] = statsRaw[scope][stage];
+        });
+      });
+    } catch (err) {
+      console.error("화물 API 연동 실패 — api/main.py(uvicorn)가 8000번 포트에서 떠 있는지 확인하세요.", err);
+      root.querySelector(".main").insertAdjacentHTML("afterbegin",
+        '<div class="note" style="border-color:var(--crit); color:var(--crit);">⚠ 화물 API(' + API_BASE + ')에 연결하지 못했습니다 — <code>cd api && uvicorn main:app --port 8000</code>로 서버를 띄운 뒤 새로고침하세요.</div>');
+    }
 
     const detail = document.getElementById("detail");
     const badgeEl = document.getElementById("d-badge");
@@ -1635,16 +1771,7 @@
       });
     });
 
-    // Real MMSI for the vessel names used in this mockup (verified via VesselFinder/MarineTraffic).
-    // Flight numbers (KE/LH/OZ) aren't AIS targets, so they fall back to the toast.
-    const VESSEL_MMSI = {
-      "ONE INNOVATION": "311001939",
-      "MSC BRUNELLA": "255806491",
-      "ONE COMMITMENT": "431332000",
-      "HYUNDAI FAITH": "538007480",
-      "CMA CGM AQUILA": "215217000",
-      "MSC ISABELLA": "353590000",
-    };
+    // VESSEL_MMSI는 위에서 API로 이미 채움(구 하드코딩 리터럴 제거).
     const VESSEL_TRACKER_BASE = "http://localhost:8787/";
 
     root.querySelectorAll(".vessel-link").forEach(v => {
@@ -1672,10 +1799,7 @@
       });
     });
 
-    const sectionStats = {
-      sea: { loading:{t:22,d:3}, transit:{t:46,d:7}, arrived:{t:28,d:3} },
-      air: { loading:{t:6,d:1}, transit:{t:15,d:2}, arrived:{t:11,d:1} },
-    };
+    // sectionStats는 위에서 API로 이미 채움(구 하드코딩 리터럴 제거).
 
     root.querySelectorAll(".status-tabs").forEach(bar => {
       const scope = bar.getAttribute("data-scope");
@@ -1715,8 +1839,25 @@
   // ============================================================
   // 업무 탭 스크립트
   // ============================================================
-  (function () {
+  (async function () {
     const root = document.getElementById("tab-operation");
+    const API_BASE = "http://localhost:8000";
+
+    // 2026-08-10 세션부터 API 연동 — bookingData/arrivalData 하드코딩 리터럴을
+    // fetch로 교체(API 응답 모양을 아래 렌더링 로직이 그대로 기대하는 모양에 맞춤).
+    let bookingData = {}, arrivalData = {};
+    try {
+      const [bookingRes, arrivalRes] = await Promise.all([
+        fetch(API_BASE + "/api/operation/bookings"),
+        fetch(API_BASE + "/api/operation/arrivals"),
+      ]);
+      bookingData = await bookingRes.json();
+      arrivalData = await arrivalRes.json();
+    } catch (err) {
+      console.error("업무 API 연동 실패 — api/main.py(uvicorn)가 8000번 포트에서 떠 있는지 확인하세요.", err);
+      root.querySelector(".main").insertAdjacentHTML("afterbegin",
+        '<div class="note" style="border-color:var(--crit); color:var(--crit);">⚠ 업무 API(' + API_BASE + ')에 연결하지 못했습니다 — <code>cd api && uvicorn main:app --port 8000</code>로 서버를 띄운 뒤 새로고침하세요.</div>');
+    }
 
     root.querySelectorAll(".jump-btn, .stat[data-jump]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -1724,65 +1865,7 @@
       });
     });
 
-    // ---- booking detail ----
-    const bookingData = {
-      "bk-6011": {
-        title:"BK-6011", route:"Busan → Rotterdam · CMAU0488226 · Pre-carriage",
-        badge:{c:"warn",t:"진행중"},
-        pos:["PO-25011","PO-25090"],
-        cutoff:[
-          {l:"SI Cut-off", v:"D-2 (8/05, 18:00)", note:"선적서류 제출 마감", cls:"warn"},
-          {l:"VGM Cut-off", v:"2/3 컨테이너 제출", note:"SOLAS 필수 — D-3 (8/06)", cls:""},
-          {l:"CY(게이트인) Cut-off", v:"D-4 (8/07, 12:00)", note:"물리적 반입 마감", cls:""},
-        ],
-        docs:[
-          {l:"수출통관", v:"진행중 (심사 대기)"},
-          {l:"B/L", v:"미발급 — SI 승인 후 발급 예정"},
-        ],
-      },
-      "bk-6012": {
-        title:"BK-6012", route:"Ningbo → Antwerp · TEMU9012334 · 롤오버",
-        badge:{c:"crit",t:"롤오버"},
-        pos:["PO-25050"],
-        cutoff:[
-          {l:"SI Cut-off", v:"재산정 중", note:"블랭크 세일링으로 다음 항차 배정 대기", cls:"crit"},
-          {l:"VGM Cut-off", v:"재산정 중", note:"새 sailing 확정 시 갱신", cls:"crit"},
-          {l:"CY(게이트인) Cut-off", v:"재산정 중", note:"새 sailing 확정 시 갱신", cls:"crit"},
-        ],
-        docs:[
-          {l:"수출통관", v:"대기 (재부킹 이후 진행)"},
-          {l:"B/L", v:"미발급"},
-        ],
-      },
-      "bk-5567": {
-        title:"BK-5567", route:"Busan → Long Beach · TCLU5520134 · Main-carriage",
-        badge:{c:"ok",t:"확정 · 서류 완료"},
-        pos:["PO-24815"],
-        cutoff:[
-          {l:"SI Cut-off", v:"완료", note:"7/22 제출 완료", cls:"done"},
-          {l:"VGM Cut-off", v:"3/3 컨테이너 제출", note:"완료", cls:"done"},
-          {l:"CY(게이트인) Cut-off", v:"완료", note:"7/23 게이트인 완료", cls:"done"},
-        ],
-        docs:[
-          {l:"수출통관", v:"완료"},
-          {l:"B/L", v:"발급완료 — ONEYSEL0552013"},
-        ],
-      },
-      "bk-5568": {
-        title:"BK-5568", route:"Shanghai → Hamburg · MSKU7712901 · Main-carriage",
-        badge:{c:"ok",t:"확정 · 서류 완료"},
-        pos:["PO-24902"],
-        cutoff:[
-          {l:"SI Cut-off", v:"완료", note:"8/01 제출 완료", cls:"done"},
-          {l:"VGM Cut-off", v:"1/1 컨테이너 제출", note:"완료", cls:"done"},
-          {l:"CY(게이트인) Cut-off", v:"완료", note:"8/02 게이트인 완료", cls:"done"},
-        ],
-        docs:[
-          {l:"수출통관", v:"완료"},
-          {l:"B/L", v:"발급완료 — ONEYSHA0771290"},
-        ],
-      },
-    };
+    // bookingData는 위에서 API로 이미 채움(구 하드코딩 리터럴 제거).
 
     const detailBooking = document.getElementById("detail-booking");
     const detailArrival = document.getElementById("detail-arrival");
@@ -1825,58 +1908,7 @@
     });
 
     // ---- arrival detail ----
-    const arrivalData = {
-      "arr-mksu": {
-        title:"MSKU7712901", route:"PO-24902 · Shanghai → Hamburg",
-        badge:{c:"neutral",t:"통관 대기 — Inland Routing 잠김"},
-        customs:[
-          {l:"수입통관 상태", v:"심사 대기 중 (전자신고 완료)"},
-          {l:"예상 완료", v:"8/11"},
-        ],
-        locked: true,
-        lockedMsg: "수입통관이 완료되어야 Inland Routing 옵션을 비교·선택할 수 있습니다.",
-      },
-      "arr-tclu": {
-        title:"TCLU5520134", route:"PO-24815 · Busan → Long Beach",
-        badge:{c:"accent",t:"비교 가능"},
-        customs:[
-          {l:"수입통관 상태", v:"완료"},
-          {l:"완료일", v:"7/30"},
-        ],
-        locked:false,
-        inland:[
-          {mode:"트럭 (드레이지)", lead:"5~7일", cost:"₩620,000", free:"3일", rec:"권장 예약: D-7", selected:false},
-          {mode:"철도 (Inland Rail)", lead:"9~12일", cost:"₩410,000", free:"5일", rec:"권장 예약: D-10", selected:false},
-        ],
-      },
-      "arr-hlxu": {
-        title:"HLXU3308719", route:"PO-24650 · Long Beach → Phoenix DC",
-        badge:{c:"ok",t:"실행완료"},
-        customs:[
-          {l:"수입통관 상태", v:"완료"},
-          {l:"완료일", v:"7/26"},
-        ],
-        locked:false,
-        inland:[
-          {mode:"트럭 (드레이지)", lead:"5~7일", cost:"₩310,000", free:"4일", rec:"실행됨 · 배차 완료", selected:true},
-          {mode:"철도 (Inland Rail)", lead:"9~12일", cost:"₩205,000", free:"5일", rec:"미선택", selected:false},
-        ],
-        note:"이 결과가 화물 탭의 FDEST ETA 재계산에 반영되었습니다.",
-      },
-      "arr-sel": {
-        title:"SEL-AIR-88231", route:"PO-24960 · Incheon → Frankfurt",
-        badge:{c:"accent",t:"비교 가능 (통관 해당없음)"},
-        customs:[
-          {l:"수입통관 상태", v:"해당없음 (해당 화물 유형은 통관 절차 불필요)"},
-          {l:"-", v:"-"},
-        ],
-        locked:false,
-        inland:[
-          {mode:"트럭 (드레이지)", lead:"2~3일", cost:"€180", free:"2일", rec:"권장 예약: D-3", selected:false},
-          {mode:"철도 (Inland Rail)", lead:"해당없음", cost:"-", free:"-", rec:"단거리 구간이라 미제공", selected:false},
-        ],
-      },
-    };
+    // arrivalData는 위에서 API로 이미 채움(구 하드코딩 리터럴 제거).
 
     root.querySelectorAll('.list-row[data-detail^="arr-"]').forEach(row => {
       row.addEventListener("click", () => {
@@ -1982,88 +2014,27 @@
   // ============================================================
   // 비용 탭 스크립트
   // ============================================================
-  (function () {
+  (async function () {
     const root = document.getElementById("tab-cost");
+    const API_BASE = "http://localhost:8000";
+
+    // 2026-08-10 세션부터 API 연동 — dndData 하드코딩 리터럴을 fetch로 교체.
+    // 월별 물류비 SVG 차트는 아직 정적 HTML(다음 단계 후보, db/README.md 참고).
+    let dndData = {};
+    try {
+      const res = await fetch(API_BASE + "/api/cost/dnd");
+      dndData = await res.json();
+    } catch (err) {
+      console.error("비용 API 연동 실패 — api/main.py(uvicorn)가 8000번 포트에서 떠 있는지 확인하세요.", err);
+      root.querySelector(".main").insertAdjacentHTML("afterbegin",
+        '<div class="note" style="border-color:var(--crit); color:var(--crit);">⚠ 비용 API(' + API_BASE + ')에 연결하지 못했습니다 — <code>cd api && uvicorn main:app --port 8000</code>로 서버를 띄운 뒤 새로고침하세요.</div>');
+    }
 
     root.querySelectorAll(".jump-btn, .stat[data-jump]").forEach(btn => {
       btn.addEventListener("click", () => {
         document.getElementById(btn.getAttribute("data-jump")).scrollIntoView({ behavior:"smooth", block:"start" });
       });
     });
-
-    // ---- 체화료(D&D) 통합 detail (임박 + 발생중) ----
-    const dndData = {
-      "lft-hlxu": {
-        title:"HLXU3308719", route:"PO-24650 · Long Beach → Phoenix DC",
-        badge:{c:"warn", t:"임박(발생 전)"},
-        info:[
-          {l:"Free Time 만료 예정일", v:"7/31"},
-          {l:"남은 일수", v:"D-2"},
-          {l:"발생 시 예상 일일 요율", v:"약 ₩180,000 / 일"},
-        ],
-        pending:true,
-      },
-      "lft-sel": {
-        title:"SEL-AIR-87990", route:"PO-24700 · Narita → Tokyo DC",
-        badge:{c:"crit", t:"임박(발생 전)"},
-        info:[
-          {l:"Free Time 만료 예정일", v:"7/30"},
-          {l:"남은 일수", v:"D-1"},
-          {l:"발생 시 예상 일일 요율", v:"약 ₩90,000 / 일"},
-        ],
-        pending:true,
-      },
-      "lft-fscu": {
-        title:"FSCU1180042", route:"PO-24511 · Hamburg → Munich DC",
-        badge:{c:"neutral", t:"임박(발생 전)"},
-        info:[
-          {l:"Free Time 만료 예정일", v:"8/04"},
-          {l:"남은 일수", v:"D-6"},
-          {l:"발생 시 예상 일일 요율", v:"약 ₩165,000 / 일"},
-        ],
-        pending:true,
-      },
-      "dnd-4week": {
-        title:"CMAU5588234", route:"PO-24390 · Yantian → Savannah",
-        badge:{c:"crit", t:"4주 이상"},
-        info:[
-          {l:"Free Time 만료일", v:"6/29"},
-          {l:"경과일수", v:"33일"},
-          {l:"일일 요율", v:"₩213,600 / 일"},
-        ],
-        elapsedDays:33, weekBuckets:[7,7,7,12],
-      },
-      "dnd-3week": {
-        title:"EISU7765310", route:"PO-24870 · Shanghai → New York",
-        badge:{c:"warn", t:"3주 이내"},
-        info:[
-          {l:"Free Time 만료일", v:"7/13"},
-          {l:"경과일수", v:"19일"},
-          {l:"일일 요율", v:"₩230,500 / 일"},
-        ],
-        elapsedDays:19, weekBuckets:[7,7,5],
-      },
-      "dnd-2week": {
-        title:"OOLU2201884", route:"PO-24988 · Qingdao → Los Angeles",
-        badge:{c:"warn", t:"2주 이내"},
-        info:[
-          {l:"Free Time 만료일", v:"7/21"},
-          {l:"경과일수", v:"11일"},
-          {l:"일일 요율", v:"₩195,500 / 일"},
-        ],
-        elapsedDays:11, weekBuckets:[7,4],
-      },
-      "dnd-1week": {
-        title:"MSKU4471002", route:"PO-25077 · Ningbo → Rotterdam",
-        badge:{c:"neutral", t:"1주 이내"},
-        info:[
-          {l:"Free Time 만료일", v:"7/28"},
-          {l:"경과일수", v:"4일"},
-          {l:"일일 요율", v:"₩155,000 / 일"},
-        ],
-        elapsedDays:4, weekBuckets:[4],
-      },
-    };
 
     const detailDnd = document.getElementById("detail-dnd");
     let selectedRow = null;
@@ -2109,153 +2080,16 @@
   // ============================================================
   // 재고 탭 스크립트 (Inventory)
   // ============================================================
-  (function () {
+  (async function () {
     const root = document.getElementById("tab-inventory");
 
     // ---- item catalog ----
-    // On-hand/Outbound/Safety Stock = 합성(SYNTHETIC, synthetic-data/ 참고).
-    // shipments의 qty/FDEST ETA/Init. ETA는 raw data/Tracking.xlsx 실제값(Container+PO 단위로 집계).
-    // 전량 On-board 확인된 물량(POL ATD 존재)이라 전부 Inbound 후보. MICROWAVE OVEN 마지막 행만
-    // On-board 미확정 Pre-carriage Pipeline 예시(계산 제외, 별도 표시용).
-    const itemCatalog = {
-      "REFRIGERATOR": {
-        productType: "CSKD",
-        onhand: 100000,
-        safetyStock: 90000,
-        dailyOutbound: 2500,
-        shipments: [
-          { id:"TCLU5520134", po:"PO-24815", mode:"sea", stageLabel:"Main-carriage", qty:130800, fdestInitEta:"8/10", fdestEta:"8/17", whDate:null, delayed:true },
-          { id:"HAMU1769015", po:"DNPX26001925", mode:"sea", stageLabel:"Main-carriage", qty:135000, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"TGBU6371452", po:"DNPX26001925", mode:"sea", stageLabel:"Main-carriage", qty:135000, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"HAMU2277719", po:"DNPX26001767", mode:"sea", stageLabel:"Main-carriage", qty:1000, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
-          { id:"HAMU2920450", po:"DNPX26001840", mode:"sea", stageLabel:"Main-carriage", qty:768, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
-          { id:"HAMU2954023", po:"DNPX26002011", mode:"sea", stageLabel:"Main-carriage", qty:22000, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
-          { id:"HAMU4168635", po:"DNPX26001535", mode:"sea", stageLabel:"Main-carriage", qty:1000, fdestInitEta:"8/13", fdestEta:"8/19", whDate:null, delayed:true },
-          { id:"HLBU2379670", po:"DNPX26001927", mode:"sea", stageLabel:"Main-carriage", qty:64600, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
-          { id:"UETU6404866", po:"DNPX26002073", mode:"sea", stageLabel:"Main-carriage", qty:3360, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
-          { id:"HAMU1442362", po:"DNPX26001923", mode:"sea", stageLabel:"Main-carriage", qty:120, fdestInitEta:"8/26", fdestEta:"8/26", whDate:null, delayed:false },
-        ],
-      },
-      "RO COMPRESSOR(ROTARY COMPRESSOR)": {
-        productType: "CSKD",
-        onhand: 78000,
-        safetyStock: 60000,
-        dailyOutbound: 7800,
-        shipments: [
-          { id:"MSKU7712901", po:"PO-24902", mode:"sea", stageLabel:"Main-carriage", qty:2160, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"MRSU2153031", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"MRSU2153068", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"MRSU2153073", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"MRSU2153160", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"HLXU8606341", po:"DNPU26000102", mode:"sea", stageLabel:"Main-carriage", qty:18800, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"MRSU2153005", po:"DNPU26000175", mode:"sea", stageLabel:"Main-carriage", qty:720, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"HAMU1196588", po:"DNPU26000167", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/17", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"HAMU2920450", po:"DNPU26000154", mode:"sea", stageLabel:"Main-carriage", qty:5760, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
-          { id:"UACU6014729", po:"DNPU26000201", mode:"sea", stageLabel:"Main-carriage", qty:4608, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
-          { id:"FANU1183772", po:"DNPU26000167", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
-          { id:"HAMU2277719", po:"DNPU26000226", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
-          { id:"HLXU8223445", po:"DNPU26000154", mode:"sea", stageLabel:"Main-carriage", qty:113000, fdestInitEta:"8/19", fdestEta:"8/19", whDate:null, delayed:false },
-          { id:"TIIU5329544", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MRSU8206592", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MRSU4240290", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"TIIU5577896", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"TRHU4804074", po:"DNPU26000212", mode:"sea", stageLabel:"Main-carriage", qty:5568, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"UETU6821725", po:"DNPU26000228", mode:"sea", stageLabel:"Main-carriage", qty:2602, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU3982081", po:"DNPU26000174", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU3223845", po:"DNPU26000209", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU0176185", po:"DNPU26000209", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"GAOU7269116", po:"DNPU26000228", mode:"sea", stageLabel:"Main-carriage", qty:2602, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU9086436", po:"DNPU26000209", mode:"sea", stageLabel:"Main-carriage", qty:5040, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"HAMU1442362", po:"DNPU26000121", mode:"sea", stageLabel:"Main-carriage", qty:109500, fdestInitEta:"8/26", fdestEta:"8/26", whDate:null, delayed:false },
-          { id:"MNBU3545482", po:"DNPU26000185", mode:"sea", stageLabel:"Main-carriage", qty:7159, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MNBU3483441", po:"DNPU26000185", mode:"sea", stageLabel:"Main-carriage", qty:7159, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MRSU6261538", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MRSU6369311", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MRSU7304850", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"SUDU8035574", po:"DNPU26000185", mode:"sea", stageLabel:"Main-carriage", qty:7159, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"FFAU5583198", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"CAAU7946642", po:"DNPU26000211", mode:"sea", stageLabel:"Main-carriage", qty:18900, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-        ],
-      },
-      "MOTOR": {
-        productType: "CSKD",
-        onhand: 30000,
-        safetyStock: 28000,
-        dailyOutbound: 3600,
-        shipments: [
-          { id:"MNBU4623804", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:1800, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"MNBU0531166", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:1800, fdestInitEta:"8/24", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"MMAU1453201", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"SUDU8036185", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"SUDU6046733", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MRSU5514781", po:"DNPU26000214", mode:"sea", stageLabel:"Main-carriage", qty:30000, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU4565755", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU4535128", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU4345869", po:"DNPU26000225", mode:"sea", stageLabel:"Main-carriage", qty:13069, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU3978369", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU3898659", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"TLLU1194925", po:"DNPU26000225", mode:"sea", stageLabel:"Main-carriage", qty:13069, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU3697696", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU3390884", po:"DNPU26000225", mode:"sea", stageLabel:"Main-carriage", qty:13069, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU3058864", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU0472037", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU0419120", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU0178450", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/31", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"MNBU0083518", po:"DNPU26000196", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"8/24", fdestEta:"8/24", whDate:null, delayed:false },
-          { id:"SUDU8244764", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MNBU4424628", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MNBU0633152", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MNBU9031500", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MRSU2703204", po:"DNPU26000224", mode:"sea", stageLabel:"Main-carriage", qty:19200, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"SUDU6208670", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"SUDU8174862", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MNBU3814128", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-          { id:"MNBU4009479", po:"DNPU26000219", mode:"sea", stageLabel:"Main-carriage", qty:2880, fdestInitEta:"9/07", fdestEta:"8/31", whDate:null, delayed:false },
-        ],
-      },
-      "PARTS FOR REFRIGERATOR": {
-        productType: "CSKD",
-        onhand: 9500,
-        safetyStock: 10500,
-        dailyOutbound: 1300,
-        shipments: [
-          { id:"CSNU6277348", po:"DNPX26001820", mode:"sea", stageLabel:"Main-carriage", qty:1300, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"GCXU5289239", po:"DNPX26001682", mode:"sea", stageLabel:"Main-carriage", qty:1173, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"OOCU5724864", po:"DNPX26001411", mode:"sea", stageLabel:"Main-carriage", qty:900, fdestInitEta:"8/26", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"OOCU7510938", po:"DNPX26001820", mode:"sea", stageLabel:"Main-carriage", qty:22725, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"OOLU9603260", po:"DNPX26001679", mode:"sea", stageLabel:"Main-carriage", qty:5650, fdestInitEta:"8/26", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"TEMU7702724", po:"DNPX26001820", mode:"sea", stageLabel:"Main-carriage", qty:22725, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"UETU5751053", po:"DNPX26001682", mode:"sea", stageLabel:"Main-carriage", qty:1173, fdestInitEta:"9/02", fdestEta:"8/17", whDate:null, delayed:false },
-          { id:"FFAU2823823", po:"DNPX26001816", mode:"sea", stageLabel:"Main-carriage", qty:1170, fdestInitEta:"9/02", fdestEta:"8/26", whDate:null, delayed:false },
-          { id:"OOCU5769658", po:"DNPX26001816", mode:"sea", stageLabel:"Main-carriage", qty:1170, fdestInitEta:"9/02", fdestEta:"8/26", whDate:null, delayed:false },
-        ],
-      },
-      "REFRIGERATORS COMPRESSOR": {
-        productType: "SET",
-        onhand: 3100,
-        safetyStock: 2400,
-        dailyOutbound: 220,
-        shipments: [
-          { id:"HAMU4427485", po:"DNPX26001553", mode:"sea", stageLabel:"Main-carriage", qty:3024, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
-          { id:"HLBU3339646", po:"DNPX26000232", mode:"sea", stageLabel:"Main-carriage", qty:864, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
-          { id:"HLBU3339646", po:"DNPX26001619", mode:"sea", stageLabel:"Main-carriage", qty:2094, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
-          { id:"TLLU5217320", po:"DNPX26001552", mode:"sea", stageLabel:"Main-carriage", qty:3336, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
-          { id:"UASU1026462", po:"DNPX26000232", mode:"sea", stageLabel:"Main-carriage", qty:108, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
-          { id:"UASU1026462", po:"DNPX26001619", mode:"sea", stageLabel:"Main-carriage", qty:3396, fdestInitEta:"9/09", fdestEta:"8/21", whDate:null, delayed:false },
-        ],
-      },
-      "MICROWAVE OVEN": {
-        productType: "CSKD",
-        onhand: 1800,
-        safetyStock: 1500,
-        dailyOutbound: 60,
-        shipments: [
-          { id:"HAMU1263259", po:"DNPY26001211", mode:"sea", stageLabel:"Main-carriage", qty:8000, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
-          { id:"HAMU2719723", po:"DNPY26001214", mode:"sea", stageLabel:"Main-carriage", qty:1080, fdestInitEta:"8/06", fdestEta:"8/19", whDate:null, delayed:true },
-          { id:null, po:"(TBD)", mode:"sea", stageLabel:"Pre-carriage", qty:20000, fdestInitEta:null, fdestEta:null, whDate:null, delayed:false },
-        ],
-      },
-    };
+    // 2026-08-10 세션부터 API 연동(db/visibility_control_tower.db 기반,
+    // synthetic-data/ 참고) — 하드코딩된 리터럴이었던 걸 fetch로 교체.
+    // 모양(shape)은 그대로라 buildTimeline/statusOf 등 아래 로직은 안 바뀜.
+    const API_BASE = "http://localhost:8000";
+    let itemCatalog = {};
+    const reorderRecoBySku = {};  // 구 /api/inventory/reorder-recommendation, item_id -> row
 
     // ---- Outbound: 합성 데이터를 요일 패턴 + 약간의 변동으로 자연스럽게 생성 ----
     // (기존엔 매일 동일 수량이라 Projected 추세선이 완전한 직선으로 보이는 문제가 있었음)
@@ -2418,11 +2252,14 @@
         else if (s.tier === "warn") warnCount++;
         inboundCount += tl.determined.length;
       });
-      document.getElementById("inv-summary").innerHTML =
+      const summaryHtml =
         '<div class="stat stat-hero"><div class="stat-label">전체 Item</div><div class="stat-figures"><span class="total-v num">' + skus.length + '</span><span class="total-l">종</span></div></div>' +
         '<div class="stat"><div class="stat-label">Shortage 예상</div><div class="stat-figures"><span class="delayed-v num" style="color:var(--crit)">' + critCount + '</span><span class="delayed-l" style="color:var(--crit)">종</span></div></div>' +
         '<div class="stat"><div class="stat-label">Safety Stock 이하</div><div class="stat-figures"><span class="delayed-v num" style="color:var(--warn)">' + warnCount + '</span><span class="delayed-l" style="color:var(--warn)">종</span></div></div>' +
         '<div class="stat"><div class="stat-label">입고 예정 (Inbound)</div><div class="stat-figures"><span class="total-v num">' + inboundCount + '</span><span class="total-l">건</span></div></div>';
+      document.getElementById("inv-summary").innerHTML = summaryHtml;
+      const ovInvSummary = document.getElementById("ov-inv-summary");
+      if (ovInvSummary) ovInvSummary.innerHTML = summaryHtml;
     }
 
     // ---- Projection: item list ----
@@ -2498,6 +2335,26 @@
         bannerEl.innerHTML = "";
       }
 
+      // ---- 발주 시점/수량 추천 (신규, DB의 reorder_recommendation을 그대로 표시) ----
+      const recoEl = document.getElementById("inv-d-reco");
+      const reco = reorderRecoBySku[sku];
+      if (reco && reco.target_event !== "None") {
+        recoEl.style.display = "";
+        recoEl.className = "shortage-banner " + (reco.urgency === "urgent" ? "crit-b" : "warn-b");
+        const laneLabel = reco.pol ? (reco.pol + " → " + reco.pod + " · " + reco.carrier) : "";
+        const urgencyText = reco.urgency === "urgent"
+          ? "⚠ 권장 발주 시점(" + reco.recommended_order_by_date + ")이 이미 지났습니다 — 지금 발주해도 " + reco.target_event + "(" + reco.target_date +
+            ") 전 도착을 보장하기 어렵습니다. 오늘 발주 시 예상 도착: <span class=\"num\">" + reco.if_ordered_today_arrival_p50 +
+            "</span>(P50) ~ <span class=\"num\">" + reco.if_ordered_today_arrival_p95 + "</span>(P95, 보수적 기준)."
+          : "발주 권장 시점: <span class=\"num\">" + reco.recommended_order_by_date + "</span> (" + reco.target_event + " 예상일 " + reco.target_date + " 기준, 이 노선 리드타임 P95 " + reco.lead_time_p95_days + "일 역산)";
+        recoEl.innerHTML = "📦 " + urgencyText +
+          " — 권장 수량 <span class=\"num\">" + Number(reco.recommended_qty).toLocaleString() + " EA</span>" +
+          (laneLabel ? '<div class="cell-sub" style="margin-top:4px;">기준 노선(데모 가정): ' + laneLabel + '</div>' : "");
+      } else {
+        recoEl.style.display = "none";
+        recoEl.innerHTML = "";
+      }
+
       const shipEl = document.getElementById("inv-d-shipment-rows");
       shipEl.innerHTML = item.shipments.map(sp => {
         const modeChip = '<span class="mode-chip ' + sp.mode + '">' + (sp.mode === "sea" ? "Sea" : "Air") + '</span>';
@@ -2527,11 +2384,40 @@
       itemDetail.scrollIntoView({ behavior:"smooth", block:"nearest" });
     }
 
-    // ---- Inbound 신뢰도 설명 Agent (§8.6.1 프로토타입) ----
+    // ---- Inbound 신뢰도 설명 Agent (§7.5 프로토타입) ----
     // 실제 파이프라인(CP_Vessel_List 실측 Gap/Risk Alert + Port Congestion 추세 +
-    // WebSearch 정성적 원인)은 별도 raw data 연동이 필요해 이 목업에는 아직 안 붙어있음.
-    // 여기서는 이미 목업 데이터에 있는 Init ETA vs 현재 FDEST ETA 비교만으로
-    // 확정된 화면 텍스트 구조(등급 배지 → 요약 → 리스크 포인트 → 근거)를 보여줌.
+    // WebSearch 정성적 원인)은 원칙적으로 전체 raw data 연동이 필요해 이 목업에는
+    // 아직 안 붙어있음. 다만 이번 케이스 2건(HAMU2277719, CSNU6277348)만은
+    // `raw data/CP_Vessel_List.xlsx`·`raw data/Port Congestion.xlsx`를 실제로 조인한
+    // 결과를 하드코딩해 "라이브가 되면 이런 형태로 보일 것"이라는 예시로 넣어둠
+    // (WebSearch 소스는 미래 시점 데이터라 실제 기사를 붙일 수 없어 미연동 상태로 명시).
+    // 그 외 모든 건은 기존과 동일하게 Init/현재 FDEST ETA 비교 프로토타입 로직을 씀.
+    const liveEvidenceExamples = {
+      "HAMU2277719": {
+        // Tracking.xlsx: MSC PROCIDA, POD MXZLO, F.DEST Init 8/06 → 현재 8/19 (+13일)
+        vessel: "MSC PROCIDA", pod: "MXZLO(Manzanillo)",
+        cpGapDays: 3, cpRiskAlert: true,
+        congestionWeek: "2026 W31", congestionDwell: 2.0, congestionTrend: "안정적(직전 5주 1.9~2.5일 범위 내)",
+      },
+      "CSNU6277348": {
+        // Tracking.xlsx: COSCO AMERICA, POD MXZLO, F.DEST Init 9/02 → 현재 8/17 (-16일, 당겨짐)
+        vessel: "COSCO AMERICA", pod: "MXZLO(Manzanillo)",
+        cpGapDays: 0, cpRiskAlert: false,
+        congestionWeek: "2026 W31", congestionDwell: 2.0, congestionTrend: "안정적(직전 5주 1.9~2.5일 범위 내)",
+        // §7.5 "당겨짐 케이스" 통계 판정 — 갭(FDEST ETA - Init ETA)은 컨테이너/B/L이
+        // 실제로 움직인 결과이지 Item 속성이 아니므로, Item이 아니라 컨테이너 단위로
+        // 중복 제거한 뒤 노선(POD→F.DEST)·선사 조합으로 집계한다(Tracking.xlsx 실측).
+        // 이 노선·선사(MXZLO→MXMTY, COSCO SHIPPING) 컨테이너 9개 기준 평균 -12.44일/
+        // 표준편차 4.28일 — 참고로 이 표본에선 이 노선·선사에 이 Item 컨테이너만 있어
+        // "노선 효과"와 "Item 효과"를 이 데이터만으로는 분리할 수 없다는 한계가 있음.
+        // POD Port(MXZLO) 전체(컨테이너 83개, 중복 제거)로 넓혀 보면 평균 -5.28일/
+        // 표준편차 6.66일로, 이 -16일은 그 기준으론 1σ 밖(이상치, z≈-1.61)이라
+        // 노선을 좁혀야만 정상 범위(z≈-0.83)로 판정된다.
+        routeGapStat: { n: 9, mean: -12.44, std: 4.28, label: "MXZLO→MXMTY · COSCO SHIPPING (컨테이너 단위)" },
+        portGapStat: { n: 83, mean: -5.28, std: 6.66, label: "POD MXZLO 전체 (컨테이너 단위)" },
+      },
+    };
+
     const itemTierCache = {};
     function getItemTier(sku) {
       if (itemTierCache[sku]) return itemTierCache[sku];
@@ -2554,9 +2440,46 @@
       const etaD = parseDateMD(sp.fdestEta);
       const gap = (initD && etaD) ? Math.round((etaD - initD) / 86400000) : null;
 
+      const live = liveEvidenceExamples[sp.id];
       let grade = "ok", gradeLabel = "정상", summary, riskPoints = [], evidence = [];
 
-      if (sp.delayed) {
+      if (live) {
+        evidence.push("Init. ETA " + sp.fdestInitEta + " → 현재 FDEST ETA " + sp.fdestEta +
+          " (" + (gap < 0 ? Math.abs(gap) + "일 당겨짐" : gap + "일 밀림") + ").");
+        evidence.push("CP_Vessel_List 실측 — " + live.vessel + " · POD " + live.pod +
+          (live.cpRiskAlert ? (" 접안 스케줄 Gap " + live.cpGapDays + "일, Risk Alert: Delay(실측 확인됨).") : " 접안 스케줄 Gap 없음(Risk Alert 없음, 정상 운항).") );
+        evidence.push("Port Congestion(" + live.pod.split("(")[0] + ", " + live.congestionWeek + ") — Dwell " +
+          live.congestionDwell + "일, 추세 " + live.congestionTrend + ".");
+        evidence.push("WebSearch(정성적 근거) — 아직 미연동. 실제 서비스에서는 통관 파업·트럭커 봉쇄 등 뉴스 검색 결과가 여기 추가됨.");
+
+        if (live.cpRiskAlert) {
+          grade = "warn"; gradeLabel = "주의";
+          summary = "선적 시점 예상보다 " + Math.abs(gap) + "일 늦어진 상태이며, 실제 선박 스케줄에서도 지연이 확인됩니다.";
+          riskPoints.push("CP_Vessel_List 실측 데이터상 " + live.vessel + "호가 POD(" + live.pod + ")에서 " + live.cpGapDays + "일 Gap · Risk Alert: Delay 상태 — FDEST ETA 지연이 실제 선박 운항 데이터로 뒷받침됨.");
+          riskPoints.push("Port Congestion 추세는 " + live.congestionTrend + "이라, 지연 원인은 항만 혼잡이 아니라 선박 스케줄 자체로 판단됨.");
+        } else if (live.routeGapStat) {
+          // §7.4/§7.5 — "ETA 신뢰도"를 판단하는 근거 자체가 PRD상 아직 미정임을
+          // 그대로 반영. 갭 통계는 "과거에도 이례적이지 않았다"는 반증 없음
+          // 수준의 참고 정보일 뿐, "그래서 이번 값이 정확하다"는 확증이 아니다.
+          // 그 구분이 흐려지지 않도록 grade/summary는 CP_Vessel_List·Port
+          // Congestion(실측 신호)만으로 정하고, 갭 통계로 등급을 뒤집지 않는다.
+          const st = live.routeGapStat, pst = live.portGapStat;
+          const z = (gap - st.mean) / st.std;
+          const notUnusual = Math.abs(z) <= 1;
+          evidence.push("같은 노선·선사(" + st.label + ") 과거 갭 분포(n=" + st.n + ", 표본 작음) — 평균 " +
+            st.mean.toFixed(1) + "일, 표준편차 " + st.std.toFixed(1) + "일. 이번 값 " + gap + "일은 평균 대비 " +
+            Math.abs(z).toFixed(2) + "σ — 참고용이며 이 자체가 신뢰도를 확정하지는 않음(아래 caveat 참고).");
+          evidence.push("참고 — " + pst.label + "(n=" + pst.n + ") 기준으로 넓혀 보면 평균 " + pst.mean.toFixed(1) +
+            "일/표준편차 " + pst.std.toFixed(1) + "일로 범위가 달라짐 — 집계 단위(노선·선사 vs 포트 전체)에 따라 결론이 바뀔 만큼 표본이 작다는 뜻.");
+          summary = "선적 시점 예상보다 " + Math.abs(gap) + "일 당겨졌습니다. 선박(CP_Vessel_List)·항만(Port Congestion) 데이터에서 반증되는 이상 신호는 없습니다.";
+          riskPoints.push("CP_Vessel_List·Port Congestion 모두 이상 신호는 없으나, 이것이 \"이 FDEST ETA가 정확하다\"는 적극적 근거는 아님 — 반증이 없다는 소극적 사실일 뿐.");
+          riskPoints.push((notUnusual ? "과거에도 비슷한 폭(" + Math.abs(z).toFixed(2) + "σ 이내)의 변동이 있었으나, " : "과거 대비로도 이례적인 폭(" + Math.abs(z).toFixed(2) + "σ)이나, ") +
+            "표본이 n=" + st.n + "로 작아 통계적 판정을 확정하기엔 근거가 약함 — \"ETA 신뢰도\" 판단 기준 자체가 아직 정의되지 않았음(→ PRD §7.4/§11).");
+        } else {
+          summary = "선적 시점 예상보다 " + Math.abs(gap) + "일 당겨졌습니다. 실제 선박 스케줄·항만 혼잡 모두 이상 신호가 없어 리스크 요인은 없습니다.";
+          riskPoints.push("CP_Vessel_List·Port Congestion 모두 이상 신호 없음 — 당겨짐은 최초 예상치가 보수적으로 잡혔던 것으로 판단되며, 이 Item·항로 기준 정상 변동 범위입니다.");
+        }
+      } else if (sp.delayed) {
         grade = "warn"; gradeLabel = "주의";
         summary = "선적 시점 예상보다 " + gap + "일 늦어진 상태입니다.";
         riskPoints.push("Init ETA(" + sp.fdestInitEta + ") 대비 현재 FDEST ETA(" + sp.fdestEta + ")가 " + gap + "일 늦어진 것으로 확인됨.");
@@ -2570,7 +2493,7 @@
         evidence.push("Init. ETA와 현재 FDEST ETA가 동일 — 변동 없음.");
       }
 
-      return { tier, grade, gradeLabel, summary, riskPoints, evidence };
+      return { tier, grade, gradeLabel, summary, riskPoints, evidence, isLiveExample: !!live };
     }
 
     function findShipment(sku, id) {
@@ -2605,9 +2528,10 @@
 
       document.getElementById("conf-evidence").innerHTML = a.evidence.map(t => "<li>" + t + "</li>").join("");
 
-      document.getElementById("conf-caveat").textContent = a.tier === "crit"
-        ? "⚡ 이 Item은 현재 Shortage 상태라 회복 시점에 걸린 입고 건으로 자동 분석되었습니다. (프로토타입: Init/현재 FDEST ETA 비교 기반 — 프로덕션에서는 CP_Vessel_List 실측 Gap/Risk Alert, Port Congestion 추세, WebSearch 정성적 근거가 추가됩니다.)"
-        : "요청하신 이 건만 분석했습니다. (프로토타입: Init/현재 FDEST ETA 비교 기반 — 프로덕션에서는 CP_Vessel_List 실측 Gap/Risk Alert, Port Congestion 추세, WebSearch 정성적 근거가 추가됩니다.)";
+      const trigger = a.tier === "crit" ? "⚡ 이 Item은 현재 Shortage 상태라 회복 시점에 걸린 입고 건으로 자동 분석되었습니다." : "요청하신 이 건만 분석했습니다.";
+      document.getElementById("conf-caveat").textContent = a.isLiveExample
+        ? trigger + " (라이브 예시: CP_Vessel_List·Port Congestion raw data를 실제로 조인한 결과입니다 — WebSearch 정성적 근거만 아직 미연동. 다른 건은 아래와 같은 프로토타입 로직입니다.)"
+        : trigger + " (프로토타입: Init/현재 FDEST ETA 비교 기반 — 프로덕션에서는 CP_Vessel_List 실측 Gap/Risk Alert, Port Congestion 추세, WebSearch 정성적 근거가 추가됩니다.)";
 
       confDetail.classList.add("open");
       confDetail.scrollIntoView({ behavior:"smooth", block:"nearest" });
@@ -2705,8 +2629,59 @@
       openItemDetail(sku);
     };
 
+    try {
+      const [catalogRes, recoRes] = await Promise.all([
+        fetch(API_BASE + "/api/inventory/items"),
+        fetch(API_BASE + "/api/inventory/reorder-recommendation"),
+      ]);
+      itemCatalog = await catalogRes.json();
+      const recoList = await recoRes.json();
+      recoList.forEach(r => { reorderRecoBySku[r.item_id] = r; });
+    } catch (err) {
+      console.error("재고 API 연동 실패 — api/main.py(uvicorn)가 8000번 포트에서 떠 있는지 확인하세요.", err);
+      root.querySelector(".main").insertAdjacentHTML("afterbegin",
+        '<div class="note" style="border-color:var(--crit); color:var(--crit);">⚠ 재고 API(' + API_BASE + ')에 연결하지 못했습니다 — <code>cd api && uvicorn main:app --port 8000</code>로 서버를 띄운 뒤 새로고침하세요.</div>');
+      return;
+    }
+
     renderSummary();
     renderItemList();
     renderInboundList();
+  })();
+
+  // ============================================================
+  // Overview 탭 스크립트 — 카드 클릭 시 해당 탭 + 섹션으로 이동
+  // ============================================================
+  (function () {
+    document.querySelectorAll(".ov-section").forEach(sec => {
+      const targetTab = sec.getAttribute("data-target-tab");
+      sec.addEventListener("click", (e) => {
+        const jumpEl = e.target.closest("[data-jump]");
+        const jumpId = jumpEl ? jumpEl.getAttribute("data-jump") : null;
+        const tabBtn = document.querySelector('.tab[data-tab="' + targetTab + '"]');
+        if (tabBtn) tabBtn.click();
+        if (jumpId) {
+          requestAnimationFrame(() => {
+            const el = document.getElementById(jumpId);
+            if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
+          });
+        }
+      });
+    });
+  })();
+
+  // ============================================================
+  // 화물 탭 — 현재 Vessel/편명과 도착예정(POD) Vessel/편명이 다르면 색 구분
+  // ============================================================
+  (function () {
+    document.querySelectorAll('#tab-cargo .list-row.cols-transit').forEach(row => {
+      const links = row.querySelectorAll(".vessel-link");
+      if (links.length !== 2) return;
+      if (links[0].textContent.trim() === links[1].textContent.trim()) return;
+      links[0].classList.add("vessel-changed");
+      links[1].classList.add("vessel-changed");
+      links[0].title = "환적 예정 — 도착 시 선박/편명이 변경됩니다";
+      links[1].title = "환적으로 변경된 도착예정 선박/편명";
+    });
   })();
 </script>

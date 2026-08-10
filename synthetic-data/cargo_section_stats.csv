@@ -1,0 +1,7 @@
+scope,stage,total,delayed,source_type
+sea,pre,22,3,SYNTHETIC
+sea,main,46,7,SYNTHETIC
+sea,on,28,3,SYNTHETIC
+air,pre,6,1,SYNTHETIC
+air,main,15,2,SYNTHETIC
+air,on,11,1,SYNTHETIC

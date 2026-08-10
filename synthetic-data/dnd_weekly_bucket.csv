@@ -1,0 +1,11 @@
+dnd_id,week_index,days,source_type
+dnd-4week,1,7,SYNTHETIC
+dnd-4week,2,7,SYNTHETIC
+dnd-4week,3,7,SYNTHETIC
+dnd-4week,4,12,SYNTHETIC
+dnd-3week,1,7,SYNTHETIC
+dnd-3week,2,7,SYNTHETIC
+dnd-3week,3,5,SYNTHETIC
+dnd-2week,1,7,SYNTHETIC
+dnd-2week,2,4,SYNTHETIC
+dnd-1week,1,4,SYNTHETIC

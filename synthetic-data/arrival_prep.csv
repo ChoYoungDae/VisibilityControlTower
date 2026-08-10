@@ -1,0 +1,5 @@
+cid,po,route,status,import_customs,customs_expected_or_done,customs_expected,locked,locked_msg,source_type
+MSKU7712901,PO-24902,Shanghai → Hamburg,통관 대기 — Inland Routing 잠김,심사 대기 중 (전자신고 완료),,2026-08-11,True,수입통관이 완료되어야 Inland Routing 옵션을 비교·선택할 수 있습니다.,SYNTHETIC
+TCLU5520134,PO-24815,Busan → Long Beach,비교 가능,완료,2026-07-30,,False,,SYNTHETIC
+HLXU3308719,PO-24650,Long Beach → Phoenix DC,실행완료,완료,2026-07-26,,False,,SYNTHETIC
+SEL-AIR-88231,PO-24960,Incheon → Frankfurt,비교 가능 (통관 해당없음),해당없음 (해당 화물 유형은 통관 절차 불필요),,,False,,SYNTHETIC

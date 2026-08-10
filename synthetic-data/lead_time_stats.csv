@@ -1,0 +1,7 @@
+lane_id,pol,pod,carrier,mode,n,mean_days,std_days,p50_days,p95_days,source_type
+L1-BUSAN-LONGBEACH-ONE,Busan,Long Beach,ONE,sea,18,27.4,6.1,25,40,SYNTHETIC
+L2-SHANGHAI-HAMBURG-ONE,Shanghai,Hamburg,ONE,sea,19,32.8,4.9,33,39,SYNTHETIC
+L3-NINGBO-ANTWERP-MSC,Ningbo,Antwerp,MSC,sea,14,34.8,6.1,34,45,SYNTHETIC
+L4-QINGDAO-ROTTERDAM-CMACGM,Qingdao,Rotterdam,CMA CGM,sea,17,31.1,3.6,30,37,SYNTHETIC
+L5-NINGBO-BUSAN-HYUNDAI,Ningbo,Busan,HYUNDAI,sea,24,4.2,1.0,4,6,SYNTHETIC
+L6-INCHEON-FRANKFURT-LH,Incheon,Frankfurt,LH,air,24,3.1,1.0,3,4,SYNTHETIC

@@ -1,0 +1,12 @@
+id,mode,stage,cid,bl,po,service_note,pol,pod,planned_vf,current_vf,pod_vf,initial_pol_etd,pol_etd,ts_count,carrier_eta,pta_p50,pta_p95,fdest_eta,dnd_lfd,status_label,delayed,badge_color,route_display,source_type
+s-l1,sea,pre,CMAU0488226,CMDU0488226A,PO-25011,,Qingdao,Rotterdam,CMA CGM AQUILA,,,2026-08-13,2026-08-13,,,,,,,Pre-carriage,False,neutral,Qingdao → Rotterdam · Pre-carriage,SYNTHETIC
+s-l2,sea,pre,TEMU9012334,MEDUN9012334,PO-25050,,Ningbo,Antwerp,MSC ISABELLA,,,2026-08-13,2026-08-16,,,,,,,지연,True,crit,Ningbo → Antwerp · Pre-carriage 지연,SYNTHETIC
+s-t1,sea,main,TCLU5520134,ONEYSEL0552013,PO-24815,ONE 서비스,Busan,Long Beach,,ONE INNOVATION,MSC BRUNELLA,,,1.0,2026-08-02,2026-08-01,2026-08-03,,,지연,True,crit,Busan → Long Beach · ONE 서비스,SYNTHETIC
+s-t2,sea,main,MSKU7712901,ONEYSHA0771290,PO-24902,ONE 서비스,Shanghai,Hamburg,,ONE COMMITMENT,ONE COMMITMENT,,,0.0,2026-08-13,2026-08-13,2026-08-16,,,정상,False,ok,Shanghai → Hamburg · ONE 서비스,SYNTHETIC
+s-t3,sea,main,HBL-SE-330871,,PO-24770,LCL,Ningbo,Busan,,HYUNDAI FAITH,HYUNDAI FAITH,,,0.0,2026-07-28,2026-07-28,2026-07-29,,,정상,False,ok,Ningbo → Busan · LCL,SYNTHETIC
+s-a1,sea,on,HLXU3308719,HDMUBUS0330871,PO-24650,,Long Beach,Phoenix DC,,,,,,,,,,2026-07-26,2026-07-31,LFD 임박,False,warn,Long Beach → Phoenix DC · On-carriage,SYNTHETIC
+s-a2,sea,on,FSCU1180042,OOLUHAM0118004,PO-24511,,Hamburg,Munich DC,,,,,,,,,,2026-07-24,2026-08-02,정상,False,ok,Hamburg → Munich DC · On-carriage,SYNTHETIC
+a-l1,air,pre,SEL-AIR-88301,,PO-25102,,Incheon,Chicago,KE 037,,,2026-08-03 14:20,2026-08-03 14:20,,,,,,,Pre-carriage,False,neutral,Incheon → Chicago · Pre-carriage,SYNTHETIC
+a-t1,air,main,SEL-AIR-88231,,PO-24960,,Incheon,Frankfurt,,LH 8286,LH 0712,,,1.0,2026-08-05 10:00,2026-08-04 21:40,2026-08-06 09:00,,,지연,True,warn,Incheon → Frankfurt · 항공,SYNTHETIC
+a-t2,air,main,SEL-AIR-88410,,PO-25033,,Incheon,Tokyo,,OZ 108,OZ 108,,,0.0,2026-07-29 11:05,2026-07-29 11:05,2026-07-29 18:00,,,정상,False,ok,Incheon → Tokyo · 항공,SYNTHETIC
+a-a1,air,on,SEL-AIR-87990,,PO-24700,,Narita,Tokyo DC,,,,,,,,,,2026-07-25 09:10,해당없음,정상,False,ok,Narita → Tokyo DC · On-carriage,SYNTHETIC
