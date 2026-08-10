@@ -51,7 +51,12 @@
        Chromium 계열(zoom 지원 브라우저)에서만 적용됨 — 목업 프리뷰 용도로 충분. */
     zoom: 1.25;
   }
-  .num { font-family: "SFMono-Regular","JetBrains Mono",ui-monospace,Consolas,monospace; font-variant-numeric: tabular-nums; }
+  /* .num은 숫자를 고정폭 폰트로 맞추기 위한 클래스인데, "33일 경과"처럼 한글이
+     섞인 셀에도 그대로 적용됨. 고정폭 폰트 스택(SFMono/JetBrains Mono/Consolas)엔
+     한글 글리프가 없어서, 마지막 generic "monospace"로 넘어가면 Windows가 한글을
+     굴림으로 대체해버림 — 그 대체가 일어나기 전에 Pretendard 계열을 폴백으로
+     끼워넣어서 숫자는 고정폭, 한글은 항상 Pretendard로 렌더링되게 함. */
+  .num { font-family: "SFMono-Regular","JetBrains Mono",ui-monospace,Consolas,"Pretendard","Malgun Gothic",monospace,sans-serif; font-variant-numeric: tabular-nums; }
 
   /* ===== icon system (lucide-style, mask-based so no HTML/JS strings need to change) ===== */
   :root {
@@ -521,20 +526,407 @@
   svg .pchart-date-label { font-size:10.5px; fill:var(--ink-muted); font-weight:600; font-family:"Pretendard",sans-serif; }
 </style>
 
+<!-- Full HD visual system override: preserves the original content, data and interactions. -->
+<style>
+  :root {
+    --bg:#f3f6f8;
+    --surface:#ffffff;
+    --surface-2:#f7f9fa;
+    --ink:#152225;
+    --ink-muted:#647377;
+    --ink-faint:#94a0a4;
+    --border:#dfe6e8;
+    --border-strong:#c9d5d8;
+    --accent:#008e70;
+    --accent-ink:#ffffff;
+    --accent-soft:#e2f7f1;
+    --accent-soft-border:#bde8dc;
+    --accent2:#3d7df3;
+    --accent2-soft:#e9f0ff;
+    --accent2-soft-border:#cddcff;
+    --ok:#078168;
+    --ok-soft:#e2f7f1;
+    --warn:#d58b18;
+    --warn-soft:#fff3dc;
+    --crit:#de4d4d;
+    --crit-soft:#ffebeb;
+    --inv-accent:#6d5bd0;
+    --inv-accent-soft:#eee9fb;
+    --inv-accent-soft-border:#d9d0f5;
+    --shadow:0 4px 16px rgba(21,49,52,.055), 0 18px 42px rgba(21,49,52,.045);
+  }
+
+  :root[data-theme="dark"] {
+    --bg:#0d1719;
+    --surface:#142124;
+    --surface-2:#19282b;
+    --ink:#edf4f3;
+    --ink-muted:#9cafaf;
+    --ink-faint:#728487;
+    --border:#27383b;
+    --border-strong:#385053;
+    --accent:#27d4aa;
+    --accent-ink:#071614;
+    --accent-soft:#143a32;
+    --accent-soft-border:#225246;
+    --accent2:#70a0ff;
+    --accent2-soft:#1a2c4d;
+    --accent2-soft-border:#29426d;
+    --ok:#38d3a8;
+    --ok-soft:#143a32;
+    --warn:#f0b44c;
+    --warn-soft:#3b301d;
+    --crit:#ff7777;
+    --crit-soft:#422326;
+    --inv-accent:#a99bff;
+    --inv-accent-soft:#241f42;
+    --inv-accent-soft-border:#3a3166;
+    --shadow:0 8px 28px rgba(0,0,0,.24);
+  }
+
+  @media (prefers-color-scheme:dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0d1719;
+      --surface:#142124;
+      --surface-2:#19282b;
+      --ink:#edf4f3;
+      --ink-muted:#9cafaf;
+      --ink-faint:#728487;
+      --border:#27383b;
+      --border-strong:#385053;
+      --accent:#27d4aa;
+      --accent-ink:#071614;
+      --accent-soft:#143a32;
+      --accent-soft-border:#225246;
+      --accent2:#70a0ff;
+      --accent2-soft:#1a2c4d;
+      --accent2-soft-border:#29426d;
+      --ok:#38d3a8;
+      --ok-soft:#143a32;
+      --warn:#f0b44c;
+      --warn-soft:#3b301d;
+      --crit:#ff7777;
+      --crit-soft:#422326;
+      --inv-accent:#a99bff;
+      --inv-accent-soft:#241f42;
+      --inv-accent-soft-border:#3a3166;
+      --shadow:0 8px 28px rgba(0,0,0,.24);
+    }
+  }
+
+  html, body { min-width:1180px; min-height:100%; background:var(--bg); }
+  body { overflow-x:hidden; }
+  .app {
+    zoom:1.25 !important;
+    min-height:100vh;
+    padding-left:228px;
+    background:
+      radial-gradient(circle at 82% 0%, color-mix(in srgb,var(--accent-soft) 45%,transparent), transparent 26%),
+      var(--bg);
+    font-size:14px;
+  }
+
+  /* Sidebar navigation */
+  .app { transition:padding-left .2s ease; }
+  .topnav {
+    position:fixed;
+    z-index:100;
+    inset:0 auto 0 0;
+    width:228px;
+    height:100vh;
+    padding:24px 16px 18px;
+    border:0;
+    background:
+      radial-gradient(circle at 12% 0%,rgba(42,213,170,.13),transparent 28%),
+      linear-gradient(175deg,#102c2e 0%,#0a2225 100%);
+    color:#c3d2d2;
+    box-shadow:8px 0 30px rgba(8,30,32,.08);
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    transition:width .2s ease, padding .2s ease;
+  }
+  .nav-toggle-btn {
+    position:absolute;
+    top:18px;
+    right:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:24px;
+    height:24px;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:7px;
+    background:rgba(255,255,255,.05);
+    color:#9db5b3;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:background .15s ease, color .15s ease;
+  }
+  .nav-toggle-btn:hover { background:rgba(255,255,255,.14); color:#fff; }
+  .nav-toggle-btn::before {
+    content:'';
+    display:block;
+    width:12px;
+    height:12px;
+    background-color:currentColor;
+    -webkit-mask-image:var(--ico-chevron-right);
+    mask-image:var(--ico-chevron-right);
+    -webkit-mask-repeat:no-repeat;
+    mask-repeat:no-repeat;
+    -webkit-mask-size:contain;
+    mask-size:contain;
+    transform:rotate(180deg);
+    transition:transform .2s ease;
+  }
+  .app.nav-collapsed .nav-toggle-btn { position:static; margin:0 auto 14px; }
+  .app.nav-collapsed .nav-toggle-btn::before { transform:rotate(0deg); }
+  .customer-mark {
+    width:42px;
+    height:42px;
+    margin:0 auto 11px;
+    border-radius:13px;
+    background:linear-gradient(145deg,#39dab2,#078f70);
+    color:#fff;
+    box-shadow:0 9px 22px rgba(0,187,143,.24);
+    font-size:12px;
+  }
+  .customer-name { color:#fff; font-size:12.5px; text-align:center; letter-spacing:.01em; }
+  .brand-title { display:none; }
+  .topnav .nav-divider { display:none; }
+  .tabs { width:100%; margin:30px 0 0; flex-direction:column; gap:5px; }
+  .tab {
+    width:100%;
+    min-height:44px;
+    padding:0 13px;
+    border-radius:11px;
+    color:#abc0bf;
+    font-size:12.5px;
+    font-weight:650;
+    letter-spacing:-.01em;
+  }
+  .tab:hover { color:#fff; background:rgba(255,255,255,.055); }
+  .tab.active {
+    color:#fff;
+    background:linear-gradient(90deg,rgba(36,207,163,.20),rgba(36,207,163,.07));
+    box-shadow:inset 3px 0 0 #28d2a8;
+  }
+  .tab::before { width:17px; height:17px; color:#789795; }
+  .tab.active::before { color:#2bd4aa; }
+  .topnav-spacer { flex:1; }
+  .topnav-spacer::before {
+    content:'●  ALL DATA CONNECTED';
+    display:block;
+    margin:0 0 14px;
+    padding:13px 12px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px;
+    color:#77d8c1;
+    background:rgba(255,255,255,.04);
+    font-size:8.5px;
+    font-weight:800;
+    letter-spacing:.055em;
+  }
+  .topnav-search {
+    width:100%;
+    padding:10px 12px;
+    border-color:rgba(255,255,255,.09);
+    border-radius:11px;
+    background:rgba(255,255,255,.055);
+  }
+  .topnav-search:focus-within { border-color:rgba(43,212,170,.55); background:rgba(255,255,255,.08); }
+  .topnav-search::before { background-color:#759492; }
+  .topnav-search input { color:#e7f0ef; font-size:11px; }
+  .topnav-search input::placeholder { color:#6c8c8a; }
+
+  /* 접힌 상태 — 아이콘만 보이도록 (max-width:1350px 반응형 스타일과 동일한 룩을
+     화면 폭과 무관하게 토글 버튼으로 수동 적용) */
+  .app.nav-collapsed { padding-left:86px; }
+  .app.nav-collapsed .topnav { width:86px; padding-inline:12px; }
+  .app.nav-collapsed .customer-mark { margin-bottom:18px; }
+  .app.nav-collapsed .customer-name,
+  .app.nav-collapsed .brand-title,
+  .app.nav-collapsed .topnav-spacer::before,
+  .app.nav-collapsed .topnav-search { display:none; }
+  .app.nav-collapsed .tabs { margin-top:0; }
+  .app.nav-collapsed .tab { justify-content:center; padding:0; font-size:0; }
+  .app.nav-collapsed .tab::before { width:20px; height:20px; }
+
+  /* 우측 상단 고정 배지 — 원래 각 탭 .main 좌측 상단에 탭마다 반복해서
+     찍히던 "LIVE OPERATIONS · 시각" 표시를, 사이드바 접힘 상태와 무관하게
+     항상 같은 자리에 떠 있는 단일 배지로 옮김(탭 넘길 때마다 다시 찍히지
+     않고 화면에 고정). */
+  .live-badge {
+    position:fixed;
+    top:20px;
+    right:24px;
+    z-index:110;
+    color:var(--accent);
+    font-size:9px;
+    font-weight:850;
+    letter-spacing:.10em;
+    white-space:nowrap;
+  }
+
+  /* Main workspace */
+  .tab-panel { min-height:100vh; }
+  .main { width:100%; max-width:none; margin:0; padding:28px 30px 84px; }
+  .main::before {
+    content:'PROACTIVE CENTER';
+    display:block;
+    margin:0 0 12px;
+    color:var(--accent);
+    font-size:10.5px;
+    font-weight:850;
+    letter-spacing:.10em;
+  }
+  .note {
+    margin-bottom:18px !important;
+    padding:12px 15px;
+    border-color:var(--accent-soft-border);
+    border-radius:11px;
+    background:linear-gradient(90deg,var(--accent-soft),color-mix(in srgb,var(--accent-soft) 42%,var(--surface)));
+    color:var(--ink-muted);
+    box-shadow:none;
+  }
+  .note b { color:var(--accent); }
+
+  .controlbar { margin-bottom:18px; }
+  .jump-btn,.back-btn,.mini-btn,.unit-btn,.status-btn,.action-btn,.conf-trigger {
+    border-color:var(--border);
+    border-radius:9px;
+    background:var(--surface);
+    box-shadow:0 2px 8px rgba(21,49,52,.035);
+  }
+  .jump-btn:hover,.back-btn:hover,.mini-btn:hover,.unit-btn:hover,.status-btn:hover,.action-btn:hover,.conf-trigger:hover {
+    border-color:var(--accent-soft-border);
+    color:var(--accent);
+  }
+  .unit-btn.active,.status-btn.active { color:var(--accent); background:var(--accent-soft); }
+
+  .section-block { margin-bottom:34px; }
+  .section-head { margin-bottom:7px; }
+  .section-title { font-size:17px; letter-spacing:-.02em; }
+  .section-sub { color:var(--ink-muted); }
+
+  .summary { gap:13px; margin-bottom:24px; }
+  .stat {
+    position:relative;
+    border-color:var(--border);
+    border-radius:14px;
+    background:var(--surface);
+    box-shadow:0 4px 16px rgba(21,49,52,.045);
+    overflow:hidden;
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .stat::after {
+    content:'';
+    position:absolute;
+    width:76px;
+    height:76px;
+    right:-31px;
+    bottom:-39px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    opacity:.7;
+  }
+  .stat:hover { transform:translateY(-2px); border-color:var(--accent-soft-border); box-shadow:var(--shadow); }
+  .stat-label { color:var(--ink-muted); font-size:11.5px; letter-spacing:.04em; }
+  .stat-figures .total-v { color:var(--ink); font-weight:750; }
+
+  .ov-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+  .ov-section {
+    min-width:0;
+    padding:24px 24px 26px;
+    border-color:var(--border);
+    border-radius:15px;
+    box-shadow:0 4px 16px rgba(21,49,52,.045);
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .ov-section:hover { transform:translateY(-2px); border-color:var(--accent-soft-border); box-shadow:var(--shadow); }
+  .ov-section-head { margin-bottom:18px; }
+  .ov-section-title { font-size:14px; }
+  /* 화물/업무/비용은 같은 화물 흐름을 단계별로 보는 뷰라 색으로 서로 구분하지
+     않고 중립 톤 그대로 둠 — 재고(Item/SKU 단위, 성격이 다른 뷰)만 --inv-accent로
+     강조해서 "이 카드만 다르다"는 신호가 정확히 전달되게 함. */
+  .ov-section[data-target-tab="inventory"] { border-left:3px solid var(--inv-accent); }
+  .ov-section[data-target-tab="inventory"]:hover { border-color:var(--inv-accent-soft-border); border-left-color:var(--inv-accent); }
+  .ov-section[data-target-tab="inventory"] .ov-section-title .mi { background-color:var(--inv-accent); }
+  .ov-section[data-target-tab="inventory"]:hover .ov-section-link { color:var(--inv-accent); }
+  .ov-section[data-target-tab="inventory"] .stat-hero .stat-figures .total-v { color:var(--inv-accent); }
+  .ov-section[data-target-tab="inventory"] .stat::after { background:var(--inv-accent-soft); }
+  .ov-summary.summary { grid-template-columns:1.25fr repeat(3,1fr); gap:10px; align-items:stretch; }
+  /* hero 박스엔 split-row/trend-line처럼 라벨+숫자 아래 한 줄이 더 있고
+     일반 박스엔 없음 — 세로 중앙정렬(justify-content:center)을 쓰면 이 콘텐츠
+     양 차이 때문에 라벨/숫자가 박스마다 다른 높이에 걸려서 "정렬이 안 맞고
+     크기도 다른" 것처럼 보였음. 모든 Overview stat 박스를 높이 고정 + 위쪽
+     정렬로 바꿔서, 라벨은 항상 같은 top 위치에서 시작하고 아래쪽 여유 공간만
+     박스마다 달라지게 함(콘텐츠가 적은 박스는 아래쪽에 여백이 남는 정도).
+     글자 크기는 예전엔 좁은 2x2 그리드에 욱여넣느라 다른 탭의 요약 카드보다
+     작게 축소해뒀었는데, 지금은 카드 공간이 넉넉해서 그럴 필요가 없음 — 위쪽
+     mockup 원본 CSS에 남아있던 .ov-summary 전용 축소값(19px/23px 등, 선택자
+     특이도가 같아서 여기서 명시적으로 다시 안 덮어쓰면 그게 이김)을 다른 탭과
+     같은 크기(24px/32px/12.5px)로 명시적으로 되돌림. */
+  .ov-summary .stat { min-width:0; padding:18px 12px; box-shadow:none; height:140px; display:flex; flex-direction:column; justify-content:flex-start; align-items:stretch; box-sizing:border-box; }
+  .ov-summary .stat-label { min-height:28px; display:flex; align-items:center; justify-content:center; font-size:11.5px; flex-shrink:0; }
+  .ov-summary .stat-figures { flex-shrink:0; }
+  .ov-summary .stat-figures .total-v,.ov-summary .stat-figures .delayed-v { font-size:24px; }
+  .ov-summary .stat-hero .stat-figures .total-v,.ov-summary .stat-hero .stat-figures .delayed-v { font-size:32px; }
+  .ov-summary .stat-figures .total-l,.ov-summary .stat-figures .delayed-l,.ov-summary .split-row,.ov-summary .trend-line { font-size:12.5px; }
+  .ov-divider { display:none; }
+
+  .list,.list-table,.timeline-table,.chart-wrap,.cost-chart,.pchart-wrap,.ss-chart-wrap,.conf-card {
+    border-color:var(--border) !important;
+    border-radius:14px !important;
+    background:var(--surface);
+    box-shadow:0 4px 16px rgba(21,49,52,.04);
+  }
+  .list-row { padding:12px 15px; border-color:var(--border); }
+  .list-row.head { background:var(--surface-2); color:var(--ink-faint); }
+  .list-row:hover { background:color-mix(in srgb,var(--accent-soft) 45%,var(--surface)); }
+  .list-row.selected { background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); }
+  .detail {
+    border-color:var(--accent-soft-border);
+    border-radius:15px;
+    background:var(--surface);
+    box-shadow:var(--shadow);
+  }
+  .detail-head { border-color:var(--border); }
+  .pill { border-radius:8px; }
+  .toast { border-radius:12px; background:#102c2e; color:#fff; box-shadow:0 16px 42px rgba(4,25,27,.24); }
+
+  @media (min-width:1600px) and (min-height:900px) {
+    #tab-overview .main { padding-top:32px; padding-bottom:32px; }
+    #tab-overview .note { margin-bottom:20px !important; padding-block:12px; }
+  }
+
+  @media (max-width:1350px) {
+    .app { padding-left:86px; }
+    .topnav { width:86px; padding-inline:12px; }
+    .customer-mark { margin-bottom:18px; }
+    .customer-name,.brand-title,.topnav-spacer::before,.topnav-search { display:none; }
+    .tabs { margin-top:0; }
+    .tab { justify-content:center; padding:0; font-size:0; }
+    .tab::before { width:20px; height:20px; }
+    .ov-grid { grid-template-columns:1fr; }
+  }
+</style>
+
 <div class="app">
   <div class="topnav">
+    <button type="button" class="nav-toggle-btn" id="nav-toggle-btn" title="사이드바 접기/펼치기" aria-label="사이드바 접기/펼치기"></button>
     <div class="customer-mark"></div>
     <div class="customer-name">Meridian Trading Co.</div>
     <div class="nav-divider"></div>
     <div class="brand-title">Visibility Control Tower</div>
     <div class="tabs">
-      <div class="tab" data-tab="overview">Overview</div>
+      <div class="tab active" data-tab="overview">Overview</div>
       <div class="nav-divider"></div>
-      <div class="tab active" data-tab="cargo">화물</div>
-      <div class="tab" data-tab="operation">업무</div>
-      <div class="tab" data-tab="cost">비용</div>
+      <div class="tab" data-tab="cargo">화물 가시성</div>
+      <div class="tab" data-tab="operation">업무 가시성</div>
+      <div class="tab" data-tab="cost">비용 가시성</div>
       <div class="nav-divider"></div>
-      <div class="tab" data-tab="inventory">재고</div>
+      <div class="tab" data-tab="inventory">재고 예측</div>
     </div>
     <div class="topnav-spacer"></div>
     <div class="topnav-search">
@@ -542,20 +934,17 @@
     </div>
   </div>
 
+  <div class="live-badge">LIVE OPERATIONS  ·  2026.08.10  19:47 KST</div>
+
   <!-- ============================================================ -->
   <!-- OVERVIEW (placeholder)                                        -->
   <!-- ============================================================ -->
-  <div class="tab-panel" id="tab-overview">
+  <div class="tab-panel active" id="tab-overview">
     <div class="main" style="padding-bottom:24px;">
-      <div class="note" style="margin-bottom:16px;">
-        <b>검토 포인트</b> — 화물/업무/비용/재고 각 탭 상단 요약 카드를 그대로 모았습니다. 카드를 클릭하면 해당 탭의
-        관련 섹션으로 바로 이동합니다. Full HD 화면 기준으로 스크롤 없이 한 화면에 들어가도록 압축했습니다.
-      </div>
-
       <div class="ov-grid">
         <section class="ov-section" data-target-tab="cargo">
           <div class="ov-section-head">
-            <div class="ov-section-title"><span class="mi"></span>화물</div>
+            <div class="ov-section-title"><span class="mi"></span>화물 가시성</div>
             <div class="ov-section-link">화물 탭에서 보기 ›</div>
           </div>
           <div class="summary ov-summary">
@@ -587,7 +976,7 @@
 
         <section class="ov-section" data-target-tab="operation">
           <div class="ov-section-head">
-            <div class="ov-section-title"><span class="mi"></span>업무</div>
+            <div class="ov-section-title"><span class="mi"></span>업무 가시성</div>
             <div class="ov-section-link">업무 탭에서 보기 ›</div>
           </div>
           <div class="summary ov-summary">
@@ -619,7 +1008,7 @@
 
         <section class="ov-section" data-target-tab="cost">
           <div class="ov-section-head">
-            <div class="ov-section-title"><span class="mi"></span>비용</div>
+            <div class="ov-section-title"><span class="mi"></span>비용 가시성</div>
             <div class="ov-section-link">비용 탭에서 보기 ›</div>
           </div>
           <div class="summary ov-summary">
@@ -648,7 +1037,7 @@
 
         <section class="ov-section" data-target-tab="inventory">
           <div class="ov-section-head">
-            <div class="ov-section-title"><span class="mi"></span>재고</div>
+            <div class="ov-section-title"><span class="mi"></span>재고 예측</div>
             <div class="ov-section-link">재고 탭에서 보기 ›</div>
           </div>
           <div class="summary ov-summary" id="ov-inv-summary"></div>
@@ -660,15 +1049,8 @@
   <!-- ============================================================ -->
   <!-- 화물 탭                                                        -->
   <!-- ============================================================ -->
-  <div class="tab-panel active" id="tab-cargo">
+  <div class="tab-panel" id="tab-cargo">
     <div class="main">
-      <div class="note">
-        <b>검토 포인트</b> — 해상·항공을 한 리스트로 섞지 않고 같은 화면에 순차 배치했습니다(해상 → 항공). 상단 바로가기 버튼은
-        필터가 아니라 해당 섹션으로 스크롤만 이동합니다. 각 섹션은 <b>Pre-carriage / Main-carriage / On-carriage</b> 3단계 탭이 있고,
-        단계를 바꾸면 행이 아니라 컬럼 구성 자체가 바뀝니다. 선박명을 클릭하면 실제 AIS 데이터 기반 실시간 위치 지도가 열립니다
-        (로컬에서 <b>vessel-tracker</b>를 켜둬야 함 — 채팅 참고). 항공 편명은 AIS 추적 대상이 아닙니다.
-        "리스크" 판정 기준은 아직 미정이라 이번 화면엔 반영하지 않았습니다.
-      </div>
 
       <div class="controlbar">
         <div class="unit-hint" style="margin-top:0;">Container(해상) / HBL(항공) 단위 리스트. Item 단위 재고 현황은 <b>재고</b> 탭에서 봅니다.</div>
@@ -965,14 +1347,6 @@
     <div class="main">
       <!-- ===== MAIN VIEW ===== -->
       <div id="op-main-view">
-        <div class="note">
-          <b>검토 포인트</b> — 포워더가 화주로부터 PO를 직접 받는 경우는 드물어서, 최상위 리스트는 <b>부킹</b>입니다. Item/수량은
-          부킹 시점엔 미확정이고, <b>CI/PL이 확보되는 수출통관 준비 시점</b>에 채워집니다. 관련 PO No가 있으면 참고용 라벨로만
-          표시합니다. 게이트인·On-board 같은 화물의 물리적 이동은 <b>화물 탭 소관</b>이라 여기선 다루지 않습니다(업무 탭 = 능동적
-          행정 액션만). "도착 준비" 섹션은 화물 탭과 <b>같은 컨테이너/HBL 데이터</b>를 "통관·Inland Routing 액션" 관점으로
-          재구성한 것이라 별도 데이터가 아닙니다. Item 단위 연결(CI/PL→부킹→B/L→컨테이너)과 Inland 스케줄 마스터는 아직
-          <b>미해결 데이터 의존성</b>입니다(있다는 전제로 설계).
-        </div>
 
         <div class="controlbar">
           <div class="jumpbar">
@@ -1281,14 +1655,6 @@
   <!-- ============================================================ -->
   <div class="tab-panel" id="tab-cost">
     <div class="main">
-      <div class="note">
-        <b>검토 포인트</b> — <b>월별 물류비 현황</b>(항목별 구성 + 물동량 대비 추이)은 "현재 발생분/추이"를 보는
-        현황형 콘텐츠이고, 아래 <b>체화료(D&D)</b>는 예정/진행중 상태를 알리는 사전 알림형 콘텐츠라 성격이 다릅니다.
-        <b>PCS(항만혼잡할증)</b>는 확정 항목에서 제외했습니다 — 선사 공지가 비정형이라 크롤링 유지보수 부담이 크고,
-        상시 비용이 아니라 특정 항로·시기에만 터지는 이벤트성 비용이라 대부분 해당 없음(발생 시엔 아래 "기타" 항목에 반영).
-        체화료 발생중 상태는 <b>경과 주 단위(1주/2주/3주/4주 이상)</b>로 구분해 리스크 크기를 표현하고, Free Time 임박(발생 전)과
-        <b>하나의 리스트로 통합</b>해 리스크 진행 순서에 따라 보여줍니다.
-      </div>
 
       <div class="controlbar">
         <div class="jumpbar">
@@ -1568,14 +1934,6 @@
   <!-- ============================================================ -->
   <div class="tab-panel" id="tab-inventory">
     <div class="main">
-      <div class="note">
-        <b>검토 포인트</b> — 화물/업무/비용이 컨테이너·B/L 단위인 것과 달리, 이 탭은 <b>Item(SKU) 단위</b>로 같은 운송
-        이벤트를 재구성한 화면입니다(별도 데이터 아님). Inbound는 <b>On-board가 확인된 물량부터</b> 반영하고, 인식 시점은
-        <b>현재 FDEST ETA</b>를 사용합니다(Init. ETA는 최초 예상 대비 변화 확인용). Outbound(예상 출고)는 수요예측이든
-        확정 출고계획이든 소스를 특정하지 않고 "고객 시스템에서 주어지는 값"으로 가정했습니다 — 이 값의 정확도에 재고
-        투영 정확도가 달려있습니다. Item/On-hand/Outbound/Safety Stock 수치는 <code>raw data/Tracking.xlsx</code>의
-        실제 Model·수량·FDEST ETA에 합성 W&amp;D 데이터를 결합한 것입니다(<code>synthetic-data/</code> 참고).
-      </div>
 
       <div class="controlbar">
         <div class="unit-toggle">
@@ -1704,6 +2062,19 @@
     input.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" || !input.value.trim()) return;
       showToast("⌕ \"" + input.value.trim() + "\" 검색 (mock) — B/L·Container No·Item 통합 조회는 아직 동작하지 않는 UI입니다");
+    });
+  })();
+
+  // ===== sidebar collapse/expand toggle =====
+  (function () {
+    const appEl = document.querySelector(".app");
+    const toggleBtn = document.getElementById("nav-toggle-btn");
+    if (!appEl || !toggleBtn) return;
+    const STORAGE_KEY = "vct-nav-collapsed";
+    if (localStorage.getItem(STORAGE_KEY) === "1") appEl.classList.add("nav-collapsed");
+    toggleBtn.addEventListener("click", () => {
+      const collapsed = appEl.classList.toggle("nav-collapsed");
+      localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
     });
   })();
 
