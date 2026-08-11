@@ -33,19 +33,38 @@ app.add_middleware(
 )
 
 
+_pg_conn = None  # Vercel 서버리스 함수가 warm 상태로 재사용될 때 커넥션도 같이 재사용(요청마다 새로 열면 느림)
+
+
+def _get_pg_conn():
+    global _pg_conn
+    import psycopg2
+
+    if _pg_conn is None or _pg_conn.closed:
+        _pg_conn = psycopg2.connect(DATABASE_URL)
+        _pg_conn.autocommit = True  # 읽기 전용 API — 트랜잭션을 열어두지 않아야 pooler가 커넥션을 바로 회수 가능
+    return _pg_conn
+
+
 def query(sql, params=()):
     """sql은 SQLite 방언(? 플레이스홀더)으로 작성 — Postgres 백엔드일 땐 %s로 바꿔서 실행."""
     if DATABASE_URL:
         import psycopg2
         import psycopg2.extras
 
-        conn = psycopg2.connect(DATABASE_URL)
+        global _pg_conn
         try:
+            conn = _get_pg_conn()
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql.replace("?", "%s"), params)
                 return [dict(r) for r in cur.fetchall()]
-        finally:
-            conn.close()
+        except psycopg2.OperationalError:
+            # 재사용하던 커넥션이 유휴 타임아웃 등으로 끊겼을 수 있음 — 한 번만 재연결 재시도.
+            _pg_conn = None
+            conn = _get_pg_conn()
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(sql.replace("?", "%s"), params)
+                return [dict(r) for r in cur.fetchall()]
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
