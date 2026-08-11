@@ -483,6 +483,7 @@
   .conf-list { margin:0; padding-left:18px; font-size:13px; line-height:1.65; color:var(--ink); }
   .conf-list li { margin-bottom:6px; }
   .conf-list.empty { list-style:none; padding-left:0; color:var(--ink-muted); }
+  .conf-list .pill { min-width:88px; justify-content:center; }
   .conf-caveat { margin-top:18px; padding-top:14px; border-top:1px dashed var(--border); font-size:11px; color:var(--ink-faint); line-height:1.55; }
 
   .inv-summary-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
@@ -507,9 +508,11 @@
   .ptimeline-row.crit .proj-v { color:var(--crit); }
   .ptimeline-pending { margin-top:10px; font-size:12px; color:var(--ink-faint); padding:0 4px; }
 
-  .shortage-banner { display:none; align-items:center; gap:8px; border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:700; margin-bottom:10px; }
+  .shortage-banner { display:none; align-items:center; gap:8px; border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:700; margin-bottom:10px; line-height:1.55; }
   .shortage-banner.warn-b { display:flex; background:var(--warn-soft); color:var(--warn); }
   .shortage-banner.crit-b { display:flex; background:var(--crit-soft); color:var(--crit); }
+  #inv-d-reco.warn-b, #inv-d-reco.crit-b { flex-direction:column; align-items:flex-start; }
+  #inv-d-reco .cell-sub { font-weight:600; }
 
   .ss-legend { display:flex; gap:16px; font-size:11.5px; color:var(--ink-muted); margin:10px 0 16px; }
   .ss-legend .ld { display:inline-flex; align-items:center; gap:6px; }
@@ -1048,14 +1051,6 @@
   #flow-detail .detail-head > div { min-width:0; }
 
   @media (min-width:1600px) and (min-height:900px) {
-    #tab-overview .main {
-      padding-top:32px;
-      padding-bottom:32px;
-      min-height:calc(100vh / 1.25 - 90px);
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
     #tab-overview .note { margin-bottom:20px !important; padding-block:12px; }
   }
 
@@ -2253,7 +2248,7 @@
         <div class="flow-arrow" style="grid-column:12;"></div>
         <button type="button" class="flow-node" data-node="fdest" style="grid-column:13;"><span class="fn-count"></span><div class="fn-title">Final Destination</div><div class="fn-sub">&nbsp;</div></button>
         <div class="flow-arrow" style="grid-column:14;"><span class="fa-label">Inbound(+)</span></div>
-        <button type="button" class="flow-node" data-node="wd" style="grid-column:15;"><span class="fn-count"></span><div class="fn-title">W&D Inventory</div><div class="fn-sub">On-hand · Outbound(−)</div></button>
+        <button type="button" class="flow-node" data-node="wd" style="grid-column:15;"><span class="fn-count"></span><div class="fn-title">Inventory</div><div class="fn-sub">On-hand · Outbound(−)</div></button>
 
         <div class="flow-influence"><span class="fi-tick start"></span><span class="fi-tick end"></span><span class="fi-label">선적 시점부터 계속 갱신되는 Final Destination 도착 예정일이 재고 투영 계산에 그대로 이어져 반영됩니다</span></div>
       </div>
@@ -2269,7 +2264,7 @@
         <div class="block-title" style="font-size:12.5px; color:var(--ink-muted); margin-bottom:10px;">이 노드에 영향을 미치는 요소</div>
         <ul class="conf-list" id="flow-d-factors"></ul>
       </div>
-      <div class="unit-hint">특정 프로세스 노드가 아니라 화면 전체 설계에 관한 이슈(Overview 구성 방식 등) 1건은 이 다이어그램의 성격상 표시 대상에서 제외했습니다.</div>
+      <div class="unit-hint" style="max-width:none; white-space:nowrap;">특정 프로세스 노드가 아니라 화면 전체 설계에 관한 이슈(Overview 구성 방식 등) 1건은 이 다이어그램의 성격상 표시 대상에서 제외했습니다.</div>
     </div>
   </div>
 
@@ -2361,16 +2356,21 @@
       discharge: { title: "하역", sub: "Discharge", tabs: ["화물 가시성", "업무 가시성", "비용 가시성"] },
       inland:    { title: "Inland Routing", sub: "", tabs: ["화물 가시성", "업무 가시성"] },
       fdest:     { title: "Final Destination", sub: "", tabs: ["화물 가시성", "업무 가시성", "비용 가시성", "재고 예측"] },
-      wd:        { title: "W&D Inventory", sub: "On-hand", tabs: ["재고 예측"] },
+      wd:        { title: "Inventory", sub: "On-hand", tabs: ["재고 예측"] },
     };
 
     const FACTORS = {
-      booking: [],
+      booking: [
+        { type: "설계 미정", issue: "부킹 상태(요청/확정/롤오버) 판정 로직 미정", ref: "§8.2" },
+        { type: "설계 미정", issue: "롤오버(선사 스페이스 부족 · blank sailing) 발생 시 cut-off 세트 리셋 표시 방식 미정", ref: "§8.2" },
+      ],
       prep: [
         { type: "데이터 확보", issue: "Pantos 실제 CI/PL 입수 경로(구조화 파일 vs 이미지/PDF) 미확인", ref: "§8.5" },
         { type: "데이터 확보", issue: "Stuffing List 등 적입/장입 확정 데이터 — 대부분 Pantos 내부 시스템 연동 문제", ref: "§8.2" },
       ],
-      shipment: [],
+      shipment: [
+        { type: "설계 미정", issue: "선적 전 선박이 이전 기항지부터 지연없이 오고 있는지 모니터링(PCP) 방식 미정 — 선적 후 기항지 스케줄 모니터링(CP)은 트래킹 단계 소관" },
+      ],
       tracking: [
         { type: "데이터 확보", issue: "소스별 과거 예측 정확도 이력(PTA·정적 신뢰도의 전제)", ref: "§7.1/§7.2" },
         { type: "데이터 확보", issue: "그래프DB(선박 스케줄·트래킹·AIS·혼잡도) 연동 방식", ref: "§7.1" },
