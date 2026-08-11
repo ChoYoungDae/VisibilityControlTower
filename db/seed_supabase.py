@@ -20,7 +20,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 DB_DIR = Path(__file__).parent
 DATA_DIR = DB_DIR.parent / "synthetic-data"
@@ -51,10 +51,25 @@ CSV_TABLE_MAP = [
     ("item_primary_lane.csv", "item_primary_lane"),
 ]
 
+ALL_TABLES = [table for _, table in CSV_TABLE_MAP] + ["reorder_recommendation"]
+
+
+def truncate_all(engine):
+    """재실행해도 안전하도록, 적재 전에 모든 테이블을 비운다(스키마는 그대로 둠)."""
+    with engine.begin() as conn:
+        conn.execute(text(f"TRUNCATE TABLE {', '.join(ALL_TABLES)} RESTART IDENTITY CASCADE"))
+    print("  기존 데이터 비움 (TRUNCATE)")
+
 
 def load_csvs(engine):
     for csv_name, table in CSV_TABLE_MAP:
         df = pd.read_csv(DATA_DIR / csv_name)
+        # SQLite는 True/False를 정수 컬럼에 그냥 받아주지만 Postgres는 타입을 엄격히
+        # 따져서 거부한다 — pandas가 bool로 추론한 컬럼(delayed/rollover/locked/
+        # selected/pending/is_outlier 등)을 0/1로 캐스팅해서 넘긴다.
+        bool_cols = df.select_dtypes(include="bool").columns
+        if len(bool_cols):
+            df[bool_cols] = df[bool_cols].astype(int)
         df.to_sql(table, engine, if_exists="append", index=False)
         print(f"  적재: {csv_name} -> {table} ({len(df)}행)")
 
@@ -156,6 +171,8 @@ def main():
 
     engine = create_engine(database_url)
 
+    print("기존 데이터 정리...")
+    truncate_all(engine)
     print("CSV 적재... (Supabase SQL Editor에서 schema_postgres.sql을 먼저 실행해뒀어야 함)")
     load_csvs(engine)
     print("발주 추천 계산...")
