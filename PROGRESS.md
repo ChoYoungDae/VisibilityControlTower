@@ -1,6 +1,62 @@
 # Visibility Control Tower · 진행 상황
 
-마지막 갱신: 2026-08-10 (같은 날 더 이어진 세션 — `visibility_control_tower_
+마지막 갱신: 2026-08-11 (`fhd.html`을 Vercel + Supabase로 실제 배포한 세션).
+지금까지는 로컬(`mockup-static` 8123 + `api` 8000, SQLite)에서만 돌아가던
+컨셉 데모를 실제 공개 URL로 옮겼다. 진행 순서:
+
+1. **Vercel 배포 준비** — `fhd.html`을 정적 루트로, `api/main.py`를 `/api/*`
+   서버리스 함수로 서빙하도록 `vercel.json`/`.vercelignore` 추가.
+   `.vercelignore`로 `mockup.html`/PRD 문서/`vessel-tracker/`/`synthetic-data/`
+   /`db/`는 공개 배포 대상에서 제외(레포 자체엔 그대로 남음).
+2. **SQLite → Supabase(Postgres) 전환** — `db/schema_postgres.sql`(스키마),
+   `db/seed_supabase.py`(시딩, `build_db.py`와 동일 로직) 신규 작성.
+   `api/main.py`는 `DATABASE_URL` 환경변수 유무로 SQLite/Postgres를 자동
+   분기(로컬 개발은 그대로 SQLite, 배포는 Supabase) — 로컬 흐름을 안 깨는
+   게 원칙.
+3. **`fhd.html`의 `API_BASE`를 런타임 분기로 변경** — 로컬(8123/8000 분리
+   오리진)과 배포(같은 오리진) 둘 다 동작하게. 첫 배포 후 `/api/api/...`로
+   중복되는 버그 발견해 수정(각 fetch 호출이 이미 `/api/...`를 포함하고
+   있어서 배포용 `API_BASE`는 빈 문자열이어야 함).
+4. **Postgres 타입 엄격성 버그** — SQLite는 정수 컬럼에 `True/False`를
+   그냥 받아주지만 Postgres는 거부함(`item_shipment.delayed` 등). pandas
+   bool 컬럼을 0/1로 캐스팅하도록 `seed_supabase.py` 수정, 재실행 안전하게
+   `TRUNCATE`도 추가.
+5. **실제 배포·검증 완료** — `https://visibility-control-tower.vercel.app`
+   접속 확인, `/api/health`가 `{"status":"ok","db":"supabase (postgres)"}`
+   반환, 화물/업무/비용/재고 4개 탭 전부 API 200 OK + 실데이터(Supabase
+   시딩분) 확인.
+6. **Postgres 커넥션 재사용** — `query()`가 호출마다 새로 connect해서 재고
+   탭(쿼리 5~6번)이 특히 느렸음(콜드 상태 9~10초). 모듈 전역에 커넥션을
+   캐싱(autocommit, 끊기면 1회 재연결)하도록 고쳐서 워밍 상태 1.5~1.8초로
+   개선.
+7. **UI 버그 2건 발견·수정** (`fhd.html`) — (a) `.live-badge`(우상단 고정
+   시각 배지)가 `position:fixed`인데 `@media (max-width:1350px)`(사이드바
+   아이콘 축소 구간)에서 `.main` 상단 여백을 확보 안 해서 재고 탭 Item
+   리스트 등과 겹치던 문제, 배지 높이만큼 `padding-top` 강제로 확보해서
+   수정. (b) Overview 탭이 큰 화면(1600px+)에서 카드가 위로 쏠리고 하단에
+   빈 공간이 많다는 피드백 — 카드 위에 "Proactive Center" 소개 문구
+   추가하고, `#tab-overview .main`을 flex+`justify-content:center`로
+   바꿔 콘텐츠 전체를 세로 중앙 배치, 카드 패딩/간격도 소폭 확대.
+
+**커밋·푸시 완료** — `41c9cd6`(Vercel/Supabase 배포 코드), `0145dc0`(Postgres
+bool 캐스팅 버그 수정), `88267cd`(API_BASE 중복 경로 버그 수정), `75ae3b1`
+(Postgres 커넥션 재사용), 그리고 이번 UI 버그 수정 커밋까지 전부
+`origin/master`에 반영됨. Vercel 프로젝트는 GitHub 연동이라 이후 push마다
+자동 재배포된다. `DATABASE_URL`은 Vercel Project Settings의 환경변수로만
+존재(레포에는 없음).
+
+**다음 단계** — 이번 세션은 배포 인프라 작업이라 콘텐츠/기능 백로그를
+밀어내지 않는다. 아래 "## 다음 단계 (2026-08-10 세션 최신 — 위 §9.5
+안내보다 우선)" 섹션의 항목 3("PostgreSQL/Supabase 전환 여부")은 이번
+세션으로 완료됐으니 그 부분만 제외하고, 나머지(1번 `api/README.md`
+정적 HTML 잔여 3가지, 2번 `db/README.md` 컨셉 데모 한계, 그다음 §9.5)는
+그대로 유효한 다음 착수 지점이다. 추가로 컨셉 데모 한정 항목이지만
+Supabase `DATABASE_URL`에 admin 비밀번호가 그대로 들어있다는 점(현재는
+컨셉 데모라 허용) — 실서비스로 넘어갈 때는 RLS/전용 계정으로 좁혀야 함.
+
+---
+
+이전 갱신: 2026-08-10 (같은 날 더 이어진 세션 — `visibility_control_tower_
 fhd.html`(Full HD 전용 파생 목업, 이전 세션에 만들어둔 초안)을 사용자 리뷰
 피드백을 반복해서 받으며 집중적으로 다듬은 세션. **이제부터 화면 UI 반영은
 이 파일이 기준이고, `mockup.html`은 현행 유지(사용자가 명시적으로 지정).**

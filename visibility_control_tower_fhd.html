@@ -940,10 +940,14 @@
   .stat-label { color:var(--ink-muted); font-size:11.5px; letter-spacing:.04em; }
   .stat-figures .total-v { color:var(--ink); font-weight:750; }
 
-  .ov-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+  .ov-intro { margin-bottom:26px; }
+  .ov-intro-title { font-size:20px; font-weight:800; letter-spacing:-.01em; color:var(--ink); margin-bottom:8px; }
+  .ov-intro-desc { font-size:13.5px; line-height:1.7; color:var(--ink-muted); max-width:760px; }
+
+  .ov-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; }
   .ov-section {
     min-width:0;
-    padding:24px 24px 26px;
+    padding:30px 32px 34px;
     border-color:var(--border);
     border-radius:15px;
     box-shadow:0 4px 16px rgba(21,49,52,.045);
@@ -1039,11 +1043,22 @@
   #flow-detail .route { margin-top:2px; }
 
   @media (min-width:1600px) and (min-height:900px) {
-    #tab-overview .main { padding-top:32px; padding-bottom:32px; }
+    #tab-overview .main {
+      padding-top:32px;
+      padding-bottom:32px;
+      min-height:calc(100vh / 1.25 - 90px);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
     #tab-overview .note { margin-bottom:20px !important; padding-block:12px; }
   }
 
   @media (max-width:1350px) {
+    /* .live-badge는 항상 position:fixed로 우상단에 떠 있는데, 이 폭부터는
+       .main 콘텐츠가 그 자리까지 올라올 수 있어서(재고 탭 Item 리스트 등)
+       상단 여백을 badge 높이만큼 강제로 확보해 겹치지 않게 한다. */
+    .main { padding-top:76px; }
     .app { padding-left:86px; }
     .topnav { width:86px; padding-inline:12px; }
     .customer-mark { margin-bottom:18px; }
@@ -1094,6 +1109,13 @@
   <!-- ============================================================ -->
   <div class="tab-panel active" id="tab-overview">
     <div class="main" style="padding-bottom:24px;">
+      <div class="ov-intro">
+        <div class="ov-intro-title">Proactive Center</div>
+        <div class="ov-intro-desc">화물·업무·비용·재고 데이터를 한 화면에 모아, 문제가 커지기 전에
+          먼저 짚어드립니다. 단순히 현재 상태를 보여주는 것을 넘어, 지연·리스크
+          신호를 미리 포착하고 다음 액션까지 이어지도록 설계된 통합 가시성
+          대시보드입니다.</div>
+      </div>
       <div class="ov-grid">
         <section class="ov-section" data-target-tab="cargo">
           <div class="ov-section-head">
