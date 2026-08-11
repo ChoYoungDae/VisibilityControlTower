@@ -2435,7 +2435,7 @@
     const root = document.getElementById("tab-cargo");
     const API_BASE = (location.hostname === "localhost" && location.port === "8123")
       ? "http://localhost:8000"
-      : "/api";
+      : "";
 
     // 2026-08-10 세션부터 API 연동 — rowData/VESSEL_MMSI/sectionStats 전부
     // 하드코딩 리터럴이었던 걸 fetch로 교체(모양은 그대로, 아래 로직 안 바뀜).
@@ -2561,7 +2561,7 @@
     const root = document.getElementById("tab-operation");
     const API_BASE = (location.hostname === "localhost" && location.port === "8123")
       ? "http://localhost:8000"
-      : "/api";
+      : "";
 
     // 2026-08-10 세션부터 API 연동 — bookingData/arrivalData 하드코딩 리터럴을
     // fetch로 교체(API 응답 모양을 아래 렌더링 로직이 그대로 기대하는 모양에 맞춤).
@@ -2738,7 +2738,7 @@
     const root = document.getElementById("tab-cost");
     const API_BASE = (location.hostname === "localhost" && location.port === "8123")
       ? "http://localhost:8000"
-      : "/api";
+      : "";
 
     // 2026-08-10 세션부터 API 연동 — dndData 하드코딩 리터럴을 fetch로 교체.
     // 월별 물류비 SVG 차트는 아직 정적 HTML(다음 단계 후보, db/README.md 참고).
@@ -2811,7 +2811,7 @@
     // 모양(shape)은 그대로라 buildTimeline/statusOf 등 아래 로직은 안 바뀜.
     const API_BASE = (location.hostname === "localhost" && location.port === "8123")
       ? "http://localhost:8000"
-      : "/api";
+      : "";
     let itemCatalog = {};
     const reorderRecoBySku = {};  // 구 /api/inventory/reorder-recommendation, item_id -> row
 
