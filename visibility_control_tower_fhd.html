@@ -511,7 +511,8 @@
   .shortage-banner { display:none; align-items:center; gap:8px; border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:700; margin-bottom:10px; line-height:1.55; }
   .shortage-banner.warn-b { display:flex; background:var(--warn-soft); color:var(--warn); }
   .shortage-banner.crit-b { display:flex; background:var(--crit-soft); color:var(--crit); }
-  #inv-d-reco.warn-b, #inv-d-reco.crit-b { flex-direction:column; align-items:flex-start; }
+  #inv-d-reco.warn-b, #inv-d-reco.crit-b { align-items:flex-start; }
+  #inv-d-reco .reco-body { flex:1; min-width:0; }
   #inv-d-reco .cell-sub { font-weight:600; }
 
   .ss-legend { display:flex; gap:16px; font-size:11.5px; color:var(--ink-muted); margin:10px 0 16px; }
@@ -3087,9 +3088,10 @@
             "</span>) 전 도착을 보장하기 어렵습니다. 오늘 발주 시 예상 도착: <span class=\"num\">" + reco.if_ordered_today_arrival_p50 +
             " (P50)</span> ~ <span class=\"num\">" + reco.if_ordered_today_arrival_p95 + " (P95, 보수적 기준)</span>."
           : "발주 권장 시점: <span class=\"num\">" + reco.recommended_order_by_date + "</span> (" + reco.target_event + " 예상일 " + reco.target_date + " 기준, 이 노선 리드타임 P95 " + reco.lead_time_p95_days + "일 역산)";
-        recoEl.innerHTML = "📦 " + urgencyText +
+        recoEl.innerHTML = '<div class="reco-icon">📦</div><div class="reco-body">' + urgencyText +
           " — 권장 수량 <span class=\"num\">" + Number(reco.recommended_qty).toLocaleString() + " EA</span>" +
-          (laneLabel ? '<div class="cell-sub" style="margin-top:4px;">기준 노선(데모 가정): ' + laneLabel + '</div>' : "");
+          (laneLabel ? '<div class="cell-sub" style="margin-top:4px;">기준 노선(데모 가정): ' + laneLabel + '</div>' : "") +
+          '</div>';
       } else {
         recoEl.style.display = "none";
         recoEl.innerHTML = "";
