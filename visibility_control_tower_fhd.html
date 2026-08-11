@@ -879,7 +879,10 @@
 
   /* Main workspace */
   .tab-panel { min-height:calc(100vh / 1.25); }
-  .main { width:100%; max-width:none; margin:0; padding:28px 30px 84px; }
+  /* .live-badge는 화면 폭과 무관하게 항상 position:fixed로 우상단에 떠 있어서,
+     상단 padding이 그 높이(약 68px)보다 작으면 화면 폭에 상관없이 리스트 헤더 등
+     콘텐츠가 그 밑을 지나갈 때 겹칠 수 있다 — 폭 조건 없이 항상 여유를 둔다. */
+  .main { width:100%; max-width:none; margin:0; padding:76px 30px 84px; }
   .main::before {
     content:'PROACTIVE CENTER';
     display:block;
@@ -1051,7 +1054,7 @@
 
   @media (min-width:1600px) and (min-height:900px) {
     #tab-overview .main {
-      padding-top:32px;
+      padding-top:76px;
       padding-bottom:32px;
       min-height:calc(100vh / 1.25 - 90px);
       display:flex;
@@ -1062,10 +1065,6 @@
   }
 
   @media (max-width:1350px) {
-    /* .live-badge는 항상 position:fixed로 우상단에 떠 있는데, 이 폭부터는
-       .main 콘텐츠가 그 자리까지 올라올 수 있어서(재고 탭 Item 리스트 등)
-       상단 여백을 badge 높이만큼 강제로 확보해 겹치지 않게 한다. */
-    .main { padding-top:76px; }
     .app { padding-left:86px; }
     .topnav { width:86px; padding-inline:12px; }
     .customer-mark { margin-bottom:18px; }
