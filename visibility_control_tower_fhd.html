@@ -56,7 +56,10 @@
      한글 글리프가 없어서, 마지막 generic "monospace"로 넘어가면 Windows가 한글을
      굴림으로 대체해버림 — 그 대체가 일어나기 전에 Pretendard 계열을 폴백으로
      끼워넣어서 숫자는 고정폭, 한글은 항상 Pretendard로 렌더링되게 함. */
-  .num { font-family: "SFMono-Regular","JetBrains Mono",ui-monospace,Consolas,"Pretendard","Malgun Gothic",monospace,sans-serif; font-variant-numeric: tabular-nums; }
+  /* white-space:nowrap — 날짜(2026-09-01)나 "60,000 EA" 같은 값이 하이픈/공백 위치에서
+     중간에 잘려 다음 줄로 넘어가는 걸 막는다. .num은 항상 원자적인 값 하나를 담는
+     용도라 어디서 써도 안전하다. */
+  .num { font-family: "SFMono-Regular","JetBrains Mono",ui-monospace,Consolas,"Pretendard","Malgun Gothic",monospace,sans-serif; font-variant-numeric: tabular-nums; white-space:nowrap; }
 
   /* ===== icon system (lucide-style, mask-based so no HTML/JS strings need to change) ===== */
   :root {
@@ -928,6 +931,7 @@
   .stat::after {
     content:'';
     position:absolute;
+    z-index:0;
     width:76px;
     height:76px;
     right:-31px;
@@ -936,6 +940,7 @@
     background:var(--accent-soft);
     opacity:.7;
   }
+  .stat > * { position:relative; z-index:1; }
   .stat:hover { transform:translateY(-2px); border-color:var(--accent-soft-border); box-shadow:var(--shadow); }
   .stat-label { color:var(--ink-muted); font-size:11.5px; letter-spacing:.04em; }
   .stat-figures .total-v { color:var(--ink); font-weight:750; }
@@ -945,10 +950,10 @@
   .ov-intro-list li { position:relative; padding-left:16px; font-size:13.5px; line-height:1.65; color:var(--ink-muted); }
   .ov-intro-list li::before { content:''; position:absolute; left:0; top:8px; width:5px; height:5px; border-radius:50%; background:var(--accent); }
 
-  .ov-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; }
+  .ov-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
   .ov-section {
     min-width:0;
-    padding:30px 32px 34px;
+    padding:26px 26px 28px;
     border-color:var(--border);
     border-radius:15px;
     box-shadow:0 4px 16px rgba(21,49,52,.045);
@@ -1041,7 +1046,8 @@
   .flow-arrow { grid-row:6; height:2px; background:var(--border-strong); position:relative; }
   .flow-arrow::after { content:''; position:absolute; right:0; top:50%; transform:translateY(-50%); border:5px solid transparent; border-left-color:var(--border-strong); }
   .flow-arrow .fa-label { position:absolute; top:-19px; left:50%; transform:translateX(-50%); font-size:9.5px; font-weight:700; color:var(--ink-faint); white-space:nowrap; }
-  #flow-detail .route { margin-top:2px; }
+  #flow-detail .route { margin-top:2px; white-space:nowrap; }
+  #flow-detail .detail-head > div { min-width:0; }
 
   @media (min-width:1600px) and (min-height:900px) {
     #tab-overview .main {
@@ -1168,7 +1174,7 @@
               </div>
             </div>
             <div class="stat" data-jump="sec-prep">
-              <div class="stat-label">Item 확정 (CI/PL 확보)</div>
+              <div class="stat-label">Item 확정<br><span style="white-space:nowrap;">(CI/PL 확보)</span></div>
               <div class="stat-figures"><span class="total-v num">2</span><span class="total-l">/4건</span><span class="delayed-v num">2</span><span class="delayed-l">미확정</span></div>
             </div>
             <div class="stat" data-jump="sec-prep">
@@ -1545,7 +1551,7 @@
             </div>
           </div>
           <div class="stat" data-jump="sec-prep">
-            <div class="stat-label">Item 확정 (CI/PL 확보)</div>
+            <div class="stat-label">Item 확정<br><span style="white-space:nowrap;">(CI/PL 확보)</span></div>
             <div class="stat-figures"><span class="total-v num">2</span><span class="total-l">/4건</span><span class="delayed-v num">2</span><span class="delayed-l">미확정</span></div>
           </div>
           <div class="stat" data-jump="sec-prep">
@@ -3002,7 +3008,7 @@
       const summaryHtml =
         '<div class="stat stat-hero"><div class="stat-label">전체 Item</div><div class="stat-figures"><span class="total-v num">' + skus.length + '</span><span class="total-l">종</span></div></div>' +
         '<div class="stat"><div class="stat-label">Shortage 예상</div><div class="stat-figures"><span class="delayed-v num" style="color:var(--crit)">' + critCount + '</span><span class="delayed-l" style="color:var(--crit)">종</span></div></div>' +
-        '<div class="stat"><div class="stat-label">Safety Stock 이하</div><div class="stat-figures"><span class="delayed-v num" style="color:var(--warn)">' + warnCount + '</span><span class="delayed-l" style="color:var(--warn)">종</span></div></div>' +
+        '<div class="stat"><div class="stat-label">Safety Stock <span style="white-space:nowrap;">이하</span></div><div class="stat-figures"><span class="delayed-v num" style="color:var(--warn)">' + warnCount + '</span><span class="delayed-l" style="color:var(--warn)">종</span></div></div>' +
         '<div class="stat"><div class="stat-label">입고 예정 (Inbound)</div><div class="stat-figures"><span class="total-v num">' + inboundCount + '</span><span class="total-l">건</span></div></div>';
       document.getElementById("inv-summary").innerHTML = summaryHtml;
       const ovInvSummary = document.getElementById("ov-inv-summary");
@@ -3090,9 +3096,9 @@
         recoEl.className = "shortage-banner " + (reco.urgency === "urgent" ? "crit-b" : "warn-b");
         const laneLabel = reco.pol ? (reco.pol + " → " + reco.pod + " · " + reco.carrier) : "";
         const urgencyText = reco.urgency === "urgent"
-          ? "⚠ 권장 발주 시점(" + reco.recommended_order_by_date + ")이 이미 지났습니다 — 지금 발주해도 " + reco.target_event + "(" + reco.target_date +
-            ") 전 도착을 보장하기 어렵습니다. 오늘 발주 시 예상 도착: <span class=\"num\">" + reco.if_ordered_today_arrival_p50 +
-            "</span>(P50) ~ <span class=\"num\">" + reco.if_ordered_today_arrival_p95 + "</span>(P95, 보수적 기준)."
+          ? "⚠ 권장 발주 시점(<span class=\"num\">" + reco.recommended_order_by_date + "</span>)이 이미 지났습니다 — 지금 발주해도 " + reco.target_event + "(<span class=\"num\">" + reco.target_date +
+            "</span>) 전 도착을 보장하기 어렵습니다. 오늘 발주 시 예상 도착: <span class=\"num\">" + reco.if_ordered_today_arrival_p50 +
+            " (P50)</span> ~ <span class=\"num\">" + reco.if_ordered_today_arrival_p95 + " (P95, 보수적 기준)</span>."
           : "발주 권장 시점: <span class=\"num\">" + reco.recommended_order_by_date + "</span> (" + reco.target_event + " 예상일 " + reco.target_date + " 기준, 이 노선 리드타임 P95 " + reco.lead_time_p95_days + "일 역산)";
         recoEl.innerHTML = "📦 " + urgencyText +
           " — 권장 수량 <span class=\"num\">" + Number(reco.recommended_qty).toLocaleString() + " EA</span>" +
