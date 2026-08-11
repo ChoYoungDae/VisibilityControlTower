@@ -7,9 +7,11 @@ VESSEL_MMSI/sectionStats/bookingData/arrivalData/dndData/itemCatalog 등)와
 동일한 모양으로 JSON을 돌려준다 — 프런트엔드 렌더링 로직은 최대한 그대로
 두고 "데이터 출처만" 하드코딩에서 API로 바꾸는 것이 이번 연동의 목표다.
 
-실행: uvicorn main:app --reload --port 8000  (이 폴더에서)
+실행(로컬, SQLite): uvicorn main:app --reload --port 8000  (이 폴더에서)
+실행(Vercel, Supabase): DATABASE_URL 환경변수가 있으면 자동으로 Postgres를 씀.
 문서: http://localhost:8000/docs (FastAPI 자동 생성)
 """
+import os
 import sqlite3
 from pathlib import Path
 
@@ -17,11 +19,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 DB_PATH = Path(__file__).parent.parent / "db" / "visibility_control_tower.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")  # 있으면 Supabase(Postgres), 없으면 로컬 SQLite
 
 app = FastAPI(title="Visibility Control Tower API", version="0.1.0")
 
-# 목업은 정적 서버(mockup-static, 8123)에서 열리고 API는 이 프로세스(8000)라
-# 오리진이 다르다 — 컨셉 데모라 전체 허용(프로덕션에서는 좁혀야 함).
+# 로컬에서는 목업 정적 서버(8123)와 API(8000)가 오리진이 다르고, Vercel에서는
+# 같은 오리진(/api)이라 CORS가 관여하지 않는다 — 컨셉 데모라 어차피 전체 허용.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -31,6 +34,19 @@ app.add_middleware(
 
 
 def query(sql, params=()):
+    """sql은 SQLite 방언(? 플레이스홀더)으로 작성 — Postgres 백엔드일 땐 %s로 바꿔서 실행."""
+    if DATABASE_URL:
+        import psycopg2
+        import psycopg2.extras
+
+        conn = psycopg2.connect(DATABASE_URL)
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(sql.replace("?", "%s"), params)
+                return [dict(r) for r in cur.fetchall()]
+        finally:
+            conn.close()
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
@@ -42,6 +58,8 @@ def query(sql, params=()):
 
 @app.get("/api/health")
 def health():
+    if DATABASE_URL:
+        return {"status": "ok", "db": "supabase (postgres)"}
     if not DB_PATH.exists():
         raise HTTPException(500, "DB 파일이 없습니다 — db/build_db.py를 먼저 실행하세요.")
     return {"status": "ok", "db": str(DB_PATH)}

@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/visibility_control_tower_fhd.html" },
+    { "source": "/api/:path*", "destination": "/api/main" }
+  ]
+}
