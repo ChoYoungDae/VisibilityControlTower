@@ -829,12 +829,15 @@
   .app.nav-collapsed .tab { justify-content:center; padding:0; font-size:0; }
   .app.nav-collapsed .tab::before { width:20px; height:20px; }
 
-  /* 우측 상단 고정 배지 — 원래 각 탭 .main 좌측 상단에 탭마다 반복해서
-     찍히던 "LIVE OPERATIONS · 시각" 표시를, 사이드바 접힘 상태와 무관하게
-     항상 같은 자리에 떠 있는 단일 배지로 옮김(탭 넘길 때마다 다시 찍히지
-     않고 화면에 고정). */
+  /* 우측 상단 배지 — 원래 각 탭 .main 좌측 상단에 탭마다 반복해서 찍히던
+     "LIVE OPERATIONS · 시각" 표시를, 사이드바 접힘 상태와 무관하게 항상 같은
+     자리에 떠 있는 단일 배지로 옮김(탭 넘길 때마다 다시 찍히지 않음). 이전엔
+     position:fixed로 스크롤해도 화면에 고정돼 있었는데, 그러면 스크롤 시
+     아래 콘텐츠가 이 자리 위로 지나가면서 계속 겹치는 문제가 있어 absolute로
+     바꿔 페이지와 함께 스크롤되게 함(페이지 맨 위에서만 보이고, 스크롤하면
+     콘텐츠와 함께 위로 사라짐). */
   .live-badge {
-    position:fixed;
+    position:absolute;
     top:30px;
     right:24px;
     z-index:110;
@@ -879,10 +882,7 @@
 
   /* Main workspace */
   .tab-panel { min-height:calc(100vh / 1.25); }
-  /* .live-badge는 화면 폭과 무관하게 항상 position:fixed로 우상단에 떠 있어서,
-     상단 padding이 그 높이(약 68px)보다 작으면 화면 폭에 상관없이 리스트 헤더 등
-     콘텐츠가 그 밑을 지나갈 때 겹칠 수 있다 — 폭 조건 없이 항상 여유를 둔다. */
-  .main { width:100%; max-width:none; margin:0; padding:76px 30px 84px; }
+  .main { width:100%; max-width:none; margin:0; padding:28px 30px 84px; }
   .main::before {
     content:'PROACTIVE CENTER';
     display:block;
@@ -1049,7 +1049,7 @@
 
   @media (min-width:1600px) and (min-height:900px) {
     #tab-overview .main {
-      padding-top:76px;
+      padding-top:32px;
       padding-bottom:32px;
       min-height:calc(100vh / 1.25 - 90px);
       display:flex;
